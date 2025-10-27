@@ -1,0 +1,80 @@
+{
+  "quizzes": [
+    {
+      "name": "PCD -1",
+      "questions": [
+        {
+          "question": "O que é uma thread?",
+          "points": 5,
+          "correct": 3,
+          "options": [
+            "Processo",
+            "Aplicação",
+            "Programa",
+            "Processo Ligeiro"
+          ]
+        },
+        {
+          "question": "Qual destas operações não é um método bloqueante?",
+          "points": 3,
+          "correct": 2,
+          "options": [
+            "join()",
+            "sleep(<millis>)",
+            "interrupted()",
+            "wait()"
+          ]
+        },
+        {
+          "question": "O que significa PCD?",
+          "points": 2,
+          "correct": 1,
+          "options": [
+            "Paralelismo e Concorrência em Desenvolvimento",
+            "Processamento de Computadores Distribuídos",
+            "Programação com Dados",
+            "Projeto de Computadores Digitais"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "PCD -2",
+      "questions": [
+        {
+          "question": "Qual é a função do método sleep() em Java?",
+          "points": 4,
+          "correct": 1,
+          "options": [
+            "Suspender a execução de uma thread por um tempo",
+            "Parar a JVM",
+            "Encerrar uma thread imediatamente",
+            "Criar uma nova thread"
+          ]
+        },
+        {
+          "question": "O que é um deadlock?",
+          "points": 5,
+          "correct": 2,
+          "options": [
+            "Uma exceção de thread",
+            "Situação em que duas ou mais threads ficam bloqueadas esperando recursos",
+            "Um método de sincronização",
+            "Um tipo de thread leve"
+          ]
+        },
+        {
+          "question": "Qual palavra-chave usamos para criar uma thread em Java?",
+          "points": 3,
+          "correct": 1,
+          "options": [
+            "extends Thread",
+            "implements Runnable",
+            "synchronized",
+            "static"
+          ]
+        }
+      ]
+    }
+  ]
+}
