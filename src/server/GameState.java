@@ -54,7 +54,7 @@ public class GameState {
                 System.out.println("Player "+playerId+" answered");
                 if(quiz.getCurQuestion().isCorrect(option)) {
                         int teamId = playerMap.get(playerId);
-                        scores.put(teamId, scores.get(teamId)+question.points());
+                        scores.put(teamId, scores.get(teamId)+question.getPoints());
                         System.out.println("Team "+teamId+" now has "+ scores.get(teamId));
                 }
 

@@ -4,27 +4,21 @@ import java.util.List;
 
 public class Quiz {
 
-        private final String name;
+        private String name;
         private int curQuestion;
-        private final List<Question> questionList;
-
-        public Quiz(String name, List<Question> questionList) {
-                this.name = name;
-                this.curQuestion = -1;
-                this.questionList = questionList;
-        }
+        private List<Question> questions;
 
         public boolean hasNextQuestion() {
-                return questionList.size() > (curQuestion + 1);
+                if(questions == null) {System.out.println("IS null");return false;}
+                return questions.size() > (curQuestion + 1);
         }
 
         public Question nextQuestion() {
-                if(!hasNextQuestion()) return null;
-                return questionList.get(++curQuestion);
+                return questions.get(++curQuestion);
         }
 
         public Question getCurQuestion() {
-                return questionList.get(curQuestion);
+                return questions.get(curQuestion);
         }
 
 }

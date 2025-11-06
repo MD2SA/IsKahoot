@@ -1,6 +1,7 @@
 package server;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 
 public class Server {
 
@@ -23,6 +24,10 @@ public class Server {
                  * - [ ] try to join game
                  * - [ ] send status to client
                 */
+        }
+
+        public synchronized void answerFrom(int option, UUID clientId){
+
         }
 
 }
