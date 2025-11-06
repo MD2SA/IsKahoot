@@ -1,7 +1,5 @@
 package gui;
 
-
-
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Cursor;
@@ -10,10 +8,7 @@ import java.awt.GridLayout;
 import java.util.List;
 import java.util.stream.IntStream;
 
-import javax.swing.JButton;
-import javax.swing.JFrame;
-import javax.swing.JLabel;
-import javax.swing.JPanel;
+import javax.swing.*;
 
 import gui.Observer.Observed;
 import utils.Question;
@@ -26,7 +21,7 @@ public class GUI extends Observed {
         private int selectedOption;
 
         public GUI() {
-                frame = new JFrame();
+                frame = new JFrame("IsKahoot");
                 frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
                 frame.setSize(500,400);
                 frame.setLocationRelativeTo(null);
@@ -43,18 +38,21 @@ public class GUI extends Observed {
 
                 mainPanel.removeAll();
 
-                JLabel label = new JLabel(question.label());
+                JLabel label = new JLabel(question.getQuestion());
+                label.setHorizontalAlignment(SwingConstants.CENTER);
+                label.setVerticalAlignment(SwingConstants.CENTER);
                 mainPanel.add(label, BorderLayout.NORTH);
 
                 JPanel optionsPanel = new JPanel(new GridLayout(2,2));
 
-                List<String> options = question.options();
+                List<String> options = question.getOptions();
 
                 IntStream.range(0, options.size())
                         .forEach(i->{
                                 JButton button = new JButton(options.get(i));
                                 styleButton(button);
                                 button.addActionListener(l->{
+                                        displayWaiting();
                                         this.selectedOption = i;
                                         notifyObservers();
                                 });
@@ -69,6 +67,20 @@ public class GUI extends Observed {
 
         public void displayScoreboard(Object scoreboard) {
                // TODO: implement scoreboard display
+        }
+
+        public void displayWaiting() {
+                mainPanel.removeAll();
+
+                JPanel panel = new JPanel();
+
+                JLabel label = new JLabel("Waiting...");
+                panel.add(label);
+
+                mainPanel.add(panel);
+
+                mainPanel.revalidate();
+                mainPanel.repaint();
         }
 
         public boolean hasSelectedOption() {
