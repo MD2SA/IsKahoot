@@ -66,7 +66,25 @@ public class GUI extends Observed {
         }
 
         public void displayScoreboard(Object scoreboard) {
-               // TODO: implement scoreboard display
+                mainPanel.removeAll();
+
+                // TODO: implement scoreboard display
+                // Dados: {Nome, Pontuação}
+                Object[][] dados = {
+                        {"Alice", 9.5},
+                        {"Bob", 8.0},
+                        {"Carol", 9.75},
+                        {"David", 7.2}
+                };
+
+                String[] colunas = {"Nome", "Pontuação"};
+
+                JTable tabela = new JTable(dados, colunas);
+                JScrollPane scrollPane = new JScrollPane(tabela);
+                mainPanel.add(scrollPane);
+
+                mainPanel.revalidate();
+                mainPanel.repaint();
         }
 
         public void displayWaiting() {

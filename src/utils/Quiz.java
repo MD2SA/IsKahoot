@@ -5,11 +5,11 @@ import java.util.List;
 public class Quiz {
 
         private String name;
-        private int curQuestion;
+        private int curQuestion = -1;
         private List<Question> questions;
 
         public boolean hasNextQuestion() {
-                if(questions == null) {System.out.println("IS null");return false;}
+                if(questions == null) return false;
                 return questions.size() > (curQuestion + 1);
         }
 
