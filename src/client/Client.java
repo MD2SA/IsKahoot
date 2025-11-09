@@ -35,10 +35,10 @@ public class Client extends Thread implements Observer  {
                                         Quiz quiz  = QuizCreator.getFrom(quizzesFile).getFirst();
 
                                         while(quiz.hasNextQuestion()) {
-                                                System.out.println("HERE");
                                                 gui.displayQuestion(quiz.nextQuestion());
                                                 sleep(1000*3);
                                         }
+                                        gui.displayScoreboard(null);
 
                                 } catch (IOException | InterruptedException e) {
                                         throw new RuntimeException(e);
@@ -47,11 +47,14 @@ public class Client extends Thread implements Observer  {
                 } catch (Exception e) {
                         throw new RuntimeException(e);
                 }
+
         }
 
         public void getQuestion() {
                 /*
                 here we should ask the server in a synchronized way for the new question
+                something like
+                Question question = server.getQuestion()
                  */
                 Question question = new Question(
                         "O que é uma ThreadPool...",
@@ -65,7 +68,7 @@ public class Client extends Thread implements Observer  {
         private void sendAnswer(int option) {
                 server.answerFrom(option, uuid);
                 System.out.println("SENDING ANSWER "+option);
-                /** TODO:
+                /* TODO:
                  *  - [ ] send option to server
                  *
                  */
