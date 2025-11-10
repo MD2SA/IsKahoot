@@ -9,6 +9,6 @@ public class Main {
 
         public static void main(String[] args) {
                 Server server = new Server();
-                Client client = new Client(server);
+                Client client = new Client(server, "user1");
         }
 }
