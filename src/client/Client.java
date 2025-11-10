@@ -1,19 +1,15 @@
 package client;
 
-import gui.GUI;
-import gui.Observer.Observer;
-import gui.Observer.Observed;
+import client.gui.GUI;
+import client.gui.Observer.Observer;
+import client.gui.Observer.Observed;
 
 import server.Server;
-import utils.Question;
 import utils.Quiz;
 import utils.QuizCreator;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.List;
-import java.util.UUID;
 
 public class Client extends Thread implements Observer  {
 
@@ -28,7 +24,7 @@ public class Client extends Thread implements Observer  {
                 gui = new GUI();
                 gui.registerObserver(this);
 
-                // just for testing gui
+                // just for testing client.gui
                 test();
 
         }
@@ -38,7 +34,7 @@ public class Client extends Thread implements Observer  {
                 here we should ask the server in a synchronized way for the new question
                 something like
                 Question question = server.getQuestion()
-                gui.displayQuestion(question);
+                client.gui.displayQuestion(question);
                  */
         }
 

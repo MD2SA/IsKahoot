@@ -1,4 +1,4 @@
-package gui.Observer;
+package client.gui.Observer;
 
 public interface Observer {
 
