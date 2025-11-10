@@ -10,8 +10,8 @@ import java.util.stream.IntStream;
 
 import javax.swing.*;
 
-import configs.FeaturesConfig;
 import client.gui.Observer.Observed;
+import configs.Config;
 import server.game.utils.Team;
 import utils.Question;
 
@@ -72,7 +72,7 @@ public class GUI extends Observed {
                 String[] colunas = {"Nome", "Pontuação"};
                 Object[][] dados;
 
-                if(FeaturesConfig.HIDE_SCOREBOARD) {
+                if(Config.Features.HIDE_SCOREBOARD) {
                         dados = getDummyScoreboard();
                 } else {
                         dados = teams.stream()
