@@ -1,6 +1,6 @@
 package configs;
 
-public class FeatureConfig {
+public class FeaturesConfig {
 
         public static final boolean HIDE_SCOREBOARD = true;
 }
