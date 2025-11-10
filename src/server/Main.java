@@ -1,4 +1,5 @@
 package server;
+import server.TUI.TUI;
 import utils.Quiz;
 import utils.QuizCreator;
 
@@ -12,9 +13,8 @@ public class Main {
 
                 List<Quiz> quizzes = QuizCreator.getFrom(new File("quizzes.json"));
 
-                for (Quiz quiz : quizzes) {
-                        System.out.println(quiz.toString());
-                }
+                int[] gameInfo = TUI.gatherGameInfo(quizzes);
+
 
         }
 }
