@@ -1,4 +1,4 @@
-package gui;
+package client.gui;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
@@ -11,7 +11,7 @@ import java.util.stream.IntStream;
 import javax.swing.*;
 
 import configs.FeaturesConfig;
-import gui.Observer.Observed;
+import client.gui.Observer.Observed;
 import server.game.utils.Team;
 import utils.Question;
 
@@ -73,22 +73,14 @@ public class GUI extends Observed {
                 Object[][] dados;
 
                 if(FeaturesConfig.HIDE_SCOREBOARD) {
-                        dados = new Object[][]{
-                                {"Red Dragons", 50},
-                                {"Blue Sharks", 75},
-                                {"Green Tigers", 60},
-                                {"Yellow Lions", 40}
-                        };
+                        dados = getDummyScoreboard();
                 } else {
-                        dados = new Object[teams.size()][2];
-                        int i = 0;
-                        for(Team team : teams) {
-                                dados[i][0] = team.getName();
-                                dados[i][1] = team.getTeamScore();
-                                i++;
-                        }
+                        dados = teams.stream()
+                                .map(team-> new Object[]{
+                                        team.getName(),
+                                        team.getTeamScore()
+                                }).toArray(Object[][]::new);
                 }
-
 
                 JTable tabela = new JTable(dados, colunas);
                 JScrollPane scrollPane = new JScrollPane(tabela);
@@ -127,6 +119,15 @@ public class GUI extends Observed {
 
         public int getSelectedOption() {
                 return selectedOption;
+        }
+
+        private Object[][] getDummyScoreboard() {
+                return new Object[][]{
+                        {"Red Dragons", 50},
+                        {"Blue Sharks", 75},
+                        {"Green Tigers", 60},
+                        {"Yellow Lions", 40}
+                };
         }
 
         private void styleButton(JButton button) {
