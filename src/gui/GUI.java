@@ -5,12 +5,15 @@ import java.awt.Color;
 import java.awt.Cursor;
 import java.awt.Font;
 import java.awt.GridLayout;
-import java.util.List;
+import java.util.*;
 import java.util.stream.IntStream;
 
 import javax.swing.*;
+import javax.swing.border.Border;
 
+import configs.FeatureConfig;
 import gui.Observer.Observed;
+import server.game.utils.Team;
 import utils.Question;
 
 public class GUI extends Observed {
@@ -65,23 +68,32 @@ public class GUI extends Observed {
                 mainPanel.repaint();
         }
 
-        public void displayScoreboard(Object scoreboard) {
+        public void displayScoreboard(Collection<Team> teams) {
                 mainPanel.removeAll();
-
-                // TODO: implement scoreboard display
-                // Dados: {Nome, Pontuação}
-                Object[][] dados = {
-                        {"Alice", 9.5},
-                        {"Bob", 8.0},
-                        {"Carol", 9.75},
-                        {"David", 7.2}
-                };
-
                 String[] colunas = {"Nome", "Pontuação"};
+                Object[][] dados;
+
+                if(FeatureConfig.HIDE_SCOREBOARD) {
+                        dados = new Object[][]{
+                                {"Red Dragons", 50},
+                                {"Blue Sharks", 75},
+                                {"Green Tigers", 60},
+                                {"Yellow Lions", 40}
+                        };
+                } else {
+                        dados = new Object[teams.size()][2];
+                        int i = 0;
+                        for(Team team : teams) {
+                                dados[i][0] = team.getName();
+                                dados[i][1] = team.getTeamScore();
+                                i++;
+                        }
+                }
+
 
                 JTable tabela = new JTable(dados, colunas);
                 JScrollPane scrollPane = new JScrollPane(tabela);
-                mainPanel.add(scrollPane);
+                mainPanel.add(scrollPane, BorderLayout.CENTER);
 
                 mainPanel.revalidate();
                 mainPanel.repaint();
@@ -97,6 +109,15 @@ public class GUI extends Observed {
 
                 mainPanel.add(panel);
 
+                mainPanel.revalidate();
+                mainPanel.repaint();
+        }
+
+        public void addExitButton() {
+                System.out.println("BUTTON");
+                JButton button = new JButton("Sair");
+                button.addActionListener(l->System.exit(0));
+                mainPanel.add(button, BorderLayout.SOUTH);
                 mainPanel.revalidate();
                 mainPanel.repaint();
         }

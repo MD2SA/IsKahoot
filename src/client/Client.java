@@ -19,34 +19,17 @@ public class Client extends Thread implements Observer  {
 
         private final GUI gui;
         private final Server server;
-        private final UUID uuid = UUID.randomUUID();
+        private final String username;
 
-        public Client(Server server) {
+        public Client(Server server, String username) {
                 this.server = server;
+                this.username = username;
 
                 gui = new GUI();
                 gui.registerObserver(this);
 
-                // Section just for tests, to delete
-                try {
-                        new Thread(()-> {
-                                try {
-                                        File quizzesFile = new File("quizzes.json");
-                                        Quiz quiz  = QuizCreator.getFrom(quizzesFile).getFirst();
-
-                                        while(quiz.hasNextQuestion()) {
-                                                gui.displayQuestion(quiz.nextQuestion());
-                                                sleep(1000*3);
-                                        }
-                                        gui.displayScoreboard(null);
-
-                                } catch (IOException | InterruptedException e) {
-                                        throw new RuntimeException(e);
-                                }
-                        }).start();
-                } catch (Exception e) {
-                        throw new RuntimeException(e);
-                }
+                // just for testing gui
+                test();
 
         }
 
@@ -55,18 +38,12 @@ public class Client extends Thread implements Observer  {
                 here we should ask the server in a synchronized way for the new question
                 something like
                 Question question = server.getQuestion()
-                 */
-                Question question = new Question(
-                        "O que é uma ThreadPool...",
-                        10,
-                        2,
-                        Arrays.asList("A","B","C","D")
-                );
                 gui.displayQuestion(question);
+                 */
         }
 
         private void sendAnswer(int option) {
-                server.answerFrom(option, uuid);
+                server.answerFrom(option, username);
                 System.out.println("SENDING ANSWER "+option);
                 /* TODO:
                  *  - [ ] send option to server
@@ -81,4 +58,28 @@ public class Client extends Thread implements Observer  {
                         sendAnswer(gui.getSelectedOption());
         }
 
+        // Section just for tests, to delete
+        private void test() {
+                try {
+                        new Thread(()-> {
+                                try {
+                                        File quizzesFile = new File("quizzes.json");
+                                        Quiz quiz  = QuizCreator.getFrom(quizzesFile).getFirst();
+
+                                        while(quiz.hasNextQuestion()) {
+                                                gui.displayQuestion(quiz.nextQuestion());
+                                                sleep(1000*1);
+                                                gui.displayScoreboard(null);
+                                                sleep(1000*1);
+                                        }
+                                        gui.addExitButton();
+
+                                } catch (IOException | InterruptedException e) {
+                                        throw new RuntimeException(e);
+                                }
+                        }).start();
+                } catch (Exception e) {
+                        throw new RuntimeException(e);
+                }
+        }
 }
