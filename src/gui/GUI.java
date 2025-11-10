@@ -9,9 +9,8 @@ import java.util.*;
 import java.util.stream.IntStream;
 
 import javax.swing.*;
-import javax.swing.border.Border;
 
-import configs.FeatureConfig;
+import configs.FeaturesConfig;
 import gui.Observer.Observed;
 import server.game.utils.Team;
 import utils.Question;
@@ -73,7 +72,7 @@ public class GUI extends Observed {
                 String[] colunas = {"Nome", "Pontuação"};
                 Object[][] dados;
 
-                if(FeatureConfig.HIDE_SCOREBOARD) {
+                if(FeaturesConfig.HIDE_SCOREBOARD) {
                         dados = new Object[][]{
                                 {"Red Dragons", 50},
                                 {"Blue Sharks", 75},
