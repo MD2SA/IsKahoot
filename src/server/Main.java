@@ -11,10 +11,8 @@ public class Main {
 
         public static void main(String[] args) throws InterruptedException, IOException {
 
-                List<Quiz> quizzes = QuizCreator.getFrom(new File("quizzes.json"));
-
-                int[] gameInfo = TUI.gatherGameInfo(quizzes);
-
+                Server server = new Server();
+                server.createGame();
 
         }
 }
