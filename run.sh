@@ -2,9 +2,8 @@
 
 SRC_DIR="src"
 OUT_DIR="out"
-LIB_DIR="libs"   # put all your project jars here, e.g., gson-2.10.1.jar
+LIB_DIR="libs"   #  libs: e.g., gson-2.10.1.jar
 
-# Create output directory
 mkdir -p "$OUT_DIR"
 
 # Build the classpath from jars
@@ -28,8 +27,6 @@ fi
 
 echo "Compilation finished."
 
-# List only classes that have "Main" in the name
-AVAILABLE_CLASSES=$(find "$OUT_DIR" -name "*Main*.class" | sed "s|$OUT_DIR/||;s|/|.|g;s|.class$||")
 
 # If the user passed the class on the command line
 if [ -n "$1" ]; then
@@ -37,12 +34,16 @@ if [ -n "$1" ]; then
     shift
     PROGRAM_ARGS="$@"
 else
-    if [ -z "$AVAILABLE_CLASSES" ]; then
-        echo "No classes with 'Main' in the name were found."
-        exit 1
-    fi
+    # List only classes that have "Main" in the name
+    AVAILABLE_CLASSES=$(find "$OUT_DIR" -name "*Main*.class" | sed "s|$OUT_DIR/||;s|/|.|g;s|.class$||")
 
     echo "Available classes (with 'Main' in the name):"
+
+    if [ -z "$AVAILABLE_CLASSES" ]; then
+        echo "No classes with 'Main' in the name were found."
+        AVAILABLE_CLASSES=$(find "$OUT_DIR" -name "*.class" | sed "s|$OUT_DIR/||;s|/|.|g;s|.class$||")
+    fi
+
     echo "$AVAILABLE_CLASSES"
 
     read -rp "Enter the fully qualified class name to run: " CLASS_NAME
