@@ -19,20 +19,26 @@ public class QuizManager {
         public Question nextQuestion() {
                 Question question = quiz.nextQuestion();
                 this.latch = new ModifiedCountdownLatch(2,2,5,10);
-                latch.startTimer();
                 return question;
         }
 
-        public synchronized void submitAnswer(Player player, int option) {
+        public void submitAnswer(Player player, int option) {
                 if(quiz == null || latch == null) throw new IllegalStateException();
 
                 Question question = quiz.getCurQuestion();
 
-                int bonusFactor = latch.countdown();
+                int bonusFactor;
+                try {
+                        bonusFactor = latch.countdown();
+                } catch (InterruptedException e) {
+                        bonusFactor = 1;
+                }
 
                 if(!question.isCorrect(option)) return;
                 int updatedScore = player.getScore() + question.getPoints()*bonusFactor;
                 player.setScore(updatedScore);
         }
+
+        public ModifiedCountdownLatch latch() { return latch; }
 
 }

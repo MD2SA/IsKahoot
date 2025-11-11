@@ -49,6 +49,7 @@ public class GameState {
                 while (quiz.hasNextQuestion()) {
                         Question question = quizManager.nextQuestion();
                         server.serveNextQuestion(id, question);
+                        quizManager.latch().await();
                         server.sendTeamScores(id, teamManager.getTeams());
                 }
 
