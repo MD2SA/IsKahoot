@@ -17,13 +17,12 @@ import utils.Question;
 
 public class GUI extends Observed {
 
-        private final JFrame frame;
         private final JPanel mainPanel;
 
         private int selectedOption;
 
         public GUI() {
-                frame = new JFrame("IsKahoot");
+                JFrame frame = new JFrame("IsKahoot");
                 frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
                 frame.setSize(500,400);
                 frame.setLocationRelativeTo(null);
