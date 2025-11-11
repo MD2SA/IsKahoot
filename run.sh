@@ -2,45 +2,52 @@
 
 SRC_DIR="src"
 OUT_DIR="out"
-LIB_DIR="libs"   # coloque aqui todos os jars que seu projeto usa, ex: gson-2.10.1.jar
+LIB_DIR="libs"   # put all your project jars here, e.g., gson-2.10.1.jar
 
-# Cria a pasta de saída
+# Create output directory
 mkdir -p "$OUT_DIR"
 
-# Monta o classpath dos jars
+# Build the classpath from jars
 CP=""
 for jar in "$LIB_DIR"/*.jar; do
     CP="$CP:$jar"
 done
-CP="${CP#:}"  # remove o ":" inicial
+CP="${CP#:}"  # remove the initial ":"
 
-echo "Compilando todos os arquivos Java..."
+echo "Compiling all Java files..."
 
-# Compila todos os arquivos de src, incluindo os jars no classpath
+# Compile all .java files, including jars in the classpath
 find "$SRC_DIR" -name "*.java" > sources.txt
 javac -cp "$CP" -d "$OUT_DIR" @sources.txt
 rm sources.txt
 
 if [ $? -ne 0 ]; then
-    echo "Houveram erros na compilação."
+    echo "Compilation errors occurred."
     exit 1
 fi
 
-echo "Compilação concluída."
+echo "Compilation finished."
 
-# Se o usuário passou a classe na linha de comando
+# List only classes that have "Main" in the name
+AVAILABLE_CLASSES=$(find "$OUT_DIR" -name "*Main*.class" | sed "s|$OUT_DIR/||;s|/|.|g;s|.class$||")
+
+# If the user passed the class on the command line
 if [ -n "$1" ]; then
     CLASS_NAME="$1"
     shift
     PROGRAM_ARGS="$@"
 else
-    # Modo interativo
-    echo "Classes disponíveis:"
-    find "$OUT_DIR" -name "*.class" | sed "s|$OUT_DIR/||;s|/|.|g;s|.class$||"
+    if [ -z "$AVAILABLE_CLASSES" ]; then
+        echo "No classes with 'Main' in the name were found."
+        exit 1
+    fi
 
-    read -rp "Digite o nome completo da classe que deseja executar: " CLASS_NAME
-    read -rp "Digite os argumentos do programa (ou vazio): " PROGRAM_ARGS
+    echo "Available classes (with 'Main' in the name):"
+    echo "$AVAILABLE_CLASSES"
+
+    read -rp "Enter the fully qualified class name to run: " CLASS_NAME
+    read -rp "Enter program arguments (or leave empty): " PROGRAM_ARGS
 fi
 
-# Executa
+# Run the Java class
 java -cp "$OUT_DIR:$CP" "$CLASS_NAME" $PROGRAM_ARGS
