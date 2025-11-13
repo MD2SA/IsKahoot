@@ -11,7 +11,7 @@ public class GameState {
         private final Server server;
 
         private final TeamManager teamManager;
-        private final QuizManager quizManager;
+        private QuizManager quizManager;
 
         private boolean hasStarted;
         private final Object startLock = new Object();
@@ -20,7 +20,6 @@ public class GameState {
                 this.server = server;
                 this.id = id;
                 this.teamManager = new TeamManager(numberOfTeams,teamCapacity);
-                this.quizManager = new QuizManager();
         }
 
         public boolean registerPlayer(String username, String teamName) {
@@ -44,7 +43,7 @@ public class GameState {
                         if(hasStarted) throw new IllegalStateException("Game has already started");
                         hasStarted = true;
                 }
-                quizManager.startQuiz(quiz);
+                this.quizManager = new QuizManager(quiz);
 
                 while (quiz.hasNextQuestion()) {
                         Question question = quizManager.nextQuestion();

@@ -11,9 +11,15 @@ public class QuizManager {
 
         private ModifiedCountdownLatch latch;
         private Quiz quiz;
+        private final boolean isIndividualQuestion;
 
-        public void startQuiz(Quiz quiz) {
-                this.quiz = Objects.requireNonNull(quiz);
+        public QuizManager(Quiz quiz) {
+                this(quiz, false);
+        }
+
+        public QuizManager(Quiz quiz, boolean isIndividualQuestion) {
+                this.quiz = quiz;
+                this.isIndividualQuestion = isIndividualQuestion;
         }
 
         public Question nextQuestion() {
