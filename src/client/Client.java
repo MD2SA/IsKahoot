@@ -4,6 +4,7 @@ import client.gui.GUI;
 import client.gui.Observer.Observer;
 import client.gui.Observer.Observed;
 
+import configs.Config;
 import server.Server;
 import utils.Quiz;
 import utils.QuizCreator;
@@ -64,9 +65,9 @@ public class Client extends Thread implements Observer  {
 
                                         while(quiz.hasNextQuestion()) {
                                                 gui.displayQuestion(quiz.nextQuestion());
-                                                sleep(1000*1);
+                                                sleep(1000* Config.Features.ROUND_SECONDS);
                                                 gui.displayScoreboard(null);
-                                                sleep(1000*1);
+                                                sleep(1000*Config.Features.ROUND_SECONDS);
                                         }
                                         gui.addExitButton();
 
