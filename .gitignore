@@ -15,12 +15,10 @@ Desktop.ini
 *.log
 bin/*
 build/*
-.project
 .settings/
 
 # IntelliJ IDEA
 .idea/
-*.iml
 out/
 
 
