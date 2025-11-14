@@ -3,7 +3,7 @@ package server.game.utils;
 import java.util.ArrayList;
 import java.util.List;
 
-public class Team {
+public class Team implements Score {
 
         public static final int DEFAULT_CAPACITY = 5;
 
@@ -19,7 +19,13 @@ public class Team {
                 this.name = name;
         }
 
+        @Override
         public String getName() { return name; }
+
+        @Override
+        public int getScore() {
+                return players.stream().mapToInt(Player::getScore).sum();
+        }
 
         public int getCapacity() { return capacity; }
 
@@ -30,8 +36,5 @@ public class Team {
                 return players.add(player);
         }
 
-        public int getTeamScore() {
-                return players.stream().mapToInt(Player::getScore).sum();
-        }
 
 }
