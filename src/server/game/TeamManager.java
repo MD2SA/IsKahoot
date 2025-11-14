@@ -3,6 +3,7 @@ package server.game;
 import server.game.utils.Player;
 import server.game.utils.Score;
 import server.game.utils.Team;
+import utils.tools.ConcurrentMap;
 
 import java.util.*;
 
@@ -10,16 +11,16 @@ public class TeamManager {
 
         // Maps for o(1) search
         // userId, playerObj
-        private final Map<String, Player> playerMap = new HashMap<>();
+        private final ConcurrentMap<String, Player> playerMap = new ConcurrentMap<>();
         //teamId, teamObj
-        private final Map<String, Team> teamMap;
+        private final ConcurrentMap<String, Team> teamMap;
 
         private final int numberOfTeams;
         private final int teamCapacity;
 
         public TeamManager(int numberOfTeams, int teamCapacity) {
                 // teamcapacity == 1 means singlePlayer mode
-                this.teamMap = isMultiPlayer() ? new HashMap<>() : null;
+                this.teamMap = isMultiPlayer() ? new ConcurrentMap<>() : null;
                 this.teamCapacity = teamCapacity;
                 this.numberOfTeams = numberOfTeams;
         }
@@ -49,15 +50,10 @@ public class TeamManager {
         }
 
         public List<Score> getScoreboard() {
-                List<Score> scores = new ArrayList<>();
                 if(teamCapacity == 1)
-                        synchronized (playerMap) {
-                                return new ArrayList<>(playerMap.values());
-                        }
+                        return new ArrayList<>(playerMap.values());
                 else
-                        synchronized (teamMap) {
-                                return new ArrayList<>(teamMap.values());
-                        }
+                        return new ArrayList<>(teamMap.values());
         }
 
         public boolean isMultiPlayer() {

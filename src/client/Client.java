@@ -6,8 +6,8 @@ import client.gui.Observer.Observed;
 
 import configs.Config;
 import server.Server;
-import utils.Quiz;
-import utils.QuizCreator;
+import utils.quiz.Quiz;
+import utils.quiz.QuizCreator;
 
 import java.io.File;
 import java.io.IOException;

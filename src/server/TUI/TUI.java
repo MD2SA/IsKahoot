@@ -2,7 +2,7 @@ package server.TUI;
 
 import server.TUI.utils.Constants;
 import server.TUI.utils.Helpers;
-import utils.Quiz;
+import utils.quiz.Quiz;
 
 import java.util.List;
 import java.util.Scanner;

@@ -9,13 +9,11 @@ import java.util.*;
 import java.util.stream.IntStream;
 
 import javax.swing.*;
-import javax.swing.border.Border;
 
 import client.gui.Observer.Observed;
 import configs.Config;
 import server.game.utils.Score;
-import server.game.utils.Team;
-import utils.Question;
+import utils.quiz.Question;
 
 public class GUI extends Observed {
 

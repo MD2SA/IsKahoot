@@ -2,8 +2,8 @@ package server.game;
 
 import server.game.utils.ModifiedCountdownLatch;
 import server.game.utils.Player;
-import utils.Question;
-import utils.Quiz;
+import utils.quiz.Question;
+import utils.quiz.Quiz;
 
 public class QuizManager {
 
