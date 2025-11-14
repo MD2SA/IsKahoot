@@ -32,9 +32,8 @@ public class ModifiedCountdownLatch {
                                 timerEnded = true;
                         }
                 }).start();
-                while(maxWaiters < curWaiters || timerEnded)
+                while(maxWaiters < curWaiters || !timerEnded)
                         wait();
-                curWaiters = 0;
         }
 
 }

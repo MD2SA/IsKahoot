@@ -1,11 +1,9 @@
 package server;
 import server.TUI.TUI;
-import server.game.GameState;
 import server.game.utils.Score;
-import server.game.utils.Team;
-import utils.Question;
-import utils.Quiz;
-import utils.QuizCreator;
+import utils.quiz.Question;
+import utils.quiz.Quiz;
+import utils.quiz.QuizCreator;
 
 import java.io.File;
 import java.io.IOException;
@@ -13,13 +11,19 @@ import java.util.*;
 
 public class Server {
 
+        private static Server instance;
         private int lastGameId;
         //gameId->set<playerId>
         private final Map<Integer, Set<DealWithClient>> games = new HashMap<>();
         private final List<Quiz> quizzes;
 
-        public Server() throws IOException {
+        private Server() throws IOException {
                 this.quizzes = QuizCreator.getFrom(new File("quizzes.json"));
+        }
+
+        public static Server getInstance() throws IOException {
+                if( instance == null ) instance = new Server();
+                return instance;
         }
 
         public void createGame() {

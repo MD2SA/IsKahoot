@@ -9,6 +9,6 @@ public class Config {
 
         public static class Features {
                 public static final boolean HIDE_SCOREBOARD = true;
-                public static final int ROUND_SECONDS = 3000;
+                public static final int ROUND_SECONDS = 3;
         }
 }
