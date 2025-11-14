@@ -49,7 +49,7 @@ public class GameState {
                         Question question = quizManager.nextQuestion();
                         server.serveNextQuestion(id, question);
                         quizManager.awaitFinish();
-                        server.sendTeamScores(id, teamManager.getScoreBoardValues());
+                        server.sendTeamScores(id, teamManager.getScoreboard());
                 }
 
         }

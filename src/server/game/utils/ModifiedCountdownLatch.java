@@ -17,16 +17,13 @@ public class ModifiedCountdownLatch {
                 this.maxWaiters = maxWaiters;
         }
 
-        public synchronized int countdown() throws InterruptedException {
+        public synchronized int countdown() {
                 int factor = curWaiters<bonusCount?bonusFactor:1;
                 curWaiters++;
-                while(maxWaiters < curWaiters || timerEnded)
-                        wait();
-                curWaiters = 0;
                 return factor;
         }
 
-        public synchronized void await() {
+        public synchronized void await() throws InterruptedException {
                 if( timerStarted ) return;
                 timerStarted = true;
                 new Timer(waitPeriod, new Runnable() {
@@ -35,6 +32,9 @@ public class ModifiedCountdownLatch {
                                 timerEnded = true;
                         }
                 }).start();
+                while(maxWaiters < curWaiters || timerEnded)
+                        wait();
+                curWaiters = 0;
         }
 
 }

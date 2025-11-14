@@ -31,12 +31,7 @@ public class QuizManager {
 
                 Question question = quiz.getCurQuestion();
 
-                int bonusFactor;
-                try {
-                        bonusFactor = latch.countdown();
-                } catch (InterruptedException e) {
-                        bonusFactor = 1;
-                }
+                int bonusFactor = latch.countdown();
 
                 if(!question.isCorrect(option)) return;
                 int updatedScore = player.getScore() + question.getPoints()*bonusFactor;
@@ -44,7 +39,9 @@ public class QuizManager {
         }
 
         public void awaitFinish() {
-                latch.await();
+                try {
+                        latch.await();
+                } catch (InterruptedException e) {}
         }
 
 }

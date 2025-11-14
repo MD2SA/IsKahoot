@@ -48,7 +48,7 @@ public class TeamManager {
                 }
         }
 
-        public List<Score> getScoreBoardValues() {
+        public List<Score> getScoreboard() {
                 List<Score> scores = new ArrayList<>();
                 if(teamCapacity == 1)
                         synchronized (playerMap) {
