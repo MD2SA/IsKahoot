@@ -64,12 +64,10 @@ public class Client extends Thread implements Observer  {
                                         Quiz quiz  = QuizCreator.getFrom(quizzesFile).getFirst();
 
                                         while(quiz.hasNextQuestion()) {
-                                                gui.displayQuestion(quiz.nextQuestion());
-                                                sleep(1000* Config.Features.ROUND_SECONDS);
-                                                gui.displayScoreboard(null);
+                                                gui.update(quiz.nextQuestion(), null);
                                                 sleep(1000*Config.Features.ROUND_SECONDS);
                                         }
-                                        gui.addExitButton();
+                                        gui.update(null, null);
 
                                 } catch (IOException | InterruptedException e) {
                                         throw new RuntimeException(e);

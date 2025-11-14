@@ -9,6 +9,7 @@ import java.util.*;
 import java.util.stream.IntStream;
 
 import javax.swing.*;
+import javax.swing.border.Border;
 
 import client.gui.Observer.Observed;
 import configs.Config;
@@ -19,31 +20,49 @@ import utils.Question;
 public class GUI extends Observed {
 
         private final JPanel mainPanel;
+        private final JPanel questionPanel;
+        private final JPanel scorePanel;
 
         private int selectedOption;
 
         public GUI() {
                 JFrame frame = new JFrame("IsKahoot");
                 frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-                frame.setSize(500,400);
+                frame.setSize(800,400);
                 frame.setLocationRelativeTo(null);
                 frame.setResizable(false);
 
-                mainPanel = new JPanel(new BorderLayout(10,10));
+                mainPanel = new JPanel(new GridLayout(2,1));
+                questionPanel = new JPanel(new BorderLayout(10,10));
+                scorePanel = new JPanel(new BorderLayout());
+
+                mainPanel.add(scorePanel);
+                mainPanel.add(questionPanel);
+
                 frame.setContentPane(mainPanel);
 
                 frame.setVisible(true);
         }
 
-        public void displayQuestion(Question question) {
+        public void update(Question question, List<Score> scoreboard) {
+                if(question != null) displayQuestion(question);
+                else {
+                        mainPanel.remove(questionPanel);
+                        mainPanel.revalidate();
+                        mainPanel.repaint();
+                }
+                displayScoreboard(scoreboard);
+        }
+
+        private void displayQuestion(Question question) {
                 selectedOption = -1;
 
-                mainPanel.removeAll();
+                questionPanel.removeAll();
 
                 JLabel label = new JLabel(question.getQuestion());
                 label.setHorizontalAlignment(SwingConstants.CENTER);
                 label.setVerticalAlignment(SwingConstants.CENTER);
-                mainPanel.add(label, BorderLayout.NORTH);
+                questionPanel.add(label, BorderLayout.NORTH);
 
                 JPanel optionsPanel = new JPanel(new GridLayout(2,2));
 
@@ -61,14 +80,14 @@ public class GUI extends Observed {
                                 optionsPanel.add(button);
                         });
 
-                mainPanel.add(optionsPanel, BorderLayout.CENTER);
+                questionPanel.add(optionsPanel, BorderLayout.CENTER);
 
-                mainPanel.revalidate();
-                mainPanel.repaint();
+                questionPanel.revalidate();
+                questionPanel.repaint();
         }
 
-        public void displayScoreboard(List<Score> scoreboard) {
-                mainPanel.removeAll();
+        private void displayScoreboard(List<Score> scoreboard) {
+                scorePanel.removeAll();
                 String[] colunas = {"Nome", "Pontuação"};
                 Object[][] dados;
 
@@ -82,33 +101,24 @@ public class GUI extends Observed {
 
                 JTable tabela = new JTable(dados, colunas);
                 JScrollPane scrollPane = new JScrollPane(tabela);
-                mainPanel.add(scrollPane, BorderLayout.CENTER);
+                scorePanel.add(scrollPane, BorderLayout.CENTER);
 
-                mainPanel.revalidate();
-                mainPanel.repaint();
+                scorePanel.revalidate();
+                scorePanel.repaint();
         }
 
         public void displayWaiting() {
-                mainPanel.removeAll();
+                questionPanel.removeAll();
 
                 JPanel panel = new JPanel();
 
                 JLabel label = new JLabel("Waiting...");
                 panel.add(label);
 
-                mainPanel.add(panel);
+                questionPanel.add(panel);
 
-                mainPanel.revalidate();
-                mainPanel.repaint();
-        }
-
-        public void addExitButton() {
-                System.out.println("BUTTON");
-                JButton button = new JButton("Sair");
-                button.addActionListener(l->System.exit(0));
-                mainPanel.add(button, BorderLayout.SOUTH);
-                mainPanel.revalidate();
-                mainPanel.repaint();
+                questionPanel.revalidate();
+                questionPanel.repaint();
         }
 
         public boolean hasSelectedOption() {
@@ -131,7 +141,7 @@ public class GUI extends Observed {
         private void styleButton(JButton button) {
                 button.setFocusPainted(false);
                 button.setBackground(new Color(230,230,250));
-                button.setFont(new Font("SansSerif", Font.BOLD, 14));
+                button.setFont(new Font("SansSerif", Font.BOLD, 10));
                 button.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         }
 
