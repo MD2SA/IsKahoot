@@ -1,6 +1,7 @@
 package server;
 import server.TUI.TUI;
 import server.game.GameState;
+import server.game.utils.Score;
 import server.game.utils.Team;
 import utils.Question;
 import utils.Quiz;
@@ -26,7 +27,7 @@ public class Server {
                 games.put(lastGameId++, new HashSet<>());
         }
 
-        public synchronized void sendTeamScores(int roomId, Collection<Team> teams) {
+        public synchronized void sendTeamScores(int roomId, List<Score> scoreboardValues) {
                 /* TODO:
                  * - [ ] send scores to all threads of roomId
                  */

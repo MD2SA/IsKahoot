@@ -12,6 +12,7 @@ import javax.swing.*;
 
 import client.gui.Observer.Observed;
 import configs.Config;
+import server.game.utils.Score;
 import server.game.utils.Team;
 import utils.Question;
 
@@ -66,7 +67,7 @@ public class GUI extends Observed {
                 mainPanel.repaint();
         }
 
-        public void displayScoreboard(Collection<Team> teams) {
+        public void displayScoreboard(List<Score> scoreboard) {
                 mainPanel.removeAll();
                 String[] colunas = {"Nome", "Pontuação"};
                 Object[][] dados;
@@ -74,11 +75,9 @@ public class GUI extends Observed {
                 if(Config.Features.HIDE_SCOREBOARD) {
                         dados = getDummyScoreboard();
                 } else {
-                        dados = teams.stream()
-                                .map(team-> new Object[]{
-                                        team.getName(),
-                                        team.getTeamScore()
-                                }).toArray(Object[][]::new);
+                        dados = scoreboard.stream()
+                                .map(s-> new Object[]{s.getName(), s.getScore()})
+                                .toArray(Object[][]::new);
                 }
 
                 JTable tabela = new JTable(dados, colunas);

@@ -1,12 +1,12 @@
 package server.game.utils;
 
-public class Player {
+public class Player implements Score {
 
         private int score;
         private String name;
 
         public Player(String name) {
-                this.name = name;
+                this(name, 0);
         }
 
         public Player(String name, int initialScore) {
@@ -14,8 +14,10 @@ public class Player {
                 this.score = initialScore;
         }
 
+        @Override
         public String getName() { return name; }
 
+        @Override
         public int getScore() {
                 return score;
         }

@@ -11,15 +11,15 @@ public class QuizManager {
 
         private ModifiedCountdownLatch latch;
         private Quiz quiz;
-        private final boolean isIndividualQuestion;
+        private final boolean isMultiPlayer;
 
         public QuizManager(Quiz quiz) {
                 this(quiz, false);
         }
 
-        public QuizManager(Quiz quiz, boolean isIndividualQuestion) {
+        public QuizManager(Quiz quiz, boolean isMultiPlayer) {
                 this.quiz = quiz;
-                this.isIndividualQuestion = isIndividualQuestion;
+                this.isMultiPlayer = isMultiPlayer;
         }
 
         public Question nextQuestion() {

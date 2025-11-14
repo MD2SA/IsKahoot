@@ -41,15 +41,15 @@ public class GameState {
         public void start(Quiz quiz) throws IllegalStateException {
                 synchronized(startLock) {
                         if(hasStarted) throw new IllegalStateException("Game has already started");
+                        this.quizManager = new QuizManager(quiz, teamManager.isMultiPlayer());
                         hasStarted = true;
                 }
-                this.quizManager = new QuizManager(quiz);
 
                 while (quiz.hasNextQuestion()) {
                         Question question = quizManager.nextQuestion();
                         server.serveNextQuestion(id, question);
                         quizManager.latch().await();
-                        server.sendTeamScores(id, teamManager.getTeams());
+                        server.sendTeamScores(id, teamManager.getScoreBoardValues());
                 }
 
         }
