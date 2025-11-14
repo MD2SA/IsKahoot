@@ -5,8 +5,6 @@ import server.game.utils.Player;
 import utils.Question;
 import utils.Quiz;
 
-import java.util.Objects;
-
 public class QuizManager {
 
         private ModifiedCountdownLatch latch;
@@ -45,6 +43,8 @@ public class QuizManager {
                 player.setScore(updatedScore);
         }
 
-        public ModifiedCountdownLatch latch() { return latch; }
+        public void awaitFinish() {
+                latch.await();
+        }
 
 }
