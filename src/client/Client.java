@@ -40,7 +40,6 @@ public class Client extends Thread implements Observer  {
         }
 
         private void sendAnswer(int option) {
-                server.answerFrom(option, username);
                 System.out.println("SENDING ANSWER "+option);
                 /* TODO:
                  *  - [ ] send option to server

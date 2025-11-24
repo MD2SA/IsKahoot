@@ -4,16 +4,16 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
-public class ConcurrentMap<K,V> {
+public class ConcurrentMap<K, V> {
 
-        private final Map<K,V> map = new HashMap<>();
+        private final Map<K, V> map = new HashMap<>();
 
         public synchronized boolean containsKey(K key) {
                 return map.containsKey(key);
         }
 
         public synchronized V put(K key, V value) {
-                return map.put(key,value);
+                return map.put(key, value);
         }
 
         public synchronized V get(K key) {
@@ -30,6 +30,10 @@ public class ConcurrentMap<K,V> {
 
         public synchronized Collection<V> values() {
                 return map.values();
+        }
+
+        public synchronized V remove(K key) {
+                return map.remove(key);
         }
 
 }
