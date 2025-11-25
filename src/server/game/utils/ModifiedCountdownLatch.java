@@ -18,22 +18,23 @@ public class ModifiedCountdownLatch {
         }
 
         public synchronized int countdown() {
-                int factor = curWaiters<bonusCount?bonusFactor:1;
+                int factor = curWaiters < bonusCount ? bonusFactor : 1;
                 curWaiters++;
                 return factor;
         }
 
         public synchronized void await() throws InterruptedException {
-                if( timerStarted ) return;
+                if (timerStarted)
+                        return;
                 timerStarted = true;
-                new Timer(waitPeriod, new Runnable() {
-                        @Override
-                        public void run() {
-                                timerEnded = true;
-                        }
-                }).start();
-                while(maxWaiters < curWaiters || !timerEnded)
-                        wait();
+                Timer timer = new Timer(waitPeriod, () -> {
+                        timerEnded = true;
+                        System.out.println("TIMER ENDED");
+                });
+                timer.start();
+                timer.join();
+
+                System.out.println("no longer waiting");
         }
 
 }

@@ -4,26 +4,34 @@ import utils.Code;
 
 public class MessageFromClient extends Message {
 
-        private int clientId;
-        private int gameId;
+        private String clientId;
+        private String gameId;
+        private String teamId;
         private int option;
 
-        public MessageFromClient(Code code, int clientId, int gameId) {
+        public MessageFromClient(Code code, String clientId, String teamId, String gameId) {
                 super(code);
                 this.clientId = clientId;
                 this.gameId = gameId;
+                this.teamId = teamId;
         }
 
-        public int getClientId() {
+        public String getClientId() {
                 return clientId;
         }
 
-        public int getGameId() {
+        public String getGameId() {
                 return gameId;
+        }
+
+        public String getTeamId() {
+                return teamId;
         }
 
         public int getAnswer() {
                 return option;
         }
+
+
 
 }

@@ -24,4 +24,13 @@ public class MessageFromServer extends Message {
                 this.scoreboard = scoreboard;
                 this.question = question;
         }
+
+        public Question getQuestion() {
+                return question;
+        }
+
+        public List<Score> getScoreboard() {
+                return scoreboard;
+        }
+
 }

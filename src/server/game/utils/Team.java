@@ -1,9 +1,10 @@
 package server.game.utils;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
-public class Team implements Score {
+public class Team implements Score, Serializable {
 
         public static final int DEFAULT_CAPACITY = 5;
 

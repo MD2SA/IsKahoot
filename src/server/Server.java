@@ -3,6 +3,7 @@ package server;
 import server.TUI.TUI;
 import server.game.GameState;
 import server.game.utils.Score;
+import utils.quiz.Question;
 import utils.quiz.Quiz;
 import utils.quiz.QuizCreator;
 import utils.tools.ConcurrentMap;
@@ -22,11 +23,11 @@ public class Server {
         private int lastGameId;
         private final List<Quiz> quizzes;
 
-        private final ConcurrentMap<Integer, GameState> games = new ConcurrentMap<>();
+        private final ConcurrentMap<String, GameState> games = new ConcurrentMap<>();
         // gameId, clientId
-        private final ConcurrentMap<Integer, Set<DealWithClient>> gameMap = new ConcurrentMap<>();
+        private final ConcurrentMap<String, Set<DealWithClient>> gameMap = new ConcurrentMap<>();
         // clientId, gameId
-        private final ConcurrentMap<DealWithClient, Integer> clientMap = new ConcurrentMap<>();
+        private final ConcurrentMap<DealWithClient, String> clientMap = new ConcurrentMap<>();
 
         private Server() throws IOException {
                 this.quizzes = QuizCreator.getFrom(new File("quizzes.json"));
@@ -46,7 +47,7 @@ public class Server {
 
         void createGame() {
                 int[] gameInfo = TUI.gatherGameInfo(quizzes);
-                int gameId = lastGameId++;
+                String gameId = String.valueOf(lastGameId++);
 
                 int numberOfTeams = gameInfo[0];
                 int teamCapacity = gameInfo[1];
@@ -60,18 +61,24 @@ public class Server {
         }
 
         boolean registerPlayer(DealWithClient handler) {
-                int clientId = handler.getClientId();
-                int gameId = handler.getGameId();
+                String clientId = handler.getClientId();
+                String gameId = handler.getGameId();
                 GameState game = games.get(gameId);
-                if (game == null)
+                if (game == null) {
+                        System.out.println("GAME == NULL");
                         return false;
+                }
 
-                if (!game.registerPlayer(String.valueOf(clientId), "teste"))
+                if (!game.registerPlayer(clientId, handler.getTeamId())) {
+                        System.out.println("FAILED ON GAME.REGISTER");
                         return false;
+                }
 
                 Set<DealWithClient> set = gameMap.get(gameId);
-                if (set == null)
+                if (set == null) {
+                        System.out.println("Set is null");
                         return false;
+                }
                 set.add(handler);
 
                 clientMap.put(handler, gameId);
@@ -79,7 +86,7 @@ public class Server {
         }
 
         void answer(DealWithClient handler, int option) {
-                int gameId = handler.getGameId();
+                String gameId = handler.getGameId();
                 GameState game = games.get(gameId);
                 if (game == null)
                         return;
@@ -87,7 +94,12 @@ public class Server {
 
         }
 
-        void serveScoreboard(int gameId, List<Score> scoreboard) {
+        public void serveNextQuestion(String gameId, Question question) {
+                Set<DealWithClient> set = gameMap.get(gameId);
+                set.forEach(h -> h.sendQuestion(question));
+        }
+
+        public void serveScoreboard(String gameId, List<Score> scoreboard) {
                 Set<DealWithClient> set = gameMap.get(gameId);
                 set.forEach(h -> h.sendScoreboard(scoreboard));
         }
@@ -107,6 +119,7 @@ public class Server {
                 try {
                         while (true) {
                                 Socket socket = ss.accept();
+                                System.out.println("ACCEPTED SOCKET");
                                 new DealWithClient(this, socket).start();
                         }
                 } catch (Exception e) {
