@@ -68,7 +68,7 @@ public class GameState {
                         Question question = quizManager.nextQuestion();
                         server.serveNextQuestion(id, question);
                         quizManager.awaitFinish();
-                        // server.serveScoreboard(id, teamManager.getScoreboard());
+                        server.serveScoreboard(id, teamManager.getScoreboard());
                         answeredPlayers.clear(); // reset players who have answered
                 }
 

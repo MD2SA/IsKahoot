@@ -46,16 +46,16 @@ public class Client extends Thread implements Observer {
                 while (true) {
                         MessageFromClient msgSent = new MessageFromClient(Code.GET_QUESTION, username, teamId, gameId);
                         try {
-                                System.out.println("Sending");
                                 out.writeObject(msgSent);
-                                System.out.println("Sent");
                                 MessageFromServer msgReceived = (MessageFromServer) in.readObject();
                                 Question question = msgReceived.getQuestion();
                                 List<Score> scoreboard = msgReceived.getScoreboard();
-                                if (question != null)
-                                        this.gui.update(question, null);
-                                else
-                                        this.gui.update(null,scoreboard);
+                                if (question != null) {
+                                        this.gui.displayQuestion(question);
+                                } else {
+                                        System.out.println(scoreboard == null);
+                                        this.gui.displayScoreboard(scoreboard);
+                                }
                         } catch (Exception e) {
                                 // TODO: handle exception
                         }
@@ -69,7 +69,6 @@ public class Client extends Thread implements Observer {
         }
 
         private void sendAnswer(int option) {
-                System.out.println("SENDING ANSWER " + option);
                 /*
                  * TODO:
                  * - [ ] send option to server
@@ -105,26 +104,4 @@ public class Client extends Thread implements Observer {
                 this.in = new ObjectInputStream(socket.getInputStream());
         }
 
-        // Section just for tests, to delete
-        private void test() {
-                try {
-                        new Thread(() -> {
-                                try {
-                                        File quizzesFile = new File("quizzes.json");
-                                        Quiz quiz = QuizCreator.getFrom(quizzesFile).getFirst();
-
-                                        while (quiz.hasNextQuestion()) {
-                                                gui.update(quiz.nextQuestion(), null);
-                                                sleep(1000 * Config.Features.ROUND_SECONDS);
-                                        }
-                                        gui.update(null, null);
-
-                                } catch (IOException | InterruptedException e) {
-                                        throw new RuntimeException(e);
-                                }
-                        }).start();
-                } catch (Exception e) {
-                        throw new RuntimeException(e);
-                }
-        }
 }

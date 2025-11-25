@@ -26,12 +26,12 @@ public class GUI extends Observed {
         public GUI() {
                 JFrame frame = new JFrame("IsKahoot");
                 frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-                frame.setSize(800,400);
+                frame.setSize(800, 400);
                 frame.setLocationRelativeTo(null);
                 frame.setResizable(false);
 
-                mainPanel = new JPanel(new GridLayout(2,1));
-                questionPanel = new JPanel(new BorderLayout(10,10));
+                mainPanel = new JPanel(new GridLayout(2, 1));
+                questionPanel = new JPanel(new BorderLayout(10, 10));
                 scorePanel = new JPanel(new BorderLayout());
 
                 mainPanel.add(scorePanel);
@@ -42,17 +42,7 @@ public class GUI extends Observed {
                 frame.setVisible(true);
         }
 
-        public void update(Question question, List<Score> scoreboard) {
-                if(question != null) displayQuestion(question);
-                else {
-                        mainPanel.remove(questionPanel);
-                        mainPanel.revalidate();
-                        mainPanel.repaint();
-                }
-                displayScoreboard(scoreboard);
-        }
-
-        private void displayQuestion(Question question) {
+        public void displayQuestion(Question question) {
                 selectedOption = -1;
 
                 questionPanel.removeAll();
@@ -62,21 +52,21 @@ public class GUI extends Observed {
                 label.setVerticalAlignment(SwingConstants.CENTER);
                 questionPanel.add(label, BorderLayout.NORTH);
 
-                JPanel optionsPanel = new JPanel(new GridLayout(2,2));
+                JPanel optionsPanel = new JPanel(new GridLayout(2, 2));
 
                 List<String> options = question.getOptions();
 
                 IntStream.range(0, options.size())
-                        .forEach(i->{
-                                JButton button = new JButton(options.get(i));
-                                styleButton(button);
-                                button.addActionListener(l->{
-                                        displayWaiting();
-                                        this.selectedOption = i;
-                                        notifyObservers();
+                                .forEach(i -> {
+                                        JButton button = new JButton(options.get(i));
+                                        styleButton(button);
+                                        button.addActionListener(l -> {
+                                                displayWaiting();
+                                                this.selectedOption = i;
+                                                notifyObservers();
+                                        });
+                                        optionsPanel.add(button);
                                 });
-                                optionsPanel.add(button);
-                        });
 
                 questionPanel.add(optionsPanel, BorderLayout.CENTER);
 
@@ -84,18 +74,14 @@ public class GUI extends Observed {
                 questionPanel.repaint();
         }
 
-        private void displayScoreboard(List<Score> scoreboard) {
+        public void displayScoreboard(List<Score> scoreboard) {
                 scorePanel.removeAll();
-                String[] colunas = {"Nome", "Pontuação"};
+                String[] colunas = { "Nome", "Pontuação" };
                 Object[][] dados;
 
-                if(Config.Features.HIDE_SCOREBOARD) {
-                        dados = getDummyScoreboard();
-                } else {
-                        dados = scoreboard.stream()
-                                .map(s-> new Object[]{s.getName(), s.getScore()})
+                dados = scoreboard.stream()
+                                .map(s -> new Object[] { s.getName(), s.getScore() })
                                 .toArray(Object[][]::new);
-                }
 
                 JTable tabela = new JTable(dados, colunas);
                 JScrollPane scrollPane = new JScrollPane(tabela);
@@ -128,17 +114,17 @@ public class GUI extends Observed {
         }
 
         private Object[][] getDummyScoreboard() {
-                return new Object[][]{
-                        {"Red Dragons", 50},
-                        {"Blue Sharks", 75},
-                        {"Green Tigers", 60},
-                        {"Yellow Lions", 40}
+                return new Object[][] {
+                                { "Red Dragons", 50 },
+                                { "Blue Sharks", 75 },
+                                { "Green Tigers", 60 },
+                                { "Yellow Lions", 40 }
                 };
         }
 
         private void styleButton(JButton button) {
                 button.setFocusPainted(false);
-                button.setBackground(new Color(230,230,250));
+                button.setBackground(new Color(230, 230, 250));
                 button.setFont(new Font("SansSerif", Font.BOLD, 10));
                 button.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         }
