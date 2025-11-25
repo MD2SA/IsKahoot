@@ -9,6 +9,6 @@ public class Config {
         }
 
         public static class Features {
-                public static final int ROUND_SECONDS = 3;
+                public static final int ROUND_SECONDS = 30;
         }
 }

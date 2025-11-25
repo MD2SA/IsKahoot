@@ -25,6 +25,7 @@ public class Player implements Score, Serializable {
         }
 
         public void setScore(int score) {
+                System.out.println("UPDATING SCORE OF "+name);
                 this.score = score;
         }
 }
