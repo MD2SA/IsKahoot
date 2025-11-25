@@ -1,6 +1,5 @@
 package server;
 
-import server.TUI.TUI;
 import server.game.GameState;
 import server.game.utils.Score;
 import utils.quiz.Question;
@@ -22,6 +21,7 @@ public class Server {
 
         private int lastGameId;
         private final List<Quiz> quizzes;
+        private final GameManager gameManager;
 
         private final ConcurrentMap<String, GameState> games = new ConcurrentMap<>();
         // gameId, clientId
@@ -31,6 +31,8 @@ public class Server {
 
         private Server() throws IOException {
                 this.quizzes = QuizCreator.getFrom(new File("quizzes.json"));
+                this.gameManager = new GameManager(quizzes);
+                gameManager.start();
         }
 
         public static Server getInstance() {
@@ -45,20 +47,20 @@ public class Server {
                 return instance;
         }
 
-        void createGame() {
-                int[] gameInfo = TUI.gatherGameInfo(quizzes);
-                String gameId = String.valueOf(lastGameId++);
-
-                int numberOfTeams = gameInfo[0];
-                int teamCapacity = gameInfo[1];
-                int quizNumber = gameInfo[2];
-                Quiz quiz = quizzes.get(quizNumber);
-
-                GameState gameState = new GameState(gameId, teamCapacity, numberOfTeams, quiz);
-
-                games.put(gameId, gameState);
-                gameMap.put(gameId, new HashSet<>());
-        }
+        // void createGame() {
+        //         int[] gameInfo = TUI.gatherGameInfo(quizzes);
+        //         String gameId = String.valueOf(lastGameId++);
+        //
+        //         int numberOfTeams = gameInfo[0];
+        //         int teamCapacity = gameInfo[1];
+        //         int quizNumber = gameInfo[2];
+        //         Quiz quiz = quizzes.get(quizNumber);
+        //
+        //         GameState gameState = new GameState(gameId, teamCapacity, numberOfTeams, quiz);
+        //
+        //         games.put(gameId, gameState);
+        //         gameMap.put(gameId, new HashSet<>());
+        // }
 
         boolean registerPlayer(DealWithClient handler) {
                 String clientId = handler.getClientId();
