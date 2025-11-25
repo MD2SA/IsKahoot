@@ -1,10 +1,11 @@
-package server.TUI.command;
+package server.cli;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Scanner;
 
-import server.TUI.command.impl.*;
+import server.cli.bin.*;
 
 public class CommandDispatcher {
 
@@ -19,6 +20,7 @@ public class CommandDispatcher {
         private void registerDefaultCommands() {
                 register(new ListGamesCommand());
                 register(new CreateGameCommand());
+                register(new LogsCommand());
                 register(new HelpCommand(this));
                 register(new ExitCommand());
         }
@@ -32,13 +34,14 @@ public class CommandDispatcher {
                         return;
                 String[] args = line.trim().split("\\s+", 2);
                 String cmdName = args[0].toLowerCase();
+                args = Arrays.copyOfRange(args, 1, args.length);
 
                 Command cmd = commands.get(cmdName);
                 if (cmd == null) {
                         System.out.println("Unkown command: " + cmdName + ". Type 'help' for available commands.");
                         return;
                 }
-                cmd.execute(scanner, context);
+                cmd.execute(scanner, context, args);
         }
 
         public void showHelp() {

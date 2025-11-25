@@ -1,6 +1,4 @@
-package server;
-
-import utils.Code;
+package utils.messages;
 
 public class MessageFromClient extends Message {
 

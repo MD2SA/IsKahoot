@@ -1,4 +1,4 @@
-package server.TUI.utils;
+package server.cli.utils;
 
 public class Constants {
 

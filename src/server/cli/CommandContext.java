@@ -1,4 +1,4 @@
-package server.TUI.command;
+package server.cli;
 
 import server.GameManager;
 

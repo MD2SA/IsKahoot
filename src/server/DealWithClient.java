@@ -7,7 +7,10 @@ import java.io.ObjectOutputStream;
 import java.net.Socket;
 
 import server.game.utils.Score;
-import utils.Code;
+import utils.messages.Code;
+import utils.messages.Message;
+import utils.messages.MessageFromClient;
+import utils.messages.MessageFromServer;
 import utils.quiz.Question;
 
 public class DealWithClient extends Thread {

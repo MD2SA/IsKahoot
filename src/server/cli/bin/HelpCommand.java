@@ -1,8 +1,10 @@
-package server.TUI.command.impl;
+package server.cli.bin;
 
 import java.util.Scanner;
 
-import server.TUI.command.*;
+import server.cli.Command;
+import server.cli.CommandContext;
+import server.cli.CommandDispatcher;
 
 public class HelpCommand implements Command {
 
@@ -23,7 +25,7 @@ public class HelpCommand implements Command {
         }
 
         @Override
-        public void execute(Scanner scanner, CommandContext context) {
+        public void execute(Scanner scanner, CommandContext context, String[] args) {
                 dispatcher.showHelp();
         }
 

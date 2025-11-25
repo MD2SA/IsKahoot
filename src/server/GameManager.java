@@ -1,7 +1,7 @@
 package server;
 
-import server.TUI.command.CommandDispatcher;
-import server.TUI.command.CommandContext;
+import server.cli.CommandDispatcher;
+import server.cli.CommandContext;
 import server.game.GameState;
 import utils.quiz.Quiz;
 import utils.tools.ConcurrentMap;
