@@ -63,12 +63,12 @@ public class Server {
                 String gameId = handler.getGameId();
                 GameState game = gameManager.getGame(gameId);
                 if (game == null) {
-                        System.out.println("GAME DOES NOT EXIST");
+                        logger.debug("Server registerPlayer: game does not exist");
                         return false;
                 }
 
                 if (!game.registerPlayer(clientId, handler.getTeamId())) {
-                        logger.info("Server registerPlayer: game.registerPlayer() returned false");
+                        logger.debug("Server registerPlayer: game.registerPlayer() returned false");
                         return false;
                 }
 

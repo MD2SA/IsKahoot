@@ -7,6 +7,10 @@ import server.GameManager;
 
 public class Helpers {
 
+        public static void printSectionHeader(String title) {
+                System.out.println("\n=== " + title + " " + "=".repeat(50 - title.length()) + "\n");
+        }
+
         public static int readPositiveInt(Scanner scanner, String prompt) {
                 int value = -1;
                 while (value <= 0) {
@@ -71,23 +75,18 @@ public class Helpers {
         }
 
         public static String readGameCode(Scanner scanner, GameManager gameManager, int length) {
-                boolean wantsCustom = askYesNo(scanner, "Do you want a personalized code for this game?");
 
-                if (!wantsCustom) {
-                        String code = generateUniqueRandomCode(length, gameManager);
-                        System.out.println("Random code generated: " + code);
-                        return code;
-                }
-
-                System.out.println("Enter personalized game code (letters/numbers only).");
+                System.out.printf("Game code (letters/numbers only) - press enter for random: ", length);
 
                 for (int attempt = 0; attempt < 2; attempt++) {
                         String input = scanner.nextLine().trim();
 
-                        if (input.isBlank()) {
-                                System.out.println("Code cannot be empty.");
-                                continue;
+                        if (input.isBlank() || input.isEmpty()) {
+                                String randomCode = generateUniqueRandomCode(length, gameManager);
+                                System.out.println("Random code generated: " + randomCode);
+                                return randomCode;
                         }
+
                         if (!input.matches("[A-Za-z0-9]+")) {
                                 System.out.println("Only letters and numbers are allowed.");
                                 continue;

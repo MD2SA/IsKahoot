@@ -5,7 +5,9 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Scanner;
 
+import server.Server;
 import server.cli.bin.*;
+import server.cli.utils.Helpers;
 
 public class CommandDispatcher {
 
@@ -42,10 +44,12 @@ public class CommandDispatcher {
                         return;
                 }
                 cmd.execute(scanner, context, args);
+
         }
 
         public void showHelp() {
                 System.out.println("\n");
+                Helpers.printSectionHeader("Available commands:");
                 System.out.println("Available commands:");
                 commands.values().stream()
                                 .forEach(c -> System.out.printf("        %-10s - %s%n", c.getName(),

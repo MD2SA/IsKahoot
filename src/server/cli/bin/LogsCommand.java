@@ -6,6 +6,7 @@ import java.util.List;
 import server.Server;
 import server.cli.Command;
 import server.cli.CommandContext;
+import server.cli.utils.Helpers;
 import server.utils.Logger;
 
 public class LogsCommand implements Command {
@@ -26,7 +27,7 @@ public class LogsCommand implements Command {
                 Logger logger = Server.getInstance().getLogger();
 
                 if (args.length == 0) {
-                        printSectionHeader("ALL LOGS");
+                        Helpers.printSectionHeader("ALL LOGS");
                         printLogs(logger.getAll());
                         if (tipCounter++ % 3 == 0)
                                 System.out.println("TIP: Type 'logs -h' to see all available options.\n");
@@ -36,19 +37,19 @@ public class LogsCommand implements Command {
                 for (String arg : args) {
                         switch (arg) {
                                 case "-a", "--all" -> {
-                                        printSectionHeader("ALL LOGS");
+                                        Helpers.printSectionHeader("ALL LOGS");
                                         printLogs(logger.getAll());
                                 }
                                 case "-d", "--debug" -> {
-                                        printSectionHeader("DEBUG LOGS");
+                                        Helpers.printSectionHeader("DEBUG LOGS");
                                         printLogs(logger.getLogs(log -> log.level == Logger.Level.DEBUG));
                                 }
                                 case "-i", "--info" -> {
-                                        printSectionHeader("INFO LOGS");
+                                        Helpers.printSectionHeader("INFO LOGS");
                                         printLogs(logger.getLogs(log -> log.level == Logger.Level.INFO));
                                 }
                                 case "-e", "--errors" -> {
-                                        printSectionHeader("WARNINGS + ERRORS");
+                                        Helpers.printSectionHeader("WARNINGS + ERRORS");
                                         printLogs(logger.getErrors());
                                 }
                                 case "-c", "--clear" -> {
@@ -59,10 +60,6 @@ public class LogsCommand implements Command {
                                 default -> System.out.println("Unknown option: " + arg + " (use -h for help)");
                         }
                 }
-        }
-
-        private void printSectionHeader(String title) {
-                System.out.println("\n=== " + title + " " + "=".repeat(50 - title.length()) + "\n");
         }
 
         private void printLogs(List<Logger.Log> logs) {
@@ -89,10 +86,9 @@ public class LogsCommand implements Command {
         }
 
         private void help() {
+                Helpers.printSectionHeader("USAGE");
                 System.out.println("""
 
-                                USAGE
-                                =====
                                 logs [option]
 
                                 OPTIONS

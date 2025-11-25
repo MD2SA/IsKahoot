@@ -32,27 +32,31 @@ public class CreateGameCommand implements Command {
                 List<Quiz> quizzes = gameManager.getQuizzes();
 
                 System.out.println(Constants.MARGIN);
-                System.out.println(Constants.HEADER);
+                Helpers.printSectionHeader("CREATING A NEW GAME");
 
                 int numberOfTeams = Helpers.readPositiveInt(scanner, Constants.NUMBER_OF_TEAMS);
                 int teamCapacity = Helpers.readPositiveInt(scanner, Constants.NUMBER_OF_PLAYERS_PER_TEAM);
 
-                System.out.println("Available quizzes:");
+                Helpers.printSectionHeader("Available quizzes:");
                 for (int i = 0; i < quizzes.size(); i++) {
                         System.out.printf("%d. %s%n", i + 1, quizzes.get(i).getName());
                 }
+                System.out.println();
 
                 int quizNumber = Helpers.readIntInRange(scanner, 1, quizzes.size(), Constants.QUIZ_NUMBER) - 1;
 
                 Quiz selectedQuiz = quizzes.get(quizNumber);
 
-                System.out.printf("%nCreating a game with %d teams of %d players with the quiz \"%s\"%n\n", numberOfTeams,
-                                teamCapacity, selectedQuiz.getName());
-
                 String id = Helpers.readGameCode(scanner, gameManager, GAME_ID_LENGTH);
-                System.out.println(Constants.MARGIN);
+
+                System.out.printf("%nCreating a game with %d teams of %d players with the quiz \"%s\"%n\n",
+                                numberOfTeams,
+                                teamCapacity, selectedQuiz.getName());
 
                 gameManager.addNewGame(new GameState(id, teamCapacity, numberOfTeams,
                                 selectedQuiz));
+
+                Helpers.printSectionHeader("CREATED GAME WITH CODE - \"" + id + "\"");
+                System.out.println(Constants.MARGIN);
         }
 }

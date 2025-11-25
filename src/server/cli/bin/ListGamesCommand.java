@@ -29,7 +29,10 @@ public class ListGamesCommand implements Command {
 
                 System.out.println(Constants.MARGIN);
 
-                System.out.println("Active games:");
+                Helpers.printSectionHeader("Active games:");
+                if( games == null || games.size() == 0) {
+                        System.out.println("    (no games)");
+                }
                 for (int i = 0; i<games.size(); i++) {
                         System.out.printf("%d. %s%n", i + 1, games.get(i).getCode());
                 }

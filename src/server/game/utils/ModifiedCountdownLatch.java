@@ -29,12 +29,9 @@ public class ModifiedCountdownLatch {
                 timerStarted = true;
                 Timer timer = new Timer(waitPeriod, () -> {
                         timerEnded = true;
-                        System.out.println("TIMER ENDED");
                 });
                 timer.start();
                 timer.join();
-
-                System.out.println("no longer waiting");
         }
 
 }

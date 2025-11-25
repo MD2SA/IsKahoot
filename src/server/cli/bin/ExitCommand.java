@@ -4,6 +4,7 @@ import java.util.Scanner;
 
 import server.cli.Command;
 import server.cli.CommandContext;
+import server.cli.utils.Helpers;
 
 public class ExitCommand implements Command {
 
@@ -19,7 +20,7 @@ public class ExitCommand implements Command {
 
         @Override
         public void execute(Scanner scanner, CommandContext context, String[] args) {
-                System.out.println("Goodbye!");
+                Helpers.printSectionHeader("Goodbye!");
                 System.exit(0);
         }
 
