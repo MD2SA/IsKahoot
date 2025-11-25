@@ -1,4 +1,4 @@
-package server.TUI.command.impl;
+package server.cli.bin;
 
 import java.util.List;
 import java.util.Scanner;
@@ -7,10 +7,10 @@ import server.GameManager;
 import server.game.GameState;
 import utils.quiz.Quiz;
 
-import server.TUI.command.Command;
-import server.TUI.command.CommandContext;
+import server.cli.Command;
+import server.cli.CommandContext;
 
-import server.TUI.utils.*;
+import server.cli.utils.*;
 
 public class CreateGameCommand implements Command {
 
@@ -27,7 +27,7 @@ public class CreateGameCommand implements Command {
         }
 
         @Override
-        public void execute(Scanner scanner, CommandContext context) {
+        public void execute(Scanner scanner, CommandContext context, String[] args) {
                 GameManager gameManager = context.gameManager();
                 List<Quiz> quizzes = gameManager.getQuizzes();
 

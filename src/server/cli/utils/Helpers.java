@@ -1,4 +1,4 @@
-package server.TUI.utils;
+package server.cli.utils;
 
 import java.util.Scanner;
 import java.util.concurrent.ThreadLocalRandom;

@@ -5,10 +5,10 @@ import client.gui.Observer.Observer;
 import client.gui.Observer.Observed;
 
 import configs.Config;
-import server.MessageFromClient;
-import server.MessageFromServer;
+import utils.messages.MessageFromClient;
+import utils.messages.MessageFromServer;
 import server.game.utils.Score;
-import utils.Code;
+import utils.messages.Code;
 import utils.quiz.Question;
 import utils.quiz.Quiz;
 import utils.quiz.QuizCreator;

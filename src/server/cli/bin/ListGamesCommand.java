@@ -1,14 +1,14 @@
-package server.TUI.command.impl;
+package server.cli.bin;
 
 import java.util.List;
 import java.util.Scanner;
 
 import server.game.GameState;
 
-import server.TUI.command.Command;
-import server.TUI.command.CommandContext;
+import server.cli.Command;
+import server.cli.CommandContext;
 
-import server.TUI.utils.*;
+import server.cli.utils.*;
 
 public class ListGamesCommand implements Command {
 
@@ -22,8 +22,9 @@ public class ListGamesCommand implements Command {
                 return "Lists all active games";
         }
 
+        //fazer aqui para dar para lista apenas os jogos que já comecaram, os que acabaram, etc..
         @Override
-        public void execute(Scanner scanner, CommandContext context) {
+        public void execute(Scanner scanner, CommandContext context, String[] args) {
                 List<GameState> games = context.gameManager().getGames();
 
                 System.out.println(Constants.MARGIN);

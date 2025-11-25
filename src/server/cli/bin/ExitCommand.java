@@ -1,9 +1,9 @@
-package server.TUI.command.impl;
+package server.cli.bin;
 
 import java.util.Scanner;
 
-import server.TUI.command.Command;
-import server.TUI.command.CommandContext;
+import server.cli.Command;
+import server.cli.CommandContext;
 
 public class ExitCommand implements Command {
 
@@ -18,7 +18,7 @@ public class ExitCommand implements Command {
         }
 
         @Override
-        public void execute(Scanner scanner, CommandContext context) {
+        public void execute(Scanner scanner, CommandContext context, String[] args) {
                 System.out.println("Goodbye!");
                 System.exit(0);
         }

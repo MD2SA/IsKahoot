@@ -2,6 +2,7 @@ package server;
 
 import server.game.GameState;
 import server.game.utils.Score;
+import server.utils.Logger;
 import utils.quiz.Question;
 import utils.quiz.Quiz;
 import utils.quiz.QuizCreator;
@@ -21,6 +22,7 @@ public class Server {
 
         private final List<Quiz> quizzes;
         private final GameManager gameManager;
+        private final Logger logger;
 
         private final ConcurrentMap<String, Set<DealWithClient>> gameMap = new ConcurrentMap<>();
         // clientId, gameId
@@ -29,13 +31,17 @@ public class Server {
         private Server() throws IOException {
                 this.quizzes = QuizCreator.getFrom(new File("quizzes.json"));
                 this.gameManager = new GameManager(quizzes);
+                this.logger = new Logger();
                 gameManager.start();
+        }
+
+        public Logger getLogger() {
+                return logger;
         }
 
         public static Server getInstance() {
                 if (instance == null) {
                         try {
-
                                 instance = new Server();
                         } catch (IOException e) {
                                 System.out.println("Unable to start server");
@@ -62,13 +68,13 @@ public class Server {
                 }
 
                 if (!game.registerPlayer(clientId, handler.getTeamId())) {
-                        System.out.println("FAILED ON GAME.REGISTER");
+                        logger.info("Server registerPlayer: game.registerPlayer() returned false");
                         return false;
                 }
 
                 Set<DealWithClient> set = gameMap.get(gameId);
                 if (set == null) {
-                        System.out.println("ILLEGAL STATE. GAME IS NOT REGISTERED IN THE SERVER");
+                        logger.warn("Server registerPlayer: set should not be null. Game probably has been removed");
                         return false;
                 }
                 set.add(handler);
@@ -98,7 +104,7 @@ public class Server {
         void close(DealWithClient handler) {
                 // Set<DealWithClient> set = gameMap.get(handler.getGameId());
                 // if (set == null)
-                //         return;
+                // return;
                 // set.remove(handler);
                 // // if is empty and has finished
                 // // if (set.isEmpty()) gameManager.removeGame(handler.getGameId());
@@ -111,7 +117,7 @@ public class Server {
                 try {
                         while (true) {
                                 Socket socket = ss.accept();
-                                System.out.println("ACCEPTED SOCKET");
+                                logger.info("Accepted socket");
                                 new DealWithClient(this, socket).start();
                         }
                 } catch (Exception e) {
