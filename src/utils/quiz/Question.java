@@ -1,11 +1,12 @@
 package utils.quiz;
 
+import java.io.Serializable;
 import java.util.List;
 
-public class Question {
+public class Question implements Serializable {
         private String question;
         private int points;
-        private int correct;
+        private transient int correct;
         private List<String> options;
 
         public Question(String label, int points, int correct, List<String> options) {

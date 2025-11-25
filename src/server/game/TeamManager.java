@@ -12,7 +12,7 @@ public class TeamManager {
         // Maps for o(1) search
         // userId, playerObj
         private final ConcurrentMap<String, Player> playerMap = new ConcurrentMap<>();
-        //teamId, teamObj
+        // teamId, teamObj
         private final ConcurrentMap<String, Team> teamMap;
 
         private final int numberOfTeams;
@@ -20,24 +20,34 @@ public class TeamManager {
 
         public TeamManager(int numberOfTeams, int teamCapacity) {
                 // teamcapacity == 1 means singlePlayer mode
-                this.teamMap = isMultiPlayer() ? new ConcurrentMap<>() : null;
-                this.teamCapacity = teamCapacity;
                 this.numberOfTeams = numberOfTeams;
+                this.teamCapacity = teamCapacity;
+                this.teamMap = isMultiPlayer() ? new ConcurrentMap<>() : null;
         }
 
         public synchronized boolean registerPlayer(String username, String teamName) {
-                if (playerMap.containsKey(username)) // player is already registered
+                // player is already registered
+                if (playerMap.containsKey(username)) {
+                        System.out.println(username);
+                        System.out.println("PLAYER IS ALREADY REGISTED");
                         return false;
+                }
 
-                if( isMultiPlayer() && !teamMap.containsKey(teamName) )  {
-                        if( numberOfTeams <= teamMap.size() ) // max teams registered
+                if (isMultiPlayer() && !teamMap.containsKey(teamName)) {
+                        // max teams registered
+                        if (numberOfTeams <= teamMap.size()) {
+                                System.out.println("MAX TEAMS REACHED");
                                 return false;
-                        teamMap.put(teamName, new Team(teamName,teamCapacity));
+                        }
+                        teamMap.put(teamName, new Team(teamName, teamCapacity));
                 }
 
                 Player player = new Player(username);
-                if( isMultiPlayer() && !teamMap.get(teamName).addPlayer(player)) // failed to add to team
+                // failed to add to team
+                if (isMultiPlayer() && !teamMap.get(teamName).addPlayer(player)) {
+                        System.out.println("FAILED TO ADD TO TEAM");
                         return false;
+                }
 
                 playerMap.put(username, player);
                 return true;
@@ -50,7 +60,7 @@ public class TeamManager {
         }
 
         public List<Score> getScoreboard() {
-                if(teamCapacity == 1)
+                if (teamCapacity == 1)
                         return new ArrayList<>(playerMap.values());
                 else
                         return new ArrayList<>(teamMap.values());
@@ -58,6 +68,10 @@ public class TeamManager {
 
         public boolean isMultiPlayer() {
                 return teamCapacity > 1;
+        }
+
+        public boolean isFull() {
+                return teamCapacity*numberOfTeams <= playerMap.size();
         }
 
 }

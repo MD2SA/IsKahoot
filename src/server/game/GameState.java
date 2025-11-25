@@ -5,14 +5,13 @@ import server.game.utils.Player;
 import utils.quiz.Question;
 import utils.quiz.Quiz;
 
-import java.io.IOException;
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
 
 public class GameState {
 
-        private final int id;
+        private final String id;
         private final Server server;
 
         private final TeamManager teamManager;
@@ -23,7 +22,7 @@ public class GameState {
         private boolean hasStarted;
         private final Object startLock = new Object();
 
-        public GameState(int id, int teamCapacity, int numberOfTeams, Quiz quiz) {
+        public GameState(String id, int teamCapacity, int numberOfTeams, Quiz quiz) {
                 // this will never be null if only called by server
                 this.server = Objects.requireNonNull(Server.getInstance());
                 this.id = id;
@@ -34,7 +33,12 @@ public class GameState {
         public boolean registerPlayer(String username, String teamName) {
                 if (hasStarted)
                         return false;
-                return teamManager.registerPlayer(username, teamName);
+                boolean ok = teamManager.registerPlayer(username, teamName);
+                if(ok && teamManager.isFull()) {
+                        System.out.println("STARTING");
+                        start();
+                }
+                return ok;
         }
 
         public void answer(String username, int option) {
@@ -50,7 +54,7 @@ public class GameState {
                 answeredPlayers.add(username);
         }
 
-        public void start() throws IllegalStateException {
+        private void start() throws IllegalStateException {
                 synchronized (startLock) {
                         if (hasStarted)
                                 throw new IllegalStateException("Game has already started");
@@ -60,9 +64,9 @@ public class GameState {
 
                 while (quiz.hasNextQuestion()) {
                         Question question = quizManager.nextQuestion();
-                        // server.serveNextQuestion(id, question);
+                        server.serveNextQuestion(id, question);
                         quizManager.awaitFinish();
-                        // server.sendTeamScores(id, teamManager.getScoreboard());
+                        // server.serveScoreboard(id, teamManager.getScoreboard());
                         answeredPlayers.clear(); // reset players who have answered
                 }
 

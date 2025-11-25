@@ -5,66 +5,117 @@ import client.gui.Observer.Observer;
 import client.gui.Observer.Observed;
 
 import configs.Config;
-import server.Server;
+import server.MessageFromClient;
+import server.MessageFromServer;
+import server.game.utils.Score;
+import utils.Code;
+import utils.quiz.Question;
 import utils.quiz.Quiz;
 import utils.quiz.QuizCreator;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.net.InetAddress;
+import java.net.Socket;
+import java.util.List;
 
-public class Client extends Thread implements Observer  {
+public class Client extends Thread implements Observer {
 
         private final GUI gui;
-        private final Server server;
         private final String username;
+        private final String gameId;
+        private final String teamId;
 
-        public Client(Server server, String username) {
-                this.server = server;
+        private ObjectOutputStream out;
+        private ObjectInputStream in;
+        private Socket socket;
+
+        public Client(String username, String teamId, String gameId) {
                 this.username = username;
+                this.gameId = gameId;
+                this.teamId = teamId;
 
                 gui = new GUI();
                 gui.registerObserver(this);
 
-                // just for testing client.gui
-                test();
-
         }
 
         public void getQuestion() {
+                while (true) {
+                        MessageFromClient msgSent = new MessageFromClient(Code.GET_QUESTION, username, teamId, gameId);
+                        try {
+                                System.out.println("Sending");
+                                out.writeObject(msgSent);
+                                System.out.println("Sent");
+                                MessageFromServer msgReceived = (MessageFromServer) in.readObject();
+                                Question question = msgReceived.getQuestion();
+                                List<Score> scoreboard = msgReceived.getScoreboard();
+                                if (question != null)
+                                        this.gui.update(question, null);
+                                else
+                                        this.gui.update(null,scoreboard);
+                        } catch (Exception e) {
+                                // TODO: handle exception
+                        }
+                }
                 /*
-                here we should ask the server in a synchronized way for the new question
-                something like
-                Question question = server.getQuestion()
-                client.gui.displayQuestion(question);
+                 * here we should ask the server in a synchronized way for the new question
+                 * something like
+                 * Question question = server.getQuestion()
+                 * client.gui.displayQuestion(question);
                  */
         }
 
         private void sendAnswer(int option) {
-                System.out.println("SENDING ANSWER "+option);
-                /* TODO:
-                 *  - [ ] send option to server
+                System.out.println("SENDING ANSWER " + option);
+                /*
+                 * TODO:
+                 * - [ ] send option to server
                  *
                  */
         }
 
-
         @Override
         public void update(Observed source) {
-                if(gui.hasSelectedOption())
+                if (gui.hasSelectedOption())
                         sendAnswer(gui.getSelectedOption());
+        }
+
+        @Override
+        public void run() {
+                try {
+                        connectToServer();
+                        getQuestion();
+                } catch (IOException e) {
+                } finally {
+                        try {
+                                socket.close();
+                        } catch (Exception e) {
+
+                        }
+                }
+        }
+
+        void connectToServer() throws IOException {
+                InetAddress addr = InetAddress.getByName(null);
+                socket = new Socket(addr, Config.Server.SERVER_PORT);
+                this.out = new ObjectOutputStream(socket.getOutputStream());
+                this.in = new ObjectInputStream(socket.getInputStream());
         }
 
         // Section just for tests, to delete
         private void test() {
                 try {
-                        new Thread(()-> {
+                        new Thread(() -> {
                                 try {
                                         File quizzesFile = new File("quizzes.json");
-                                        Quiz quiz  = QuizCreator.getFrom(quizzesFile).getFirst();
+                                        Quiz quiz = QuizCreator.getFrom(quizzesFile).getFirst();
 
-                                        while(quiz.hasNextQuestion()) {
+                                        while (quiz.hasNextQuestion()) {
                                                 gui.update(quiz.nextQuestion(), null);
-                                                sleep(1000*Config.Features.ROUND_SECONDS);
+                                                sleep(1000 * Config.Features.ROUND_SECONDS);
                                         }
                                         gui.update(null, null);
 

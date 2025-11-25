@@ -1,6 +1,8 @@
 package server.game.utils;
 
-public class Player implements Score {
+import java.io.Serializable;
+
+public class Player implements Score, Serializable {
 
         private int score;
         private String name;

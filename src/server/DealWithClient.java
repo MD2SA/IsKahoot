@@ -8,6 +8,7 @@ import java.net.Socket;
 
 import server.game.utils.Score;
 import utils.Code;
+import utils.quiz.Question;
 
 public class DealWithClient extends Thread {
 
@@ -16,10 +17,12 @@ public class DealWithClient extends Thread {
         private final Server server;
         private Socket socket;
 
-        private int clientId = -1;
-        private int gameId = -1;
-        ObjectOutputStream out;
-        ObjectInputStream in;
+        private String clientId;
+        private String gameId;
+        private String teamId;
+
+        private ObjectOutputStream out;
+        private ObjectInputStream in;
 
         public DealWithClient(Server server, Socket socket) {
                 this.server = server;
@@ -28,14 +31,17 @@ public class DealWithClient extends Thread {
 
         @Override
         public void run() {
-                try (Socket connection = socket) {
+                try {
+
                         doConnections();
                         boolean okRegister = registerClient();
                         if (!okRegister) {
+                                System.out.println("DID NOT REGISTER");
                                 sendError();
                                 return;
                         }
-                        serve();
+                        System.out.println("REGISTERED");
+                        // serve();
                 } catch (IOException e) {
                 } finally {
                         server.close(this);
@@ -59,18 +65,27 @@ public class DealWithClient extends Thread {
 
                 this.clientId = msg.getClientId();
                 this.gameId = msg.getGameId();
+                this.teamId = msg.getTeamId();
                 return server.registerPlayer(this);
         }
 
         private void serve() {
                 while (true) {
+                        System.out.println("reading...");
                         MessageFromClient msg = readMessage(in);
+                        System.out.println("read");
                         if (msg == null || isInvalid(msg))
                                 continue;
                         Code code = msg.getCode();
                         if (code == Code.POST_ANSWER)
                                 server.answer(this, msg.getAnswer());
                 }
+        }
+
+        void sendQuestion(Question question) {
+                MessageFromServer msg = new MessageFromServer(question);
+                System.out.println("Sending question"+ question.getQuestion());
+                sendWithRetries(msg, MAX_FAILS);
         }
 
         void sendScoreboard(List<Score> scoreboard) {
@@ -91,10 +106,13 @@ public class DealWithClient extends Thread {
                 sendWithRetries(msg, MAX_FAILS);
         }
 
+        /**
+         * ATENCAO QUE ESTA LOGICA NAOE STA BEM
+         */
         private boolean isInvalid(MessageFromClient msg) {
-                if (clientId != -1 && clientId != msg.getClientId())
+                if (clientId != null && clientId != msg.getClientId())
                         return true;
-                if (gameId != -1 && gameId != msg.getGameId())
+                if (gameId != null && gameId != msg.getGameId())
                         return true;
                 return false;
         }
@@ -103,23 +121,29 @@ public class DealWithClient extends Thread {
                 for (int attempts = 0; attempts < maxTries; attempts++) {
                         try {
                                 synchronized (out) {
+                                        //ISTO DA ERRO PROVAVELMENTE QUESTION E OUTROS TEM DE SER SERIALIZABLE
                                         out.writeObject(msg);
                                         out.flush();
                                 }
                                 return;
                         } catch (Exception e) {
                                 System.out.println(attempts + "º attempt to send message");
+                                e.printStackTrace();
                         }
                 }
                 System.out.println("Failed to send message after " + maxTries + " attempts");
         }
 
-        public int getGameId() {
+        public String getGameId() {
                 return gameId;
         }
 
-        public int getClientId() {
-                return gameId;
+        public String getClientId() {
+                return clientId;
+        }
+
+        public String getTeamId() {
+                return teamId;
         }
 
         // @Override
