@@ -2,6 +2,7 @@ package server.TUI.utils;
 
 public class Constants {
 
+        public static final String MARGIN = "\r\n";
         public static final String HEADER =
                         "===================================\n" +
                         "|       CREATING A NEW GAME       |\n" +

@@ -34,7 +34,7 @@ public class GameState {
                 if (hasStarted)
                         return false;
                 boolean ok = teamManager.registerPlayer(username, teamName);
-                if(ok && teamManager.isFull()) {
+                if (ok && teamManager.isFull()) {
                         System.out.println("STARTING");
                         start();
                 }
@@ -70,6 +70,10 @@ public class GameState {
                         answeredPlayers.clear(); // reset players who have answered
                 }
 
+        }
+
+        public String getCode() {
+                return id;
         }
 
 }
