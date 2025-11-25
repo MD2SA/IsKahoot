@@ -13,18 +13,15 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.*;
 
-public class Server {
+import configs.Config;
 
-        private final static int PORT = 8080;
+public class Server {
 
         private static Server instance;
 
-        private int lastGameId;
         private final List<Quiz> quizzes;
         private final GameManager gameManager;
 
-        private final ConcurrentMap<String, GameState> games = new ConcurrentMap<>();
-        // gameId, clientId
         private final ConcurrentMap<String, Set<DealWithClient>> gameMap = new ConcurrentMap<>();
         // clientId, gameId
         private final ConcurrentMap<DealWithClient, String> clientMap = new ConcurrentMap<>();
@@ -41,33 +38,26 @@ public class Server {
 
                                 instance = new Server();
                         } catch (IOException e) {
-                                System.out.println("Unable to start server" + e);
+                                System.out.println("Unable to start server");
+                                e.printStackTrace();
                         }
                 }
                 return instance;
         }
 
-        // void createGame() {
-        //         int[] gameInfo = TUI.gatherGameInfo(quizzes);
-        //         String gameId = String.valueOf(lastGameId++);
-        //
-        //         int numberOfTeams = gameInfo[0];
-        //         int teamCapacity = gameInfo[1];
-        //         int quizNumber = gameInfo[2];
-        //         Quiz quiz = quizzes.get(quizNumber);
-        //
-        //         GameState gameState = new GameState(gameId, teamCapacity, numberOfTeams, quiz);
-        //
-        //         games.put(gameId, gameState);
-        //         gameMap.put(gameId, new HashSet<>());
-        // }
+        public boolean registerGame(String gameId) {
+                if (gameMap.containsKey(gameId))
+                        return false;
+                gameMap.put(gameId, new HashSet<>());
+                return true;
+        }
 
         boolean registerPlayer(DealWithClient handler) {
                 String clientId = handler.getClientId();
                 String gameId = handler.getGameId();
-                GameState game = games.get(gameId);
+                GameState game = gameManager.getGame(gameId);
                 if (game == null) {
-                        System.out.println("GAME == NULL");
+                        System.out.println("GAME DOES NOT EXIST");
                         return false;
                 }
 
@@ -78,7 +68,7 @@ public class Server {
 
                 Set<DealWithClient> set = gameMap.get(gameId);
                 if (set == null) {
-                        System.out.println("Set is null");
+                        System.out.println("ILLEGAL STATE. GAME IS NOT REGISTERED IN THE SERVER");
                         return false;
                 }
                 set.add(handler);
@@ -89,11 +79,10 @@ public class Server {
 
         void answer(DealWithClient handler, int option) {
                 String gameId = handler.getGameId();
-                GameState game = games.get(gameId);
+                GameState game = gameManager.getGame(gameId);
                 if (game == null)
                         return;
                 game.answer(String.valueOf(handler.getClientId()), option);
-
         }
 
         public void serveNextQuestion(String gameId, Question question) {
@@ -107,17 +96,18 @@ public class Server {
         }
 
         void close(DealWithClient handler) {
-                // TODO: close this properly
                 // Set<DealWithClient> set = gameMap.get(handler.getGameId());
                 // if (set == null)
                 //         return;
                 // set.remove(handler);
+                // // if is empty and has finished
+                // // if (set.isEmpty()) gameManager.removeGame(handler.getGameId());
                 //
                 // clientMap.remove(handler);
         }
 
         public void startServing() throws IOException {
-                ServerSocket ss = new ServerSocket(PORT);
+                ServerSocket ss = new ServerSocket(Config.Server.SERVER_PORT);
                 try {
                         while (true) {
                                 Socket socket = ss.accept();

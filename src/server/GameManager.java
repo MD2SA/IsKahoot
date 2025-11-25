@@ -4,11 +4,10 @@ import server.TUI.command.CommandDispatcher;
 import server.TUI.command.CommandContext;
 import server.game.GameState;
 import utils.quiz.Quiz;
+import utils.tools.ConcurrentMap;
 
-import java.util.HashMap;
 import java.util.List;
 import java.util.ArrayList;
-import java.util.Map;
 import java.util.Scanner;
 
 public class GameManager extends Thread {
@@ -17,7 +16,7 @@ public class GameManager extends Thread {
         private final Scanner scanner = new Scanner(System.in);
         private final CommandDispatcher dispatcher;
 
-        private final Map<String, GameState> games = new HashMap<>();
+        private final ConcurrentMap<String, GameState> games = new ConcurrentMap<>();
 
         public GameManager(List<Quiz> quizzes) {
                 this.quizzes = quizzes;
@@ -32,6 +31,15 @@ public class GameManager extends Thread {
                 if (gameState == null)
                         return;
                 games.put(gameState.getCode(), gameState);
+                Server.getInstance().registerGame(gameState.getCode());
+        }
+
+        public void removeGame(String gameId) {
+                games.remove(gameId);
+        }
+
+        public GameState getGame(String gameId) {
+                return games.get(gameId);
         }
 
         public List<GameState> getGames() {
@@ -45,8 +53,6 @@ public class GameManager extends Thread {
                         System.out.print("> ");
                         String line = scanner.nextLine();
                         dispatcher.processLine(scanner, line);
-                        // GameInfo gameInfo = TUI.gatherGameInfo(quizzes);
-                        // GameState gameState = new GameState(gameInfo);
                 }
         }
 
