@@ -39,11 +39,11 @@ public class DealWithClient extends Thread {
                         doConnections();
                         boolean okRegister = registerClient();
                         if (!okRegister) {
-                                System.out.println("DID NOT REGISTER");
+                                server.getLogger().debug("DID NOT REGISTER");
                                 sendError();
                                 return;
                         }
-                        System.out.println("REGISTERED");
+                        server.getLogger().debug("registered client" + clientId);
                         // serve();
                 } catch (IOException e) {
                 } finally {
@@ -74,9 +74,7 @@ public class DealWithClient extends Thread {
 
         private void serve() {
                 while (true) {
-                        System.out.println("reading...");
                         MessageFromClient msg = readMessage(in);
-                        System.out.println("read");
                         if (msg == null || isInvalid(msg))
                                 continue;
                         Code code = msg.getCode();
@@ -87,7 +85,7 @@ public class DealWithClient extends Thread {
 
         void sendQuestion(Question question) {
                 MessageFromServer msg = new MessageFromServer(question);
-                System.out.println("Sending question"+ question.getQuestion());
+                server.getLogger().debug("Sending question" + question.getQuestion());
                 sendWithRetries(msg, MAX_FAILS);
         }
 
@@ -124,17 +122,16 @@ public class DealWithClient extends Thread {
                 for (int attempts = 0; attempts < maxTries; attempts++) {
                         try {
                                 synchronized (out) {
-                                        //ISTO DA ERRO PROVAVELMENTE QUESTION E OUTROS TEM DE SER SERIALIZABLE
                                         out.writeObject(msg);
                                         out.flush();
                                 }
                                 return;
                         } catch (Exception e) {
-                                System.out.println(attempts + "º attempt to send message");
-                                e.printStackTrace();
+                                server.getLogger().error(attempts + "º attempt to send message");
+                                // e.printStackTrace();
                         }
                 }
-                System.out.println("Failed to send message after " + maxTries + " attempts");
+                server.getLogger().warn("Failed to send message after " + maxTries + " attempts");
         }
 
         public String getGameId() {

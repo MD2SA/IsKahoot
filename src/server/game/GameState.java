@@ -35,7 +35,7 @@ public class GameState {
                         return false;
                 boolean ok = teamManager.registerPlayer(username, teamName);
                 if (ok && teamManager.isFull()) {
-                        System.out.println("STARTING");
+                        Server.getInstance().getLogger().debug("GameState registerPlayer: Starting game");
                         start();
                 }
                 return ok;
@@ -56,9 +56,11 @@ public class GameState {
 
         private void start() throws IllegalStateException {
                 synchronized (startLock) {
-                        if (hasStarted)
+                        if (hasStarted) {
+                                Server.getInstance().getLogger().warn("GameState start: game has already started");
                                 throw new IllegalStateException("Game has already started");
-                        this.quizManager = new QuizManager(quiz, teamManager.isMultiPlayer());
+                        }
+                        this.quizManager = new QuizManager(quiz);
                         hasStarted = true;
                 }
 

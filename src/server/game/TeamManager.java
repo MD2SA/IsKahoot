@@ -1,5 +1,6 @@
 package server.game;
 
+import server.Server;
 import server.game.utils.Player;
 import server.game.utils.Score;
 import server.game.utils.Team;
@@ -28,15 +29,15 @@ public class TeamManager {
         public synchronized boolean registerPlayer(String username, String teamName) {
                 // player is already registered
                 if (playerMap.containsKey(username)) {
-                        System.out.println(username);
-                        System.out.println("PLAYER IS ALREADY REGISTED");
+                        Server.getInstance().getLogger()
+                                        .debug("TeamManager registerPlayer: " + username + " is already registered");
                         return false;
                 }
 
                 if (isMultiPlayer() && !teamMap.containsKey(teamName)) {
                         // max teams registered
                         if (numberOfTeams <= teamMap.size()) {
-                                System.out.println("MAX TEAMS REACHED");
+                                Server.getInstance().getLogger().debug("TeamManager registerPlayer: max teams reached");
                                 return false;
                         }
                         teamMap.put(teamName, new Team(teamName, teamCapacity));
@@ -45,7 +46,7 @@ public class TeamManager {
                 Player player = new Player(username);
                 // failed to add to team
                 if (isMultiPlayer() && !teamMap.get(teamName).addPlayer(player)) {
-                        System.out.println("FAILED TO ADD TO TEAM");
+                        Server.getInstance().getLogger().debug("TeamManager registerPlayer: failed to add to team");
                         return false;
                 }
 
@@ -71,7 +72,7 @@ public class TeamManager {
         }
 
         public boolean isFull() {
-                return teamCapacity*numberOfTeams <= playerMap.size();
+                return teamCapacity * numberOfTeams <= playerMap.size();
         }
 
 }

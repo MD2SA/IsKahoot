@@ -1,7 +1,7 @@
 {
   "quizzes": [
     {
-      "name": "PCD -1",
+      "name": "PCD - 1",
       "questions": [
         {
           "question": "O que é uma thread?",
@@ -39,7 +39,7 @@
       ]
     },
     {
-      "name": "PCD -2",
+      "name": "PCD - 2",
       "questions": [
         {
           "question": "Qual é a função do método sleep() em Java?",
