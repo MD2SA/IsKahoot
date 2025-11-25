@@ -1,5 +1,6 @@
 package server.game;
 
+import configs.Config;
 import server.game.utils.ModifiedCountdownLatch;
 import server.game.utils.Player;
 import utils.quiz.Question;
@@ -16,26 +17,30 @@ public class QuizManager {
 
         public Question nextQuestion() {
                 Question question = quiz.nextQuestion();
-                this.latch = new ModifiedCountdownLatch(2,2,5,10);
+                this.latch = new ModifiedCountdownLatch(2, 2, Config.Features.ROUND_SECONDS, 10);
                 return question;
         }
 
         public void submitAnswer(Player player, int option) {
-                if(quiz == null || latch == null) throw new IllegalStateException();
+                if (quiz == null || latch == null)
+                        throw new IllegalStateException();
 
                 Question question = quiz.getCurQuestion();
 
                 int bonusFactor = latch.countdown();
 
-                if(!question.isCorrect(option)) return;
-                int updatedScore = player.getScore() + question.getPoints()*bonusFactor;
+                if (!question.isCorrect(option))
+                        return;
+
+                int updatedScore = player.getScore() + question.getPoints() * bonusFactor;
                 player.setScore(updatedScore);
         }
 
         public void awaitFinish() {
                 try {
                         latch.await();
-                } catch (InterruptedException e) {}
+                } catch (InterruptedException e) {
+                }
         }
 
 }

@@ -10,10 +10,7 @@ import utils.messages.MessageFromServer;
 import server.game.utils.Score;
 import utils.messages.Code;
 import utils.quiz.Question;
-import utils.quiz.Quiz;
-import utils.quiz.QuizCreator;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
@@ -47,28 +44,29 @@ public class Client extends Thread implements Observer {
                         MessageFromClient msgSent = new MessageFromClient(Code.GET_QUESTION, username, teamId, gameId);
                         try {
                                 out.writeObject(msgSent);
+                                out.reset();
                                 MessageFromServer msgReceived = (MessageFromServer) in.readObject();
                                 Question question = msgReceived.getQuestion();
                                 List<Score> scoreboard = msgReceived.getScoreboard();
                                 if (question != null) {
                                         this.gui.displayQuestion(question);
                                 } else {
-                                        System.out.println(scoreboard == null);
                                         this.gui.displayScoreboard(scoreboard);
                                 }
                         } catch (Exception e) {
                                 // TODO: handle exception
                         }
                 }
-                /*
-                 * here we should ask the server in a synchronized way for the new question
-                 * something like
-                 * Question question = server.getQuestion()
-                 * client.gui.displayQuestion(question);
-                 */
         }
 
         private void sendAnswer(int option) {
+                MessageFromClient msgSent = new MessageFromClient(Code.POST_ANSWER, username, teamId, gameId, option);
+                try {
+                        out.writeObject(msgSent);
+                        out.reset();
+                } catch (Exception e) {
+                        System.out.println("ERROR SENDING ASNWER");
+                }
                 /*
                  * TODO:
                  * - [ ] send option to server

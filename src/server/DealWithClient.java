@@ -44,8 +44,12 @@ public class DealWithClient extends Thread {
                                 return;
                         }
                         server.getLogger().debug("registered client" + clientId);
-                        // serve();
-                } catch (IOException e) {
+                        Thread receiver = new Thread(() -> {
+                                serve();
+                        });
+                        receiver.start();
+                        receiver.join();
+                } catch (IOException | InterruptedException e) {
                 } finally {
                         server.close(this);
                 }
@@ -124,6 +128,7 @@ public class DealWithClient extends Thread {
                                 synchronized (out) {
                                         out.writeObject(msg);
                                         out.flush();
+                                        out.reset();
                                 }
                                 return;
                         } catch (Exception e) {
