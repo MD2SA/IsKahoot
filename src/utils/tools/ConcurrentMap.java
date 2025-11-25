@@ -20,6 +20,10 @@ public class ConcurrentMap<K, V> {
                 return map.get(key);
         }
 
+        public V getOrDefault(K key, V defaultValue) {
+                return map.getOrDefault(key, defaultValue);
+        }
+
         public synchronized void clear() {
                 map.clear();
         }
@@ -35,5 +39,6 @@ public class ConcurrentMap<K, V> {
         public synchronized V remove(K key) {
                 return map.remove(key);
         }
+
 
 }

@@ -14,6 +14,8 @@ import server.TUI.utils.*;
 
 public class CreateGameCommand implements Command {
 
+        private static final int GAME_ID_LENGTH = 4;
+
         @Override
         public String getName() {
                 return "create";
@@ -44,11 +46,13 @@ public class CreateGameCommand implements Command {
 
                 Quiz selectedQuiz = quizzes.get(quizNumber);
 
-                System.out.printf("%nCreating a game with %d teams of %d players with the quiz \"%s\"%n", numberOfTeams,
+                System.out.printf("%nCreating a game with %d teams of %d players with the quiz \"%s\"%n\n", numberOfTeams,
                                 teamCapacity, selectedQuiz.getName());
+
+                String id = Helpers.readGameCode(scanner, gameManager, GAME_ID_LENGTH);
                 System.out.println(Constants.MARGIN);
 
-                gameManager.addNewGame(new GameState(Helpers.generateUniqueRandomCode(4), teamCapacity, numberOfTeams,
+                gameManager.addNewGame(new GameState(id, teamCapacity, numberOfTeams,
                                 selectedQuiz));
         }
 }

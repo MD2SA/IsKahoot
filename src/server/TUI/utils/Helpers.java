@@ -3,23 +3,9 @@ package server.TUI.utils;
 import java.util.Scanner;
 import java.util.concurrent.ThreadLocalRandom;
 
+import server.GameManager;
+
 public class Helpers {
-
-        public static void awaitPrompt(Scanner scanner, String command) {
-                while (true) {
-                        String line = scanner.nextLine();
-                        if (line == null)
-                                continue;
-
-                        if (line.equals(command))
-                                break;
-
-                        if (line.contains(command)) {
-                                if (Helpers.askYesNo(scanner, "Did you meant \"" + command + "\"?"))
-                                        break;
-                        }
-                }
-        }
 
         public static int readPositiveInt(Scanner scanner, String prompt) {
                 int value = -1;
@@ -55,19 +41,20 @@ public class Helpers {
                 return value;
         }
 
-        private static int ID;
+        public static String generateUniqueRandomCode(int length, GameManager gameManager) {
+                String chars = "QWERTYUIOPASDFGHJKLZXCVBNM1234567890";
 
-        public static String generateUniqueRandomCode(int length) {
-                String chars = "QWERTYUIOPASDFGHJKLZXCVBNMqwertyuiopasdfghjklzxcvbnm";
-                StringBuilder sb = new StringBuilder();
-                sb.append(ID++);
+                String id;
+                do {
+                        StringBuilder sb = new StringBuilder();
+                        while (sb.length() < length) {
+                                int randomIdx = ThreadLocalRandom.current().nextInt(chars.length());
+                                sb.append(chars.charAt(randomIdx));
+                        }
+                        id = sb.toString();
+                } while (gameManager.getGame(id) != null);
 
-                while (sb.length() < length) {
-                        int randomIdx = ThreadLocalRandom.current().nextInt(chars.length());
-                        sb.append(chars.charAt(randomIdx));
-                }
-
-                return sb.toString();
+                return id;
         }
 
         public static boolean askYesNo(Scanner scanner, String prompt) {
@@ -81,6 +68,45 @@ public class Helpers {
                         else
                                 System.out.println("Please answer 'y' or 'n'.");
                 }
+        }
+
+        public static String readGameCode(Scanner scanner, GameManager gameManager, int length) {
+                boolean wantsCustom = askYesNo(scanner, "Do you want a personalized code for this game?");
+
+                if (!wantsCustom) {
+                        String code = generateUniqueRandomCode(length, gameManager);
+                        System.out.println("Random code generated: " + code);
+                        return code;
+                }
+
+                System.out.println("Enter personalized game code (letters/numbers only).");
+
+                for (int attempt = 0; attempt < 2; attempt++) {
+                        String input = scanner.nextLine().trim();
+
+                        if (input.isBlank()) {
+                                System.out.println("Code cannot be empty.");
+                                continue;
+                        }
+                        if (!input.matches("[A-Za-z0-9]+")) {
+                                System.out.println("Only letters and numbers are allowed.");
+                                continue;
+                        }
+
+                        String code = input.toUpperCase();
+
+                        if (gameManager.getGame(code) != null) {
+                                System.out.println("This code already exists. Try another one.");
+                                continue;
+                        }
+
+                        System.out.println("Personalized code accepted: " + code);
+                        return code;
+                }
+
+                String fallbackCode = generateUniqueRandomCode(length, gameManager);
+                System.out.println("Too many invalid attempts. A random code has been generated: " + fallbackCode);
+                return fallbackCode;
         }
 
 }
