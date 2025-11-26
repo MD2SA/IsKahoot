@@ -27,3 +27,5 @@ out/
 *.class
 
 /bin/
+
+test.sh
