@@ -2,12 +2,13 @@ package server.game.utils;
 
 public class ModifiedCountdownLatch {
 
+        public static final int NO_TIMER = -1;
+
         private final int bonusFactor;
         private int bonusCount;
         private int waitPeriod;
         private int maxWaiters;
         private int curWaiters;
-        private boolean timerStarted;
         private boolean timerEnded;
 
         public ModifiedCountdownLatch(int bonusFactor, int bonusCount, int waitPeriod, int maxWaiters) {
@@ -24,14 +25,14 @@ public class ModifiedCountdownLatch {
         }
 
         public synchronized void await() throws InterruptedException {
-                if (timerStarted)
-                        return;
-                timerStarted = true;
-                Timer timer = new Timer(waitPeriod, () -> {
-                        timerEnded = true;
-                });
-                timer.start();
-                timer.join();
+                if (waitPeriod != -1)
+                        new Timer(waitPeriod, () -> {
+                                timerEnded = true;
+                        });
+                while (curWaiters < maxWaiters || (waitPeriod != -1 && timerEnded))
+                        wait();
+                curWaiters = 0;
+                timerEnded = false;
         }
 
 }

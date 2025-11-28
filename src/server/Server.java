@@ -66,6 +66,10 @@ public class Server {
                         logger.debug("Server registerPlayer: game does not exist");
                         return false;
                 }
+                if (game.hasStarted()) {
+                        logger.warn("Server registerPlayer: game has already started");
+                        return false;
+                }
 
                 if (!game.registerPlayer(clientId, handler.getTeamId())) {
                         logger.debug("Server registerPlayer: game.registerPlayer() returned false");
@@ -80,6 +84,9 @@ public class Server {
                 set.add(handler);
 
                 clientMap.put(handler, gameId);
+
+                gameManager.startGameWhenFull(game);
+
                 return true;
         }
 

@@ -23,10 +23,6 @@ public class GameManager extends Thread {
                 this.dispatcher = new CommandDispatcher(new CommandContext(this));
         }
 
-        public List<Quiz> getQuizzes() {
-                return quizzes;
-        }
-
         public void addNewGame(GameState gameState) {
                 if (gameState == null)
                         return;
@@ -38,12 +34,17 @@ public class GameManager extends Thread {
                 games.remove(gameId);
         }
 
-        public GameState getGame(String gameId) {
-                return games.get(gameId);
+        public boolean startGameWhenFull(GameState gameState) {
+                if (gameState == null || !gameState.isFull())
+                        return false;
+                runGameLoop(gameState);
+                return true;
         }
 
-        public List<GameState> getGames() {
-                return new ArrayList<>(games.values());
+        public void runGameLoop(GameState gameState) {
+                new Thread(() -> {
+                        gameState.start();
+                }).start();
         }
 
         @Override
@@ -54,6 +55,18 @@ public class GameManager extends Thread {
                         String line = scanner.nextLine();
                         dispatcher.processLine(scanner, line);
                 }
+        }
+
+        public List<Quiz> getQuizzes() {
+                return quizzes;
+        }
+
+        public GameState getGame(String gameId) {
+                return games.get(gameId);
+        }
+
+        public List<GameState> getGames() {
+                return new ArrayList<>(games.values());
         }
 
 }

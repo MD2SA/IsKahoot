@@ -1,6 +1,7 @@
 package server.game;
 
 import server.Server;
+import server.game.utils.ModifiedCountdownLatch;
 import server.game.utils.Player;
 import utils.quiz.Question;
 import utils.quiz.Quiz;
@@ -9,14 +10,16 @@ import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
 
+import configs.Config;
+
 public class GameState {
 
         private final String id;
         private final Server server;
 
+        private ModifiedCountdownLatch latch;
         private final TeamManager teamManager;
         private final Quiz quiz;
-        private QuizManager quizManager;
         private Set<String> answeredPlayers = new HashSet<>();
 
         private boolean hasStarted;
@@ -28,17 +31,14 @@ public class GameState {
                 this.id = id;
                 this.teamManager = new TeamManager(numberOfTeams, teamCapacity);
                 this.quiz = quiz;
+                this.latch = new ModifiedCountdownLatch(Config.Features.BONUS_COUNT, Config.Features.BONUS_FACTOR,
+                                Config.Features.ROUND_SECONDS, teamManager.getCapacity());
         }
 
         public boolean registerPlayer(String username, String teamName) {
                 if (hasStarted)
                         return false;
-                boolean ok = teamManager.registerPlayer(username, teamName);
-                if (ok && teamManager.isFull()) {
-                        Server.getInstance().getLogger().debug("GameState registerPlayer: Starting game");
-                        start();
-                }
-                return ok;
+                return teamManager.registerPlayer(username, teamName);
         }
 
         public void answer(String username, int option) {
@@ -50,24 +50,28 @@ public class GameState {
                 if (player == null)
                         return;
 
-                quizManager.submitAnswer(player, option);
+                submitAnswer(player, option);
                 answeredPlayers.add(username);
         }
 
-        private void start() throws IllegalStateException {
+        public void start() {
                 synchronized (startLock) {
                         if (hasStarted) {
                                 Server.getInstance().getLogger().warn("GameState start: game has already started");
                                 throw new IllegalStateException("Game has already started");
                         }
-                        this.quizManager = new QuizManager(quiz);
                         hasStarted = true;
+                        Server.getInstance().getLogger().debug("GameState registerPlayer: Starting game");
                 }
 
                 while (quiz.hasNextQuestion()) {
-                        Question question = quizManager.nextQuestion();
+                        Question question = quiz.nextQuestion();
                         server.serveNextQuestion(id, question);
-                        quizManager.awaitFinish();
+                        try {
+                                latch.await();
+                        } catch (InterruptedException e) {
+                                Server.getInstance().getLogger().error("GameState start latch: unwanted interrupted");
+                        }
                         server.serveScoreboard(id, teamManager.getScoreboard());
                         answeredPlayers.clear(); // reset players who have answered
                 }
@@ -76,6 +80,29 @@ public class GameState {
 
         public String getCode() {
                 return id;
+        }
+
+        public boolean isFull() {
+                return teamManager.isFull();
+        }
+
+        public boolean hasStarted() {
+                return hasStarted;
+        }
+
+        public void submitAnswer(Player player, int option) {
+                if (quiz == null || latch == null)
+                        throw new IllegalStateException();
+
+                Question question = quiz.getCurQuestion();
+
+                int bonusFactor = latch.countdown();
+
+                if (!question.isCorrect(option))
+                        return;
+
+                int updatedScore = player.getScore() + question.getPoints() * bonusFactor;
+                player.setScore(updatedScore);
         }
 
 }

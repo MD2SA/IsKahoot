@@ -71,6 +71,10 @@ public class TeamManager {
                 return teamCapacity > 1;
         }
 
+        public int getCapacity() {
+                return teamCapacity * numberOfTeams;
+        }
+
         public boolean isFull() {
                 return teamCapacity * numberOfTeams <= playerMap.size();
         }
