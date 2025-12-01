@@ -24,6 +24,7 @@ public class Server {
         private final GameManager gameManager;
         private final Logger logger;
 
+        // gameId, set<connection>
         private final ConcurrentMap<String, Set<DealWithClient>> gameMap = new ConcurrentMap<>();
         // clientId, gameId
         private final ConcurrentMap<DealWithClient, String> clientMap = new ConcurrentMap<>();
@@ -108,6 +109,17 @@ public class Server {
         public void serveScoreboard(String gameId, List<Score> scoreboard) {
                 Set<DealWithClient> set = gameMap.get(gameId);
                 set.forEach(h -> h.sendScoreboard(scoreboard));
+        }
+
+        public void killGame(String gameId) {
+                Set<DealWithClient> clients = gameMap.get(gameId);
+                if (clients == null)
+                        return;
+                for (DealWithClient client : clients)
+                        client.interrupt();
+
+                gameMap.remove(gameId);
+                gameManager.removeGame(gameId);
         }
 
         void close(DealWithClient handler) {

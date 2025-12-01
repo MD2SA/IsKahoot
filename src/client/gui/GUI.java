@@ -11,7 +11,6 @@ import java.util.stream.IntStream;
 import javax.swing.*;
 
 import client.gui.Observer.Observed;
-import configs.Config;
 import server.game.utils.Score;
 import utils.quiz.Question;
 
@@ -23,7 +22,7 @@ public class GUI extends Observed {
 
         private int selectedOption;
 
-        public GUI() {
+        public GUI(String username, String teamId) {
                 JFrame frame = new JFrame("IsKahoot");
                 frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
                 frame.setSize(800, 400);
@@ -33,6 +32,15 @@ public class GUI extends Observed {
                 mainPanel = new JPanel(new GridLayout(2, 1));
                 questionPanel = new JPanel(new BorderLayout(10, 10));
                 scorePanel = new JPanel(new BorderLayout());
+
+                JLabel userLabel = new JLabel("User: " + username);
+                JLabel teamLabel = new JLabel("Team: " + teamId);
+
+                JPanel infoPanel = new JPanel(new GridLayout(1, 2));
+                infoPanel.add(userLabel);
+                infoPanel.add(teamLabel);
+
+                scorePanel.add(infoPanel, BorderLayout.NORTH);
 
                 mainPanel.add(scorePanel);
                 mainPanel.add(questionPanel);

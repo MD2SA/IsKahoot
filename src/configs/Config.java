@@ -9,7 +9,7 @@ public class Config {
         }
 
         public static class Features {
-                public static final int ROUND_SECONDS = 10;
+                public static final int ROUND_SECONDS = 20;
                 public static final int BONUS_COUNT = 2;
                 public static final int BONUS_FACTOR = 2;
         }
