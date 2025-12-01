@@ -52,9 +52,11 @@ public class Server {
         }
 
         public boolean registerGame(String gameId) {
+                logger.debug("Trying to register game (step 1/2) " + gameId);
                 if (gameMap.containsKey(gameId))
                         return false;
                 gameMap.put(gameId, new HashSet<>());
+                logger.debug("Successfully registered game (step2/2) " + gameId);
                 return true;
         }
 
@@ -63,7 +65,7 @@ public class Server {
                 String gameId = handler.getGameId();
                 GameState game = gameManager.getGame(gameId);
                 if (game == null) {
-                        logger.debug("Server registerPlayer: game does not exist");
+                        logger.debug("Server registerPlayer: game " + gameId + "does not exist");
                         return false;
                 }
                 if (game.hasStarted()) {

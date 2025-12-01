@@ -35,4 +35,15 @@ public class MessageFromClient extends Message {
                 return option;
         }
 
+        @Override
+        public String toString() {
+                return """
+                                Code: %s
+                                GameId: %s
+                                ClientId: %s
+                                Option: %s
+                                """
+                                .formatted(getCode().name(), this.gameId, this.clientId, this.option);
+        }
+
 }
