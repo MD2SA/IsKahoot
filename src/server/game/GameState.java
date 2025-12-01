@@ -45,6 +45,7 @@ public class GameState {
                 // hasn't started or does have already answered this question
                 if (!hasStarted || answeredPlayers.contains(username))
                         return;
+                server.getLogger().debug("Handling answer of " + username);
 
                 Player player = teamManager.getPlayer(username);
                 if (player == null)
@@ -68,6 +69,7 @@ public class GameState {
                         Question question = quiz.nextQuestion();
                         server.serveNextQuestion(id, question);
                         try {
+                                server.getLogger().debug("GAME AWAITING ID:"+id);
                                 latch.await();
                         } catch (InterruptedException e) {
                                 Server.getInstance().getLogger().error("GameState start latch: unwanted interrupted");

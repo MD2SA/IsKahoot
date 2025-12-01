@@ -82,8 +82,9 @@ public class DealWithClient extends Thread {
                         if (msg == null || isInvalid(msg))
                                 continue;
                         Code code = msg.getCode();
-                        if (code == Code.POST_ANSWER)
+                        if (code == Code.POST_ANSWER) {
                                 server.answer(this, msg.getAnswer());
+                        }
                 }
         }
 
@@ -95,6 +96,7 @@ public class DealWithClient extends Thread {
 
         void sendScoreboard(List<Score> scoreboard) {
                 MessageFromServer msg = new MessageFromServer(scoreboard);
+                server.getLogger().debug("Sending scoreboard");
                 sendWithRetries(msg, MAX_FAILS);
         }
 
@@ -108,6 +110,7 @@ public class DealWithClient extends Thread {
 
         private void sendError() throws IOException {
                 Message msg = new Message(Code.ERROR);
+                server.getLogger().debug("Sending error message");
                 sendWithRetries(msg, MAX_FAILS);
         }
 
@@ -115,10 +118,10 @@ public class DealWithClient extends Thread {
          * ATENCAO QUE ESTA LOGICA NAOE STA BEM
          */
         private boolean isInvalid(MessageFromClient msg) {
-                if (clientId != null && clientId != msg.getClientId())
+                if (clientId != null && !clientId.equals(msg.getClientId())) {
+                        server.getLogger().debug("MESSAGE CONSIDERED INVALID" + msg + "\nCLIENTID WAS:" + clientId);
                         return true;
-                if (gameId != null && gameId != msg.getGameId())
-                        return true;
+                }
                 return false;
         }
 

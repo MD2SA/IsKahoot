@@ -1,15 +1,18 @@
 package server.game.utils;
 
+import server.Server;
+
 public class ModifiedCountdownLatch {
 
         public static final int NO_TIMER = -1;
 
         private final int bonusFactor;
-        private int bonusCount;
-        private int waitPeriod;
-        private int maxWaiters;
+        private final int bonusCount;
+        private final int waitPeriod;
+        private final int maxWaiters;
+
         private int curWaiters;
-        private boolean timerEnded;
+        private Timer timer;
 
         public ModifiedCountdownLatch(int bonusFactor, int bonusCount, int waitPeriod, int maxWaiters) {
                 this.bonusFactor = bonusFactor;
@@ -21,18 +24,32 @@ public class ModifiedCountdownLatch {
         public synchronized int countdown() {
                 int factor = curWaiters < bonusCount ? bonusFactor : 1;
                 curWaiters++;
+                Server.getInstance().getLogger().debug(String.valueOf(curWaiters));
+                if (curWaiters >= maxWaiters) {
+                        Server.getInstance().getLogger().debug("NOTIFIYING");
+                        notifyAll();
+                }
+
                 return factor;
         }
 
         public synchronized void await() throws InterruptedException {
-                if (waitPeriod != -1)
-                        new Timer(waitPeriod, () -> {
-                                timerEnded = true;
+                if (waitPeriod > 0 && timer == null) {
+                        timer = new Timer(waitPeriod, () -> {
+                                synchronized (this) {
+                                        notifyAll();
+                                }
                         });
-                while (curWaiters < maxWaiters || (waitPeriod != -1 && timerEnded))
+                        timer.start();
+                }
+
+                while (curWaiters < maxWaiters && (timer == null || !timer.hasEnded()))
                         wait();
+
+                Server.getInstance().getLogger().debug("No longer waiting!");
+
+                timer = null;
                 curWaiters = 0;
-                timerEnded = false;
         }
 
 }

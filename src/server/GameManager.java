@@ -26,6 +26,7 @@ public class GameManager extends Thread {
         public void addNewGame(GameState gameState) {
                 if (gameState == null)
                         return;
+                Server.getInstance().getLogger().debug("GameManager adding new game"+ gameState.getCode());
                 games.put(gameState.getCode(), gameState);
                 Server.getInstance().registerGame(gameState.getCode());
         }
