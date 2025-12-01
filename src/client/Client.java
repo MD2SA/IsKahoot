@@ -34,7 +34,7 @@ public class Client extends Thread implements Observer {
                 this.gameId = gameId;
                 this.teamId = teamId;
 
-                gui = new GUI();
+                gui = new GUI(username, teamId);
                 gui.registerObserver(this);
 
         }
@@ -64,14 +64,10 @@ public class Client extends Thread implements Observer {
                 try {
                         out.writeObject(msgSent);
                         out.reset();
+                        System.out.println("SENDING"+option);
                 } catch (Exception e) {
                         System.out.println("ERROR SENDING ASNWER");
                 }
-                /*
-                 * TODO:
-                 * - [ ] send option to server
-                 *
-                 */
         }
 
         @Override

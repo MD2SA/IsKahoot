@@ -69,7 +69,7 @@ public class GameState {
                         Question question = quiz.nextQuestion();
                         server.serveNextQuestion(id, question);
                         try {
-                                server.getLogger().debug("GAME AWAITING ID:"+id);
+                                server.getLogger().debug("GAME AWAITING ID:" + id);
                                 latch.await();
                         } catch (InterruptedException e) {
                                 Server.getInstance().getLogger().error("GameState start latch: unwanted interrupted");
@@ -77,6 +77,7 @@ public class GameState {
                         server.serveScoreboard(id, teamManager.getScoreboard());
                         answeredPlayers.clear(); // reset players who have answered
                 }
+                server.killGame(this.id);
 
         }
 
