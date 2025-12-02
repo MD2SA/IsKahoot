@@ -49,10 +49,12 @@ public class Client extends Thread implements Observer {
                                 Question question = msgReceived.getQuestion();
                                 List<Score> scoreboard = msgReceived.getScoreboard();
                                 if (question != null) {
-                                        this.gui.displayQuestion(question);
-                                } else {
-                                        this.gui.displayScoreboard(scoreboard);
+                                    this.gui.displayQuestion(question);
                                 }
+                                if (question == null && scoreboard == null) {
+                                        this.gui.displayEndGame();
+                                }
+                                this.gui.displayScoreboard(scoreboard);
                         } catch (Exception e) {
                                 // TODO: handle exception
                         }

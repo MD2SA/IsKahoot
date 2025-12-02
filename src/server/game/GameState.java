@@ -78,7 +78,6 @@ public class GameState {
                         answeredPlayers.clear(); // reset players who have answered
                 }
                 server.killGame(this.id);
-
         }
 
         public String getCode() {

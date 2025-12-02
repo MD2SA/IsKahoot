@@ -88,6 +88,13 @@ public class DealWithClient extends Thread {
                 }
         }
 
+        void sendEndGame(){
+            MessageFromServer msg = new MessageFromServer();
+            server.getLogger().debug("Ending the game");
+            System.out.println("mostra ai a mensagem do fim do jogo primaço");
+            sendWithRetries(msg, MAX_FAILS);
+        }
+
         void sendQuestion(Question question) {
                 MessageFromServer msg = new MessageFromServer(question);
                 server.getLogger().debug("Sending question" + question.getQuestion());
@@ -97,6 +104,7 @@ public class DealWithClient extends Thread {
         void sendScoreboard(List<Score> scoreboard) {
                 MessageFromServer msg = new MessageFromServer(scoreboard);
                 server.getLogger().debug("Sending scoreboard");
+            System.out.println("ih boy mandou agora o scoreboard");
                 sendWithRetries(msg, MAX_FAILS);
         }
 

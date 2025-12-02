@@ -115,9 +115,10 @@ public class Server {
                 Set<DealWithClient> clients = gameMap.get(gameId);
                 if (clients == null)
                         return;
-                for (DealWithClient client : clients)
-                        client.interrupt();
-
+                for (DealWithClient client : clients) {
+                    client.sendEndGame();
+                    client.interrupt();
+                }
                 gameMap.remove(gameId);
                 gameManager.removeGame(gameId);
         }

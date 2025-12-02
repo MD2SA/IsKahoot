@@ -23,7 +23,7 @@ public class GUI extends Observed {
         private int selectedOption;
 
         public GUI(String username, String teamId) {
-                JFrame frame = new JFrame("IsKahoot");
+                JFrame frame = new JFrame("IsKahoot - User: " + username + " Team: " + teamId);
                 frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
                 frame.setSize(800, 400);
                 frame.setLocationRelativeTo(null);
@@ -33,21 +33,26 @@ public class GUI extends Observed {
                 questionPanel = new JPanel(new BorderLayout(10, 10));
                 scorePanel = new JPanel(new BorderLayout());
 
-                JLabel userLabel = new JLabel("User: " + username);
-                JLabel teamLabel = new JLabel("Team: " + teamId);
-
-                JPanel infoPanel = new JPanel(new GridLayout(1, 2));
-                infoPanel.add(userLabel);
-                infoPanel.add(teamLabel);
-
-                scorePanel.add(infoPanel, BorderLayout.NORTH);
-
                 mainPanel.add(scorePanel);
                 mainPanel.add(questionPanel);
 
                 frame.setContentPane(mainPanel);
 
                 frame.setVisible(true);
+        }
+
+        public void displayEndGame(){
+            questionPanel.removeAll();
+
+            JPanel panel = new JPanel();
+
+            JLabel label = new JLabel("Jogo terminado.");
+            panel.add(label);
+
+            questionPanel.add(panel);
+
+            questionPanel.revalidate();
+            questionPanel.repaint();
         }
 
         public void displayQuestion(Question question) {

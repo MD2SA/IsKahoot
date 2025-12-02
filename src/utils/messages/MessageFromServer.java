@@ -10,6 +10,8 @@ public class MessageFromServer extends Message {
         private List<Score> scoreboard;
         private Question question;
 
+        public MessageFromServer() { this(null, null); }
+
         public MessageFromServer(List<Score> scoreboard) {
                 this(scoreboard, null);
         }
