@@ -6,6 +6,7 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
 
+import server.game.GameState;
 import server.game.utils.Score;
 import utils.messages.Code;
 import utils.messages.Message;
@@ -13,102 +14,97 @@ import utils.messages.MessageFromClient;
 import utils.messages.MessageFromServer;
 import utils.quiz.Question;
 
-public class DealWithClient extends Thread {
+public class DealWithClient implements Runnable, AutoCloseable {
 
         private static final int MAX_FAILS = 3;
 
         private final Server server;
         private Socket socket;
-
-        private String clientId;
-        private String gameId;
-        private String teamId;
-
         private ObjectOutputStream out;
         private ObjectInputStream in;
 
-        public DealWithClient(Server server, Socket socket) {
+        private String clientId;
+        private String teamId;
+        private GameState game;
+
+        public DealWithClient(Server server, Socket socket) throws IOException {
                 this.server = server;
                 this.socket = socket;
+                out = new ObjectOutputStream(socket.getOutputStream());
+                in = new ObjectInputStream(socket.getInputStream());
         }
 
         @Override
         public void run() {
                 try {
-
-                        doConnections();
-                        boolean okRegister = registerClient();
-                        if (!okRegister) {
-                                server.getLogger().debug("DID NOT REGISTER");
-                                sendError();
+                        if (!registerClient()) {
+                                server.getLogger().info("Registration failed for client " + clientId);
+                                sendError("Registration failed");
                                 return;
                         }
-                        server.getLogger().debug("registered client" + clientId);
                         serve();
                 } catch (IOException e) {
-                        System.out.println("THIS WAS CALLED"+e);
-                        server.close(this);
+                        server.getLogger().warn("Client disconnected from excepion: " + clientId);
+                } finally {
+                        cleanup();
                 }
-                server.getLogger().info("Client Socket was closed. CLIENT_ID:" + clientId);
-
-        }
-
-        private void doConnections() throws IOException {
-                out = new ObjectOutputStream(socket.getOutputStream());
-                in = new ObjectInputStream(socket.getInputStream());
         }
 
         private boolean registerClient() throws IOException {
-                MessageFromClient msg;
-                int tries = 0;
-                do {
-                        msg = readMessage(in);
-                        if (tries++ > MAX_FAILS)
-                                return false;
-                } while (msg == null || isInvalid(msg));
+                MessageFromClient msg = readMessage();
+                // if (msg == null || msg.getCode() != Code.REGISTER)
+                if (msg == null)
+                        return false;
 
                 this.clientId = msg.getClientId();
-                this.gameId = msg.getGameId();
                 this.teamId = msg.getTeamId();
-                return server.registerPlayer(this);
+
+                GameState game = server.getGameManager().getGame(msg.getGameId());
+                if (game == null) {
+                        server.getLogger().debug("Game does not exist to register" + msg.getGameId());
+                        return false;
+                }
+                this.game = game;
+
+                return game.registerPlayer(clientId, teamId, this);
         }
 
         private void serve() {
-                while (true) {
-                        MessageFromClient msg = readMessage(in);
-                        if (msg == null || isInvalid(msg)) {
-                                server.close(this);
-                                sendError();
-                                return;
+                while (!Thread.currentThread().isInterrupted()) {
+                        MessageFromClient msg = readMessage();
+                        if (msg == null) {
+                                server.getLogger().info("Message from client: " + clientId + " was null.");
+                                break;
                         }
-                        Code code = msg.getCode();
-                        if (code == Code.POST_ANSWER) {
-                                server.answer(this, msg.getAnswer());
+
+                        if (!clientId.equals(msg.getClientId())) {
+                                server.getLogger().info("Message from client was invalid");
+                                sendError("Invalid client ID");
+                                break;
                         }
+
+                        if (msg.getCode() == Code.POST_ANSWER)
+                                this.game.answer(clientId, msg.getAnswer());
                 }
         }
 
-        void sendEndGame() {
-                MessageFromServer msg = new MessageFromServer();
-                server.getLogger().debug("Ending the game");
-                System.out.println("mostra ai a mensagem do fim do jogo primaço");
-                sendWithRetries(msg, MAX_FAILS);
+        public void sendQuestion(Question question) {
+                send(new MessageFromServer(question));
         }
 
-        void sendQuestion(Question question) {
-                MessageFromServer msg = new MessageFromServer(question);
-                server.getLogger().debug("Sending question" + question.getQuestion());
-                sendWithRetries(msg, MAX_FAILS);
+        public void sendScoreboard(List<Score> scoreboard) {
+                send(new MessageFromServer(scoreboard));
         }
 
-        void sendScoreboard(List<Score> scoreboard) {
-                MessageFromServer msg = new MessageFromServer(scoreboard);
-                server.getLogger().debug("Sending scoreboard");
-                System.out.println("ih boy mandou agora o scoreboard");
-                sendWithRetries(msg, MAX_FAILS);
+        public void sendEndGame() {
+                send(new MessageFromServer());
         }
 
-        private MessageFromClient readMessage(ObjectInputStream in) {
+        private void sendError(String reason) {
+                send(new Message(Code.ERROR, reason));
+        }
+
+        private MessageFromClient readMessage() {
                 try {
                         return (MessageFromClient) in.readObject();
                 } catch (IOException | ClassNotFoundException | ClassCastException e) {
@@ -116,25 +112,8 @@ public class DealWithClient extends Thread {
                 }
         }
 
-        private void sendError() {
-                Message msg = new Message(Code.ERROR);
-                server.getLogger().debug("Sending error message");
-                sendWithRetries(msg, MAX_FAILS);
-        }
-
-        /**
-         * ATENCAO QUE ESTA LOGICA NAOE STA BEM
-         */
-        private boolean isInvalid(MessageFromClient msg) {
-                if (clientId != null && !clientId.equals(msg.getClientId())) {
-                        server.getLogger().debug("MESSAGE CONSIDERED INVALID" + msg + "\nCLIENTID WAS:" + clientId);
-                        return true;
-                }
-                return false;
-        }
-
-        private void sendWithRetries(Message msg, int maxTries) {
-                for (int attempts = 0; attempts < maxTries; attempts++) {
+        private void send(Message msg) {
+                for (int i = 0; i < MAX_FAILS; i++) {
                         try {
                                 synchronized (out) {
                                         out.writeObject(msg);
@@ -143,15 +122,32 @@ public class DealWithClient extends Thread {
                                 }
                                 return;
                         } catch (Exception e) {
-                                server.getLogger().error(attempts + "º attempt to send message");
-                                // e.printStackTrace();
+                                server.getLogger().warn(
+                                                "Failed to send message (attempt " + (i + 1) + ") to " + clientId);
                         }
                 }
-                server.getLogger().warn("Failed to send message after " + maxTries + " attempts");
+                server.getLogger().warn("Failed to send message after " + MAX_FAILS + " attempts");
         }
 
-        public String getGameId() {
-                return gameId;
+        private void cleanup() {
+                if (game != null)
+                        game.unregisterPlayer(clientId);
+                closeQuietly(socket, in, out);
+        }
+
+        private void closeQuietly(AutoCloseable... closeables) {
+                for (AutoCloseable c : closeables) {
+                        try {
+                                if (c != null)
+                                        c.close();
+                        } catch (Exception e) { // error ignored
+                        }
+                }
+        }
+
+        @Override
+        public void close() {
+                cleanup();
         }
 
         public String getClientId() {
@@ -161,20 +157,5 @@ public class DealWithClient extends Thread {
         public String getTeamId() {
                 return teamId;
         }
-
-        // @Override
-        // public boolean equals(Object o) {
-        // if (this == o)
-        // return true;
-        // if (!(o instanceof DealWithClient))
-        // return false;
-        // DealWithClient other = (DealWithClient) o;
-        // return clientId == other.clientId;
-        // }
-        //
-        // @Override
-        // public int hashCode() {
-        // return Integer.hashCode(clientId);
-        // }
 
 }

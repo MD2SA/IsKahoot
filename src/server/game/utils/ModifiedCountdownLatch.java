@@ -9,25 +9,30 @@ public class ModifiedCountdownLatch {
         private final int bonusFactor;
         private final int bonusCount;
         private final int waitPeriod;
-        private final int maxWaiters;
+        private final int totalPlayers;
 
-        private int curWaiters;
+        private int answeredCount;
         private Timer timer;
+        private boolean timerEnded = false;
 
-        public ModifiedCountdownLatch(int bonusFactor, int bonusCount, int waitPeriod, int maxWaiters) {
+        public ModifiedCountdownLatch(int bonusFactor, int bonusCount, int waitPeriod, int totalPlayers) {
                 this.bonusFactor = bonusFactor;
                 this.bonusCount = bonusCount;
                 this.waitPeriod = waitPeriod;
-                this.maxWaiters = maxWaiters;
+                this.totalPlayers = totalPlayers;
         }
 
         public synchronized int countdown() {
-                int factor = curWaiters < bonusCount ? bonusFactor : 1;
-                curWaiters++;
-                Server.getInstance().getLogger().debug(String.valueOf(curWaiters));
-                if (curWaiters >= maxWaiters) {
-                        Server.getInstance().getLogger().debug("NOTIFIYING");
+                if (timerEnded || answeredCount >= totalPlayers)
+                        return 0;
+
+                answeredCount++;
+
+                int factor = (answeredCount <= bonusCount) ? bonusFactor : 1;
+
+                if (answeredCount >= totalPlayers) {
                         notifyAll();
+                        cancelTimer();
                 }
 
                 return factor;
@@ -37,19 +42,23 @@ public class ModifiedCountdownLatch {
                 if (waitPeriod > 0 && timer == null) {
                         timer = new Timer(waitPeriod, () -> {
                                 synchronized (this) {
+                                        System.out.println("Timer endede");
+                                        timerEnded = true;
                                         notifyAll();
                                 }
                         });
                         timer.start();
                 }
 
-                while (curWaiters < maxWaiters && (timer == null || !timer.hasEnded()))
+                while (answeredCount < totalPlayers && !timerEnded)
                         wait();
-
+                cancelTimer();
                 Server.getInstance().getLogger().debug("No longer waiting!");
+        }
 
-                timer = null;
-                curWaiters = 0;
+        private void cancelTimer() {
+                if (timer != null)
+                        timer.interrupt();
         }
 
 }
