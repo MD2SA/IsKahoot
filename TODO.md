@@ -8,6 +8,7 @@
 
 ### Prioridade Média
 - [ ] **[Fácil]** Ecra de fim de jogo
+- [ ] **[Médio|Dificil]** Implementar unregister from game
 
 #### Prioridade Baixa
 - [ ] **[Fácil]** GUI com username e teamID constante

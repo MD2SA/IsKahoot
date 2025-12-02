@@ -9,6 +9,7 @@ import utils.quiz.Quiz;
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import configs.Config;
 
@@ -20,6 +21,7 @@ public class GameState extends Thread {
         private ModifiedCountdownLatch latch;
         private final TeamManager teamManager;
         private final Quiz quiz;
+        private AtomicInteger numberOfRealPlayers = new AtomicInteger(0); // not including ones that left mid game
         private Set<String> answeredPlayers = new HashSet<>();
 
         private boolean hasStarted;
@@ -31,14 +33,24 @@ public class GameState extends Thread {
                 this.id = id;
                 this.teamManager = new TeamManager(numberOfTeams, teamCapacity);
                 this.quiz = quiz;
-                this.latch = new ModifiedCountdownLatch(Config.Features.BONUS_COUNT, Config.Features.BONUS_FACTOR,
-                                Config.Features.ROUND_SECONDS, teamManager.getCapacity());
         }
 
         public boolean registerPlayer(String username, String teamName) {
                 if (hasStarted)
                         return false;
-                return teamManager.registerPlayer(username, teamName);
+                if (teamManager.registerPlayer(username, teamName)) {
+                        numberOfRealPlayers.incrementAndGet();
+                        return true;
+                }
+
+                return false;
+        }
+
+        public boolean unregisterPlayer(String username) {
+                if (teamManager.getPlayer(username) == null)
+                        return false;
+                numberOfRealPlayers.decrementAndGet();
+                return true;
         }
 
         public void answer(String username, int option) {
@@ -67,6 +79,11 @@ public class GameState extends Thread {
                 }
 
                 while (quiz.hasNextQuestion()) {
+                        this.latch = new ModifiedCountdownLatch(Config.Features.BONUS_COUNT,
+                                        Config.Features.BONUS_FACTOR,
+                                        Config.Features.ROUND_SECONDS,
+                                        numberOfRealPlayers.get());
+
                         Question question = quiz.nextQuestion();
                         server.serveNextQuestion(id, question);
                         try {
