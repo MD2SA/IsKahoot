@@ -1,6 +1,6 @@
 # Prioridade Máxima
 - [ ] **[Dificil]** Implementar Barreira de Equipas
-- [ ] **[???]** Implementar Thread Pool ?no game manager?
+- [x] **[???]** Implementar Thread Pool ?no game manager?
 - [ ] **[Médio|Fácil]** Arranjar problema de reutilizacao do mesmo quiz (ao reutilizar aparece como se o quiz nao tivesse mais perguntas)
 
 ## Prioridade Alta

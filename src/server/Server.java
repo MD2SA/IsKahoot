@@ -20,7 +20,6 @@ public class Server {
 
         private static Server instance;
 
-        private final List<Quiz> quizzes;
         private final GameManager gameManager;
         private final Logger logger;
 
@@ -30,8 +29,7 @@ public class Server {
         private final ConcurrentMap<DealWithClient, String> clientMap = new ConcurrentMap<>();
 
         private Server() throws IOException {
-                this.quizzes = QuizCreator.getFrom(new File("quizzes.json"));
-                this.gameManager = new GameManager(quizzes);
+                this.gameManager = new GameManager();
                 this.logger = new Logger();
                 gameManager.start();
         }
@@ -121,17 +119,6 @@ public class Server {
                 }
                 gameMap.remove(gameId);
                 gameManager.removeGame(gameId);
-        }
-
-        void close(DealWithClient handler) {
-                // Set<DealWithClient> set = gameMap.get(handler.getGameId());
-                // if (set == null)
-                // return;
-                // set.remove(handler);
-                // // if is empty and has finished
-                // // if (set.isEmpty()) gameManager.removeGame(handler.getGameId());
-                //
-                // clientMap.remove(handler);
         }
 
         public void startServing() throws IOException {

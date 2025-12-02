@@ -50,8 +50,6 @@ public class DealWithClient extends Thread {
                         receiver.start();
                         receiver.join();
                 } catch (IOException | InterruptedException e) {
-                } finally {
-                        server.close(this);
                 }
 
         }
