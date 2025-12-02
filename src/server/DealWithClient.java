@@ -44,13 +44,12 @@ public class DealWithClient extends Thread {
                                 return;
                         }
                         server.getLogger().debug("registered client" + clientId);
-                        Thread receiver = new Thread(() -> {
-                                serve();
-                        });
-                        receiver.start();
-                        receiver.join();
-                } catch (IOException | InterruptedException e) {
+                        serve();
+                } catch (IOException e) {
+                        System.out.println("THIS WAS CALLED"+e);
+                        server.close(this);
                 }
+                server.getLogger().info("Client Socket was closed. CLIENT_ID:" + clientId);
 
         }
 
@@ -77,8 +76,11 @@ public class DealWithClient extends Thread {
         private void serve() {
                 while (true) {
                         MessageFromClient msg = readMessage(in);
-                        if (msg == null || isInvalid(msg))
-                                continue;
+                        if (msg == null || isInvalid(msg)) {
+                                server.close(this);
+                                sendError();
+                                return;
+                        }
                         Code code = msg.getCode();
                         if (code == Code.POST_ANSWER) {
                                 server.answer(this, msg.getAnswer());
@@ -86,11 +88,11 @@ public class DealWithClient extends Thread {
                 }
         }
 
-        void sendEndGame(){
-            MessageFromServer msg = new MessageFromServer();
-            server.getLogger().debug("Ending the game");
-            System.out.println("mostra ai a mensagem do fim do jogo primaço");
-            sendWithRetries(msg, MAX_FAILS);
+        void sendEndGame() {
+                MessageFromServer msg = new MessageFromServer();
+                server.getLogger().debug("Ending the game");
+                System.out.println("mostra ai a mensagem do fim do jogo primaço");
+                sendWithRetries(msg, MAX_FAILS);
         }
 
         void sendQuestion(Question question) {
@@ -102,7 +104,7 @@ public class DealWithClient extends Thread {
         void sendScoreboard(List<Score> scoreboard) {
                 MessageFromServer msg = new MessageFromServer(scoreboard);
                 server.getLogger().debug("Sending scoreboard");
-            System.out.println("ih boy mandou agora o scoreboard");
+                System.out.println("ih boy mandou agora o scoreboard");
                 sendWithRetries(msg, MAX_FAILS);
         }
 
@@ -114,7 +116,7 @@ public class DealWithClient extends Thread {
                 }
         }
 
-        private void sendError() throws IOException {
+        private void sendError() {
                 Message msg = new Message(Code.ERROR);
                 server.getLogger().debug("Sending error message");
                 sendWithRetries(msg, MAX_FAILS);

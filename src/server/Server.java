@@ -4,11 +4,8 @@ import server.game.GameState;
 import server.game.utils.Score;
 import server.utils.Logger;
 import utils.quiz.Question;
-import utils.quiz.Quiz;
-import utils.quiz.QuizCreator;
 import utils.tools.ConcurrentMap;
 
-import java.io.File;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -114,11 +111,24 @@ public class Server {
                 if (clients == null)
                         return;
                 for (DealWithClient client : clients) {
-                    client.sendEndGame();
-                    client.interrupt();
+                        client.sendEndGame();
+                        client.interrupt();
                 }
                 gameMap.remove(gameId);
                 gameManager.removeGame(gameId);
+        }
+
+        public void close(DealWithClient handler) {
+                String gameId = clientMap.get(handler);
+                if (gameId == null) {
+                        return;
+                }
+                GameState gameState = gameManager.getGame(gameId);
+                if (gameState == null) {
+                        return;
+                }
+                // TODO: IMPLEMENT THIS
+                gameState.unregisterPlayer(handler.getClientId());
         }
 
         public void startServing() throws IOException {
