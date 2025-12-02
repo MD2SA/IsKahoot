@@ -8,6 +8,11 @@ public class Quiz {
         private int curQuestion = -1;
         private List<Question> questions;
 
+        private Quiz(String name, List<Question> questions) {
+                this.name = name;
+                this.questions = questions;
+        }
+
         public String getName() {
                 return name;
         }
@@ -23,6 +28,11 @@ public class Quiz {
 
         public Question getCurQuestion() {
                 return questions.get(curQuestion);
+        }
+
+        // not implemented yet
+        public Quiz deepCopy() {
+                return this;
         }
 
 }

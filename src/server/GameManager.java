@@ -17,46 +17,37 @@ import java.util.concurrent.Executors;
 
 public class GameManager extends Thread {
 
-        private static final ExecutorService GAME_EXECUTOR = Executors.newFixedThreadPool(5);
-
         private final List<Quiz> quizzes;
-        private final Scanner scanner = new Scanner(System.in);
-        private final CommandDispatcher dispatcher;
-
         private final ConcurrentMap<String, GameState> games = new ConcurrentMap<>();
+
+        private final ExecutorService gameExecutor = Executors.newFixedThreadPool(5);
+        private final CommandDispatcher dispatcher;
 
         public GameManager() throws IOException {
                 this.quizzes = QuizCreator.getFrom(new File("quizzes.json"));
                 this.dispatcher = new CommandDispatcher(new CommandContext(this));
         }
 
-        public void addNewGame(GameState gameState) {
-                if (gameState == null)
-                        return;
-                Server.getInstance().getLogger().debug("GameManager adding new game" + gameState.getCode());
-                games.put(gameState.getCode(), gameState);
-                Server.getInstance().registerGame(gameState.getCode());
+        public void createGame(String gameId, int teams, int capacity, int quizNumber) {
+                Quiz quiz = quizzes.get(quizNumber).deepCopy();
+                GameState game = new GameState(gameId, teams, capacity, quiz, this);
+                games.put(gameId, game);
+                Server.getInstance().getLogger().debug("Game created: " + gameId);
+        }
+
+        public void startGameWhenFull(String gameId) {
+                GameState game = games.get(gameId);
+                if (game != null && game.isFull() && !game.hasStarted())
+                        gameExecutor.submit(game);
         }
 
         public void removeGame(String gameId) {
                 games.remove(gameId);
         }
 
-        public boolean startGameWhenFull(GameState gameState) {
-                if (gameState == null || !gameState.isFull())
-                        return false;
-                GAME_EXECUTOR.submit(gameState);
-                return true;
-        }
-
-        // public void runGameLoop(GameState gameState) {
-        //         new Thread(() -> {
-        //                 gameState.start();
-        //         }).start();
-        // }
-
         @Override
         public void run() {
+                Scanner scanner = new Scanner(System.in);
                 System.out.println("Server console ready. Type 'help' for commands.\n");
                 while (true) {
                         System.out.print("> ");

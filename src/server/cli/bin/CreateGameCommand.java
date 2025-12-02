@@ -4,7 +4,6 @@ import java.util.List;
 import java.util.Scanner;
 
 import server.GameManager;
-import server.game.GameState;
 import utils.quiz.Quiz;
 
 import server.cli.Command;
@@ -45,16 +44,13 @@ public class CreateGameCommand implements Command {
 
                 int quizNumber = Helpers.readIntInRange(scanner, 1, quizzes.size(), Constants.QUIZ_NUMBER) - 1;
 
-                Quiz selectedQuiz = quizzes.get(quizNumber);
-
                 String id = Helpers.readGameCode(scanner, gameManager, GAME_ID_LENGTH);
 
-                System.out.printf("%nCreating a game with %d teams of %d players with the quiz \"%s\"%n\n",
+                System.out.printf("\nCreating a game with %d teams of %d players with the quiz %d\n\n",
                                 numberOfTeams,
-                                teamCapacity, selectedQuiz.getName());
+                                teamCapacity, quizNumber);
 
-                gameManager.addNewGame(new GameState(id, teamCapacity, numberOfTeams,
-                                selectedQuiz));
+                gameManager.createGame(id, numberOfTeams, teamCapacity, quizNumber);
 
                 Helpers.printSectionHeader("CREATED GAME WITH CODE - \"" + id + "\"");
                 System.out.println(Constants.MARGIN);
