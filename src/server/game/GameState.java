@@ -27,6 +27,7 @@ public class GameState implements Runnable {
         private final Set<DealWithClient> clientHandlers = ConcurrentHashMap.newKeySet();
 
         private volatile boolean started = false;
+        private int curQuestion = -1;
 
         private ModifiedCountdownLatch latch;
         private AtomicInteger numberOfRealPlayers = new AtomicInteger(0); // not including ones that left mid game
@@ -94,7 +95,7 @@ public class GameState implements Runnable {
                 if (player == null)
                         return;
 
-                Question question = quiz.getCurQuestion();
+                Question question = quiz.getQuestion(curQuestion);
 
                 int bonusFactor = latch.countdown();
 
@@ -116,14 +117,14 @@ public class GameState implements Runnable {
                         Server.getInstance().getLogger().debug("Game started: " + id);
                 }
 
-                while (quiz.hasNextQuestion()) {
+                int numberOfQuestions = quiz.getNumberOfQuestions();
+                while (++curQuestion < numberOfQuestions) {
                         this.latch = new ModifiedCountdownLatch(Config.Features.BONUS_COUNT,
                                         Config.Features.BONUS_FACTOR,
                                         Config.Features.ROUND_SECONDS,
                                         numberOfRealPlayers.get());
 
-                        Question question = quiz.nextQuestion();
-                        // server.serveNextQuestion(id, question);
+                        Question question = quiz.getQuestion(curQuestion);
                         broadcastQuestion(question);
                         try {
                                 latch.await();
@@ -155,7 +156,7 @@ public class GameState implements Runnable {
                                 action.accept(handler);
                                 return false;
                         } catch (Exception e) {
-                                return true;
+                                return true; //remove any invalid handlers
                         }
                 });
         }

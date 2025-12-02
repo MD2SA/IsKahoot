@@ -29,7 +29,7 @@ public class GameManager extends Thread {
         }
 
         public void createGame(String gameId, int teams, int capacity, int quizNumber) {
-                Quiz quiz = quizzes.get(quizNumber).deepCopy();
+                Quiz quiz = quizzes.get(quizNumber);
                 GameState game = new GameState(gameId, teams, capacity, quiz, this);
                 games.put(gameId, game);
                 Server.getInstance().getLogger().debug("Game created: " + gameId);
