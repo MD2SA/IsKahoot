@@ -12,7 +12,7 @@ import java.util.Set;
 
 import configs.Config;
 
-public class GameState {
+public class GameState extends Thread {
 
         private final String id;
         private final Server server;
@@ -55,7 +55,8 @@ public class GameState {
                 answeredPlayers.add(username);
         }
 
-        public void start() {
+        @Override
+        public void run() {
                 synchronized (startLock) {
                         if (hasStarted) {
                                 Server.getInstance().getLogger().warn("GameState start: game has already started");
