@@ -34,7 +34,7 @@ public class ListGamesCommand implements Command {
                         System.out.println("    (no games)");
                 }
                 for (int i = 0; i<games.size(); i++) {
-                        System.out.printf("%d. %s%n", i + 1, games.get(i).getCode());
+                        System.out.printf("%d. %s%n", i + 1, games.get(i).getId());
                 }
 
                 System.out.println(Constants.MARGIN);
