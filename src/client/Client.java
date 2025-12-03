@@ -48,12 +48,11 @@ public class Client extends Thread implements Observer {
                                 MessageFromServer msgReceived = (MessageFromServer) in.readObject();
                                 Question question = msgReceived.getQuestion();
                                 List<Score> scoreboard = msgReceived.getScoreboard();
-                                if (question != null) {
-                                    this.gui.displayQuestion(question);
-                                }
-                                if (question == null && scoreboard == null) {
+                                if (question == null) {
                                         this.gui.displayEndGame();
+                                        return;
                                 }
+                                this.gui.displayQuestion(question);
                                 this.gui.displayScoreboard(scoreboard);
                         } catch (Exception e) {
                                 // TODO: handle exception
@@ -66,7 +65,7 @@ public class Client extends Thread implements Observer {
                 try {
                         out.writeObject(msgSent);
                         out.reset();
-                        System.out.println("SENDING"+option);
+                        System.out.println("SENDING" + option);
                 } catch (Exception e) {
                         System.out.println("ERROR SENDING ASNWER");
                 }

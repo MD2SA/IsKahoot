@@ -10,20 +10,22 @@ public class MessageFromServer extends Message {
         private List<Score> scoreboard;
         private Question question;
 
-        public MessageFromServer() { this(null, null); }
+        public MessageFromServer() {
+                this(null, null);
+        }
 
         public MessageFromServer(List<Score> scoreboard) {
-                this(scoreboard, null);
+                this(null, scoreboard);
         }
 
         public MessageFromServer(Question question) {
-                this(null, question);
+                this(question, null);
         }
 
-        public MessageFromServer(List<Score> scoreboard, Question question) {
+        public MessageFromServer(Question question, List<Score> scoreboard) {
                 super(Code.POST_ANSWER);
-                this.scoreboard = scoreboard;
                 this.question = question;
+                this.scoreboard = scoreboard;
         }
 
         public Question getQuestion() {
