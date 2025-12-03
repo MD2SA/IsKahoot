@@ -40,7 +40,7 @@ public class GameState implements Runnable {
                 this.gameManager = gameManager;
         }
 
-        public String getCode() {
+        public String getId() {
                 return id;
         }
 
