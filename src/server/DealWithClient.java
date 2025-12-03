@@ -88,16 +88,12 @@ public class DealWithClient implements Runnable, AutoCloseable {
                 }
         }
 
-        public void sendQuestion(Question question) {
-                send(new MessageFromServer(question));
+        public void sendUpdate(Question question, List<Score> scoreboard) {
+                send(new MessageFromServer(question, scoreboard));
         }
 
-        public void sendScoreboard(List<Score> scoreboard) {
+        public void sendEndGame(List<Score> scoreboard) {
                 send(new MessageFromServer(scoreboard));
-        }
-
-        public void sendEndGame() {
-                send(new MessageFromServer());
         }
 
         private void sendError(String reason) {

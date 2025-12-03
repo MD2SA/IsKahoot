@@ -9,6 +9,7 @@ import server.game.utils.Score;
 import utils.quiz.Question;
 import utils.quiz.Quiz;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -125,28 +126,24 @@ public class GameState implements Runnable {
                                         numberOfRealPlayers.get());
 
                         Question question = quiz.getQuestion(curQuestion);
-                        broadcastQuestion(question);
+                        broadcastUpdate(question, teamManager.getScoreboard());
                         try {
                                 latch.await();
                         } catch (InterruptedException e) {
                                 Server.getInstance().getLogger().error("GameState start latch: unwanted interrupted");
                         }
-                        broadcastScoreboard(teamManager.getScoreboard());
                         answeredPlayers.clear(); // reset players who have answered
                 }
                 endGame();
         }
 
-        private void broadcastQuestion(Question question) {
-                broadcast(handler -> handler.sendQuestion(question));
-        }
-
-        private void broadcastScoreboard(List<Score> scoreboard) {
-                broadcast(handler -> handler.sendScoreboard(scoreboard));
+        private void broadcastUpdate(Question question, List<Score> scoreboard) {
+                broadcast(handler -> handler.sendUpdate(question, scoreboard));
         }
 
         private void endGame() {
-                broadcast(handler -> handler.sendEndGame());
+                List<Score> scoreboard = teamManager.getScoreboard(); // keep outside sendEndGame
+                broadcast(handler -> handler.sendEndGame(scoreboard));
                 gameManager.removeGame(id);
         }
 
@@ -156,7 +153,7 @@ public class GameState implements Runnable {
                                 action.accept(handler);
                                 return false;
                         } catch (Exception e) {
-                                return true; //remove any invalid handlers
+                                return true; // remove any invalid handlers
                         }
                 });
         }
