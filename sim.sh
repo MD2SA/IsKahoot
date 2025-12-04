@@ -30,11 +30,14 @@ for (( i=0; i<TOTAL; i++ )); do
     TEAM=$(( i / TEAM_SIZE ))
 
     # No terminal, só background
-    nohup jrc -r client.Main "$USER" "$TEAM" "$GAME" > "logs_$USER.txt" 2>&1 &
+    nohup jrc -r client.Main "$USER" "$TEAM" "$GAME" > "log.tmp" 2>&1 &
 done
+
+rm log.tmp
 
 echo "All processes started."
 
 echo -n "Press anything to kill all processes"
 read
+killall java
 

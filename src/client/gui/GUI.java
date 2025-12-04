@@ -41,18 +41,18 @@ public class GUI extends Observed {
                 frame.setVisible(true);
         }
 
-        public void displayEndGame(){
-            questionPanel.removeAll();
+        public void displayEndGame() {
+                questionPanel.removeAll();
 
-            JPanel panel = new JPanel();
+                JPanel panel = new JPanel();
 
-            JLabel label = new JLabel("Jogo terminado.");
-            panel.add(label);
+                JLabel label = new JLabel("Jogo terminado.");
+                panel.add(label);
 
-            questionPanel.add(panel);
+                questionPanel.add(panel);
 
-            questionPanel.revalidate();
-            questionPanel.repaint();
+                questionPanel.revalidate();
+                questionPanel.repaint();
         }
 
         public void displayQuestion(Question question) {
@@ -116,6 +116,10 @@ public class GUI extends Observed {
 
                 questionPanel.revalidate();
                 questionPanel.repaint();
+        }
+
+        public void displayError(String errorMsg) {
+                return;
         }
 
         public boolean hasSelectedOption() {

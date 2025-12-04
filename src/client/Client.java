@@ -25,9 +25,11 @@ public class Client extends Thread implements Observer {
         private final String gameId;
         private final String teamId;
 
+        private int roundNumber = -1;
+
+        private Socket socket;
         private ObjectOutputStream out;
         private ObjectInputStream in;
-        private Socket socket;
 
         public Client(String username, String teamId, String gameId) {
                 this.username = username;
@@ -36,16 +38,28 @@ public class Client extends Thread implements Observer {
 
                 gui = new GUI(username, teamId);
                 gui.registerObserver(this);
-
         }
 
-        public void getQuestion() {
+        private void connectToServer() throws IOException {
+                InetAddress addr = InetAddress.getByName(null);
+                socket = new Socket(addr, Config.Server.SERVER_PORT);
+                this.out = new ObjectOutputStream(socket.getOutputStream());
+                this.in = new ObjectInputStream(socket.getInputStream());
+                MessageFromClient msgSent = MessageFromClient.getRegistrationMessage(username, teamId, gameId);
+                out.writeObject(msgSent);
+                out.reset();
+        }
+
+        private void comunicate() {
                 while (true) {
-                        MessageFromClient msgSent = new MessageFromClient(Code.GET_QUESTION, username, teamId, gameId);
+                        MessageFromClient msgSent = MessageFromClient.getRegistrationMessage(username, teamId, gameId);
                         try {
                                 out.writeObject(msgSent);
                                 out.reset();
                                 MessageFromServer msgReceived = (MessageFromServer) in.readObject();
+
+                                this.roundNumber = msgReceived.getRoundNumber();
+
                                 Question question = msgReceived.getQuestion();
                                 List<Score> scoreboard = msgReceived.getScoreboard();
                                 if (question == null) {
@@ -56,18 +70,18 @@ public class Client extends Thread implements Observer {
                                 this.gui.displayScoreboard(scoreboard);
                         } catch (Exception e) {
                                 // TODO: handle exception
+                                break;
                         }
                 }
         }
 
         private void sendAnswer(int option) {
-                MessageFromClient msgSent = new MessageFromClient(Code.POST_ANSWER, username, teamId, gameId, option);
+                MessageFromClient msgSent = MessageFromClient.getAnswerQuestion(username, option, roundNumber);
                 try {
                         out.writeObject(msgSent);
                         out.reset();
-                        System.out.println("SENDING" + option);
                 } catch (Exception e) {
-                        System.out.println("ERROR SENDING ASNWER");
+                        gui.displayError("Error sending answer to server.");
                 }
         }
 
@@ -81,22 +95,24 @@ public class Client extends Thread implements Observer {
         public void run() {
                 try {
                         connectToServer();
-                        getQuestion();
+                        comunicate();
                 } catch (IOException e) {
                 } finally {
-                        try {
-                                socket.close();
-                        } catch (Exception e) {
-
-                        }
+                        closeResources();
                 }
         }
 
-        void connectToServer() throws IOException {
-                InetAddress addr = InetAddress.getByName(null);
-                socket = new Socket(addr, Config.Server.SERVER_PORT);
-                this.out = new ObjectOutputStream(socket.getOutputStream());
-                this.in = new ObjectInputStream(socket.getInputStream());
+        private void closeResources() {
+                try {
+                        if (in != null)
+                                in.close();
+                        if (out != null)
+                                out.close();
+                        if (socket != null)
+                                socket.close();
+                } catch (Exception e) {
+                        System.out.println("error closing resources");
+                }
         }
 
 }
