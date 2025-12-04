@@ -26,6 +26,7 @@ public class DealWithClient implements Runnable, AutoCloseable {
         private String clientId;
         private String teamId;
         private GameState game;
+        private int roundNumber;
 
         public DealWithClient(Server server, Socket socket) throws IOException {
                 this.server = server;
@@ -83,17 +84,18 @@ public class DealWithClient implements Runnable, AutoCloseable {
                                 break;
                         }
 
-                        if (msg.getCode() == Code.POST_ANSWER)
-                                this.game.answer(clientId, msg.getAnswer());
+                        if (msg.getCode() == Code.ANSWER)
+                                this.game.answer(clientId, msg.getRoundNumber(), msg.getAnswer());
                 }
         }
 
-        public void sendUpdate(Question question, List<Score> scoreboard) {
-                send(new MessageFromServer(question, scoreboard));
+        public void sendRoundInfo(Question question, List<Score> scoreboard) {
+                roundNumber++;
+                send(MessageFromServer.updateMessage(roundNumber++, question, scoreboard));
         }
 
         public void sendEndGame(List<Score> scoreboard) {
-                send(new MessageFromServer(scoreboard));
+                send(MessageFromServer.endMessage(scoreboard));
         }
 
         private void sendError(String reason) {

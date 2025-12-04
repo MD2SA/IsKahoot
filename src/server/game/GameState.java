@@ -28,9 +28,9 @@ public class GameState implements Runnable {
         private final Set<DealWithClient> clientHandlers = ConcurrentHashMap.newKeySet();
 
         private volatile boolean started = false;
-        private int curQuestion = -1;
+        private int curRound = -1;
+        private List<ModifiedCountdownLatch> latchs;
 
-        private ModifiedCountdownLatch latch;
         private AtomicInteger numberOfRealPlayers = new AtomicInteger(0); // not including ones that left mid game
         private Set<String> answeredPlayers = new HashSet<>();
 
@@ -87,18 +87,18 @@ public class GameState implements Runnable {
                 return true;
         }
 
-        public void answer(String username, int option) {
+        public void answer(String username, int roundNumber, int option) {
                 // hasn't started or does have already answered this question
-                if (!started || answeredPlayers.contains(username))
+                if (!started || answeredPlayers.contains(username) || roundNumber < 0 || roundNumber >= latchs.size())
                         return;
 
                 Player player = teamManager.getPlayer(username);
                 if (player == null)
                         return;
 
-                Question question = quiz.getQuestion(curQuestion);
+                Question question = quiz.getQuestion(roundNumber);
 
-                int bonusFactor = latch.countdown();
+                int bonusFactor = latchs.get(roundNumber).countdown();
 
                 if (!question.isCorrect(option))
                         return;
@@ -119,13 +119,17 @@ public class GameState implements Runnable {
                 }
 
                 int numberOfQuestions = quiz.getNumberOfQuestions();
-                while (++curQuestion < numberOfQuestions) {
-                        this.latch = new ModifiedCountdownLatch(Config.Features.BONUS_COUNT,
+                latchs = new ArrayList<>(numberOfQuestions);
+
+                while (++curRound < numberOfQuestions) {
+                        ModifiedCountdownLatch latch = new ModifiedCountdownLatch(Config.Features.BONUS_COUNT,
                                         Config.Features.BONUS_FACTOR,
                                         Config.Features.ROUND_SECONDS,
                                         numberOfRealPlayers.get());
 
-                        Question question = quiz.getQuestion(curQuestion);
+                        latchs.add(latch);
+
+                        Question question = quiz.getQuestion(curRound);
                         broadcastUpdate(question, teamManager.getScoreboard());
                         try {
                                 latch.await();
@@ -138,7 +142,7 @@ public class GameState implements Runnable {
         }
 
         private void broadcastUpdate(Question question, List<Score> scoreboard) {
-                broadcast(handler -> handler.sendUpdate(question, scoreboard));
+                broadcast(handler -> handler.sendRoundInfo(question, scoreboard));
         }
 
         private void endGame() {
