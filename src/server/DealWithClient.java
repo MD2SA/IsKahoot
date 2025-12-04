@@ -53,8 +53,7 @@ public class DealWithClient implements Runnable, AutoCloseable {
 
         private boolean registerClient() throws IOException {
                 MessageFromClient msg = readMessage();
-                // if (msg == null || msg.getCode() != Code.REGISTER)
-                if (msg == null)
+                if (msg == null || msg.getCode() != Code.REGISTER)
                         return false;
 
                 this.clientId = msg.getClientId();
