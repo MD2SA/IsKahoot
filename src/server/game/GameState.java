@@ -9,13 +9,13 @@ import server.game.utils.Score;
 import utils.quiz.Question;
 import utils.quiz.Quiz;
 
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
+import java.util.stream.IntStream;
 
 import configs.Config;
 
@@ -25,71 +25,78 @@ public class GameState implements Runnable {
         private final Quiz quiz;
         private final TeamManager teamManager;
         private final GameManager gameManager;
+
         private final Set<DealWithClient> clientHandlers = ConcurrentHashMap.newKeySet();
+        private AtomicInteger numberOfRealPlayers = new AtomicInteger(0); // not including ones that left mid game
+        private Set<String> answeredPlayers = new HashSet<>();
 
         private volatile boolean started = false;
         private int curRound = -1;
         private List<ModifiedCountdownLatch> latchs;
 
-        private AtomicInteger numberOfRealPlayers = new AtomicInteger(0); // not including ones that left mid game
-        private Set<String> answeredPlayers = new HashSet<>();
-
         public GameState(String id, int teamCapacity, int numberOfTeams, Quiz quiz, GameManager gameManager) {
                 this.id = id;
-                this.teamManager = new TeamManager(numberOfTeams, teamCapacity);
                 this.quiz = quiz;
+                this.teamManager = new TeamManager(numberOfTeams, teamCapacity);
                 this.gameManager = gameManager;
         }
 
-        public String getId() {
-                return id;
-        }
+        @Override
+        public void run() {
+                synchronized (this) {
+                        if (started)
+                                return;
+                        started = true;
+                        Server.getInstance().getLogger().debug("Game started: " + id);
+                }
 
-        public boolean isFull() {
-                return teamManager.isFull();
-        }
+                int numberOfQuestions = quiz.getNumberOfQuestions();
+                latchs = IntStream.range(0, numberOfQuestions).mapToObj(i -> getGameLatch()).toList();
 
-        public boolean hasStarted() {
-                return started;
+                while (++curRound < numberOfQuestions) {
+                        ModifiedCountdownLatch latch = latchs.get(curRound);
+
+                        Question question = quiz.getQuestion(curRound);
+                        broadcastUpdate(question, teamManager.getScoreboard());
+                        try {
+                                latch.await();
+                        } catch (InterruptedException e) {
+                                Server.getInstance().getLogger().error("GameState start latch: unwanted interrupted");
+                        }
+                        answeredPlayers.clear(); // reset players who have answered
+                }
+                endGame();
         }
 
         public boolean registerPlayer(String username, String teamName, DealWithClient handler) {
-                if (started) {
-                        Server.getInstance().getLogger()
-                                        .info("Game " + id + " has already started unable to add" + username);
+                if (started || !teamManager.registerPlayer(username, teamName))
                         return false;
-                }
-                if (!teamManager.registerPlayer(username, teamName)) {
-                        Server.getInstance().getLogger().debug("Failed to add to team");
-                        return false;
-                }
+
                 clientHandlers.add(handler);
-                gameManager.startGameWhenFull(id);
                 numberOfRealPlayers.incrementAndGet();
+                gameManager.startGameWhenFull(id);
+
                 return true;
         }
 
         public boolean unregisterPlayer(String username) {
-                if (teamManager.getPlayer(username) == null)
-                        return false;
+                DealWithClient handler = clientHandlers.stream()
+                                .filter(h -> h.getClientId().equals(username))
+                                .findFirst()
+                                .orElse(null);
 
-                DealWithClient toRemove = null;
-                for (DealWithClient handler : clientHandlers) {
-                        if (handler.getClientId() != username)
-                                continue;
-                        toRemove = handler;
-                        break;
-                }
-
-                if (!clientHandlers.remove(toRemove))
+                if (handler == null || !clientHandlers.remove(handler))
                         return false;
+                if (started)
+                        teamManager.remove(username);
                 numberOfRealPlayers.decrementAndGet();
+
                 return true;
         }
 
         public void answer(String username, int roundNumber, int option) {
                 // hasn't started or does have already answered this question
-                if (!started || answeredPlayers.contains(username) || roundNumber < 0 || roundNumber >= latchs.size())
+                if (!started || roundNumber < 0 || roundNumber >= latchs.size() || answeredPlayers.contains(username))
                         return;
 
                 Player player = teamManager.getPlayer(username);
@@ -109,37 +116,6 @@ public class GameState implements Runnable {
                 answeredPlayers.add(username);
         }
 
-        @Override
-        public void run() {
-                synchronized (this) {
-                        if (started)
-                                return;
-                        started = true;
-                        Server.getInstance().getLogger().debug("Game started: " + id);
-                }
-
-                int numberOfQuestions = quiz.getNumberOfQuestions();
-                latchs = new ArrayList<>(numberOfQuestions);
-
-                while (++curRound < numberOfQuestions) {
-                        ModifiedCountdownLatch latch = new ModifiedCountdownLatch(Config.Features.BONUS_COUNT,
-                                        Config.Features.BONUS_FACTOR,
-                                        Config.Features.ROUND_SECONDS,
-                                        numberOfRealPlayers.get());
-
-                        latchs.add(latch);
-
-                        Question question = quiz.getQuestion(curRound);
-                        broadcastUpdate(question, teamManager.getScoreboard());
-                        try {
-                                latch.await();
-                        } catch (InterruptedException e) {
-                                Server.getInstance().getLogger().error("GameState start latch: unwanted interrupted");
-                        }
-                        answeredPlayers.clear(); // reset players who have answered
-                }
-                endGame();
-        }
 
         private void broadcastUpdate(Question question, List<Score> scoreboard) {
                 broadcast(handler -> handler.sendRoundInfo(question, scoreboard));
@@ -162,4 +138,22 @@ public class GameState implements Runnable {
                 });
         }
 
+        private ModifiedCountdownLatch getGameLatch() {
+                return new ModifiedCountdownLatch(Config.Features.BONUS_COUNT,
+                                Config.Features.BONUS_FACTOR,
+                                Config.Features.ROUND_SECONDS,
+                                numberOfRealPlayers.get());
+        }
+
+        public String getId() {
+                return id;
+        }
+
+        public boolean isFull() {
+                return teamManager.isFull();
+        }
+
+        public boolean hasStarted() {
+                return started;
+        }
 }

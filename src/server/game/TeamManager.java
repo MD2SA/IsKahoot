@@ -54,6 +54,10 @@ public class TeamManager {
                 return true;
         }
 
+        public Player remove(String username) {
+                return playerMap.remove(username);
+        }
+
         public Player getPlayer(String username) {
                 synchronized (playerMap) {
                         return playerMap.get(username);
