@@ -89,7 +89,6 @@ public class DealWithClient implements Runnable, AutoCloseable {
         }
 
         public void sendRoundInfo(Question question, List<Score> scoreboard) {
-                roundNumber++;
                 send(MessageFromServer.updateMessage(roundNumber++, question, scoreboard));
         }
 

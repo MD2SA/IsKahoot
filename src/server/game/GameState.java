@@ -3,19 +3,18 @@ package server.game;
 import server.DealWithClient;
 import server.GameManager;
 import server.Server;
+import server.game.utils.Lock;
 import server.game.utils.ModifiedCountdownLatch;
 import server.game.utils.Player;
 import server.game.utils.Score;
 import utils.quiz.Question;
 import utils.quiz.Quiz;
 
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
-import java.util.stream.IntStream;
 
 import configs.Config;
 
@@ -27,12 +26,13 @@ public class GameState implements Runnable {
         private final GameManager gameManager;
 
         private final Set<DealWithClient> clientHandlers = ConcurrentHashMap.newKeySet();
-        private AtomicInteger numberOfRealPlayers = new AtomicInteger(0); // not including ones that left mid game
-        private Set<String> answeredPlayers = new HashSet<>();
+        private AtomicInteger numberOfRealPlayers = new AtomicInteger(0);
+        // private Set<String> answeredPlayers = new HashSet<>();
 
         private volatile boolean started = false;
-        private int curRound = -1;
-        private List<ModifiedCountdownLatch> latchs;
+        private AtomicInteger curRound = new AtomicInteger(-1);
+        private ModifiedCountdownLatch latch;
+        private final Lock scoringLock = new Lock();
 
         public GameState(String id, int teamCapacity, int numberOfTeams, Quiz quiz, GameManager gameManager) {
                 this.id = id;
@@ -43,28 +43,28 @@ public class GameState implements Runnable {
 
         @Override
         public void run() {
-                synchronized (this) {
-                        if (started)
-                                return;
-                        started = true;
-                        Server.getInstance().getLogger().debug("Game started: " + id);
-                }
+                started = true;
+                Server.getInstance().getLogger().debug("Game started: " + id);
 
+                int round;
                 int numberOfQuestions = quiz.getNumberOfQuestions();
-                latchs = IntStream.range(0, numberOfQuestions).mapToObj(i -> getGameLatch()).toList();
 
-                while (++curRound < numberOfQuestions) {
-                        ModifiedCountdownLatch latch = latchs.get(curRound);
+                while ((round = curRound.incrementAndGet()) < numberOfQuestions && numberOfRealPlayers.get() > 0) {
 
-                        Question question = quiz.getQuestion(curRound);
+                        this.latch = getGameLatch();
+                        Question question = quiz.getQuestion(round);
                         broadcastUpdate(question, teamManager.getScoreboard());
                         try {
                                 latch.await();
+                                scoringLock.lock();
                         } catch (InterruptedException e) {
-                                Server.getInstance().getLogger().error("GameState start latch: unwanted interrupted");
+                                Server.getInstance().getLogger().error("GameState start latch interrupted");
+                        } finally {
+                                scoringLock.unlock();
                         }
-                        answeredPlayers.clear(); // reset players who have answered
+
                 }
+
                 endGame();
         }
 
@@ -95,9 +95,10 @@ public class GameState implements Runnable {
         }
 
         public void answer(String username, int roundNumber, int option) {
-                // hasn't started or does have already answered this question
-                if (!started || roundNumber < 0 || roundNumber >= latchs.size() || answeredPlayers.contains(username))
+                if (!isValidAnswer(username, roundNumber)) {
+                        Server.getInstance().getLogger().info("Cannot accept answer from " + username);
                         return;
+                }
 
                 Player player = teamManager.getPlayer(username);
                 if (player == null)
@@ -105,17 +106,40 @@ public class GameState implements Runnable {
 
                 Question question = quiz.getQuestion(roundNumber);
 
-                int bonusFactor = latchs.get(roundNumber).countdown();
+                try {
+                        scoringLock.lock();
+                        int bonusFactor = latch.countdown();
+                        if (!question.isCorrect(option))
+                                return;
 
-                if (!question.isCorrect(option))
-                        return;
+                        int updatedScore = player.getScore() + question.getPoints() * bonusFactor;
+                        player.setScore(updatedScore);
 
-                int updatedScore = player.getScore() + question.getPoints() * bonusFactor;
-                player.setScore(updatedScore);
+                        // answeredPlayers.add(username);
+                } catch (InterruptedException e) {
+                } finally {
+                        scoringLock.unlock();
+                }
 
-                answeredPlayers.add(username);
         }
 
+        public String getId() {
+                return id;
+        }
+
+        public boolean isFull() {
+                return teamManager.isFull();
+        }
+
+        public boolean hasStarted() {
+                return started;
+        }
+
+        private boolean isValidAnswer(String username, int roundNumber) {
+                return started && latch != null && roundNumber == curRound.get()
+                                && teamManager.hasPlayer(username);
+                // && !answeredPlayers.contains(username);
+        }
 
         private void broadcastUpdate(Question question, List<Score> scoreboard) {
                 broadcast(handler -> handler.sendRoundInfo(question, scoreboard));
@@ -145,15 +169,4 @@ public class GameState implements Runnable {
                                 numberOfRealPlayers.get());
         }
 
-        public String getId() {
-                return id;
-        }
-
-        public boolean isFull() {
-                return teamManager.isFull();
-        }
-
-        public boolean hasStarted() {
-                return started;
-        }
 }
