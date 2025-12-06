@@ -84,7 +84,7 @@ public class DealWithClient implements Runnable, AutoCloseable {
                         }
 
                         if (msg.getCode() == Code.ANSWER)
-                                this.game.answer(clientId, msg.getRoundNumber(), msg.getAnswer());
+                                this.game.answer(msg.getAnswer());
                 }
         }
 

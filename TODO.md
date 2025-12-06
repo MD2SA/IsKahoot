@@ -10,7 +10,7 @@
                     - Existe ai perdido um ou outro atomic integer e sets e listas que nao estao preparadas para ser concurrents
 
 ### Prioridade Média
-- [ ] **[Fácil]** Ecra de fim de jogo
+- [x] **[Fácil]** Ecra de fim de jogo
 
 #### Prioridade Baixa
 - [ ] **[Fácil]** GUI com username e teamID constante

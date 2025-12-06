@@ -1,4 +1,3 @@
-
 package server.game.utils;
 
 public class Lock {
