@@ -1,12 +1,13 @@
 package utils.messages;
 
+import server.game.utils.Answer;
+
 public class MessageFromClient extends Message {
 
         private String clientId;
         private String gameId;
         private String teamId;
-        private int option;
-        private int roundNumber;
+        private Answer answer;
 
         private MessageFromClient(Code code, String clientId, String teamId, String gameId,
                         int option, int roundNumber) {
@@ -14,8 +15,7 @@ public class MessageFromClient extends Message {
                 this.clientId = clientId;
                 this.gameId = gameId;
                 this.teamId = teamId;
-                this.option = option;
-                this.roundNumber = roundNumber;
+                this.answer = new Answer(clientId, option, roundNumber);
         }
 
         public static MessageFromClient getRegistrationMessage(String clientId, String teamId, String gameId) {
@@ -38,23 +38,8 @@ public class MessageFromClient extends Message {
                 return teamId;
         }
 
-        public int getRoundNumber() {
-                return roundNumber;
-        }
-
-        public int getAnswer() {
-                return option;
-        }
-
-        @Override
-        public String toString() {
-                return """
-                                Code: %s
-                                GameId: %s
-                                ClientId: %s
-                                Option: %s
-                                """
-                                .formatted(getCode().name(), this.gameId, this.clientId, this.option);
+        public Answer getAnswer() {
+                return answer;
         }
 
 }

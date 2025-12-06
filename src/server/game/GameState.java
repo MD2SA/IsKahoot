@@ -3,16 +3,21 @@ package server.game;
 import server.DealWithClient;
 import server.GameManager;
 import server.Server;
+import server.game.utils.Answer;
 import server.game.utils.Lock;
 import server.game.utils.ModifiedCountdownLatch;
 import server.game.utils.Player;
 import server.game.utils.Score;
 import utils.quiz.Question;
 import utils.quiz.Quiz;
+import utils.tools.ConcurrentMap;
 
+import java.util.Deque;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 
@@ -32,7 +37,8 @@ public class GameState implements Runnable {
         private volatile boolean started = false;
         private AtomicInteger curRound = new AtomicInteger(-1);
         private ModifiedCountdownLatch latch;
-        private final Lock scoringLock = new Lock();
+
+        private final ConcurrentMap<Answer, Integer> answers = new ConcurrentMap<>();
 
         public GameState(String id, int teamCapacity, int numberOfTeams, Quiz quiz, GameManager gameManager) {
                 this.id = id;
@@ -56,13 +62,10 @@ public class GameState implements Runnable {
                         broadcastUpdate(question, teamManager.getScoreboard());
                         try {
                                 latch.await();
-                                scoringLock.lock();
                         } catch (InterruptedException e) {
                                 Server.getInstance().getLogger().error("GameState start latch interrupted");
-                        } finally {
-                                scoringLock.unlock();
                         }
-
+                        scoreAnswers();
                 }
 
                 endGame();
@@ -94,33 +97,12 @@ public class GameState implements Runnable {
                 return true;
         }
 
-        public void answer(String username, int roundNumber, int option) {
-                if (!isValidAnswer(username, roundNumber)) {
-                        Server.getInstance().getLogger().info("Cannot accept answer from " + username);
+        public void answer(Answer answer) {
+                if (!isValidAnswer(answer)) {
+                        Server.getInstance().getLogger().info("Cannot accept answer from " + answer.getUsername());
                         return;
                 }
-
-                Player player = teamManager.getPlayer(username);
-                if (player == null)
-                        return;
-
-                Question question = quiz.getQuestion(roundNumber);
-
-                try {
-                        scoringLock.lock();
-                        int bonusFactor = latch.countdown();
-                        if (!question.isCorrect(option))
-                                return;
-
-                        int updatedScore = player.getScore() + question.getPoints() * bonusFactor;
-                        player.setScore(updatedScore);
-
-                        // answeredPlayers.add(username);
-                } catch (InterruptedException e) {
-                } finally {
-                        scoringLock.unlock();
-                }
-
+                answers.put(answer, latch.countdown());
         }
 
         public String getId() {
@@ -135,9 +117,9 @@ public class GameState implements Runnable {
                 return started;
         }
 
-        private boolean isValidAnswer(String username, int roundNumber) {
-                return started && latch != null && roundNumber == curRound.get()
-                                && teamManager.hasPlayer(username);
+        private boolean isValidAnswer(Answer answer) {
+                return started && latch != null && answer.getRoundNumber() == curRound.get()
+                                && teamManager.hasPlayer(answer.getUsername());
                 // && !answeredPlayers.contains(username);
         }
 
@@ -167,6 +149,21 @@ public class GameState implements Runnable {
                                 Config.Features.BONUS_FACTOR,
                                 Config.Features.ROUND_SECONDS,
                                 numberOfRealPlayers.get());
+        }
+
+        private void scoreAnswers() {
+                Question question = quiz.getQuestion(curRound.get());
+                int correctOption = question.getCorrect();
+                int points = question.getPoints();
+                for (Map.Entry<Answer, Integer> entry : answers.entrySet()) {
+                        Answer answer = entry.getKey();
+                        int bonusFactor = entry.getValue();
+                        Player player = teamManager.getPlayer(answer.getUsername());
+                        if (player == null || bonusFactor == 0 || correctOption != answer.getOption())
+                                continue;
+                        int updatedScore = player.getScore() + (points * bonusFactor);
+                        player.setScore(updatedScore);
+                }
         }
 
 }

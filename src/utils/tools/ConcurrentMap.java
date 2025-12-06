@@ -3,6 +3,7 @@ package utils.tools;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 
 public class ConcurrentMap<K, V> {
 
@@ -40,5 +41,8 @@ public class ConcurrentMap<K, V> {
                 return map.remove(key);
         }
 
+        public synchronized Set<Map.Entry<K, V>> entrySet() {
+                return map.entrySet();
+        }
 
 }
