@@ -59,9 +59,7 @@ public class TeamManager {
         }
 
         public Player getPlayer(String username) {
-                synchronized (playerMap) {
-                        return playerMap.get(username);
-                }
+                return playerMap.get(username);
         }
 
         public List<Score> getScoreboard() {
@@ -81,6 +79,10 @@ public class TeamManager {
 
         public boolean isFull() {
                 return teamCapacity * numberOfTeams <= playerMap.size();
+        }
+
+        public boolean hasPlayer(String username) {
+                return playerMap.containsKey(username);
         }
 
 }

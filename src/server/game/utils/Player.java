@@ -17,7 +17,9 @@ public class Player implements Score, Serializable {
         }
 
         @Override
-        public String getName() { return name; }
+        public String getName() {
+                return name;
+        }
 
         @Override
         public int getScore() {
@@ -26,5 +28,10 @@ public class Player implements Score, Serializable {
 
         public void setScore(int score) {
                 this.score = score;
+        }
+
+        @Override
+        public String toString() {
+                return "score: " + score + "- name: " + name;
         }
 }

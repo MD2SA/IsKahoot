@@ -62,12 +62,12 @@ public class Client extends Thread implements Observer {
 
                                 Question question = msgReceived.getQuestion();
                                 List<Score> scoreboard = msgReceived.getScoreboard();
+                                this.gui.displayScoreboard(scoreboard);
                                 if (question == null) {
                                         this.gui.displayEndGame();
                                         return;
                                 }
                                 this.gui.displayQuestion(question);
-                                this.gui.displayScoreboard(scoreboard);
                         } catch (Exception e) {
                                 // TODO: handle exception
                                 break;
@@ -77,6 +77,7 @@ public class Client extends Thread implements Observer {
 
         private void sendAnswer(int option) {
                 MessageFromClient msgSent = MessageFromClient.getAnswerQuestion(username, option, roundNumber);
+                System.out.println(roundNumber);
                 try {
                         out.writeObject(msgSent);
                         out.reset();

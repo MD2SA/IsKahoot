@@ -5,4 +5,5 @@ public interface Score {
         public String getName();
 
         public int getScore();
+
 }

@@ -42,7 +42,6 @@ public class ModifiedCountdownLatch {
                 if (waitPeriod > 0 && timer == null) {
                         timer = new Timer(waitPeriod, () -> {
                                 synchronized (this) {
-                                        System.out.println("Timer endede");
                                         timerEnded = true;
                                         notifyAll();
                                 }
