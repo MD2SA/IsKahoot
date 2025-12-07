@@ -1,125 +1,180 @@
 package client.gui;
 
-import java.awt.BorderLayout;
-import java.awt.Color;
-import java.awt.Cursor;
-import java.awt.Font;
-import java.awt.GridLayout;
-import java.util.*;
-import java.util.stream.IntStream;
-
 import javax.swing.*;
-
+import javax.swing.border.EmptyBorder;
+import javax.swing.border.LineBorder;
+import javax.swing.table.DefaultTableCellRenderer;
 import client.gui.Observer.Observed;
 import server.game.utils.Score;
 import utils.quiz.Question;
+import java.awt.*;
+import java.util.List;
 
 public class GUI extends Observed {
 
-        private final JPanel mainPanel;
         private final JPanel questionPanel;
         private final JPanel scorePanel;
 
         private int selectedOption;
 
         public GUI(String username, String teamId) {
-                JFrame frame = new JFrame("IsKahoot - User: " + username + " Team: " + teamId);
+
+                JFrame frame = new JFrame("IsKahoot");
                 frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-                frame.setSize(800, 400);
+                frame.setSize(760, 460);
                 frame.setLocationRelativeTo(null);
                 frame.setResizable(false);
+                frame.setLayout(new BorderLayout(10, 10));
 
-                mainPanel = new JPanel(new GridLayout(2, 1));
-                questionPanel = new JPanel(new BorderLayout(10, 10));
+                JPanel header = createHeader(username, teamId);
+
                 scorePanel = new JPanel(new BorderLayout());
+                scorePanel.setBorder(new EmptyBorder(10, 10, 10, 10));
+                scorePanel.setBackground(new Color(245, 245, 250));
 
-                mainPanel.add(scorePanel);
-                mainPanel.add(questionPanel);
+                questionPanel = new JPanel();
+                questionPanel.setLayout(new BoxLayout(questionPanel, BoxLayout.Y_AXIS));
+                questionPanel.setBorder(new EmptyBorder(15, 15, 15, 15));
+                questionPanel.setBackground(Color.WHITE);
 
-                frame.setContentPane(mainPanel);
+                JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, scorePanel, questionPanel);
+                splitPane.setResizeWeight(0.35);
+                splitPane.setDividerSize(5);
+                splitPane.setBorder(null);
+
+                frame.add(header, BorderLayout.NORTH);
+                frame.add(splitPane, BorderLayout.CENTER);
 
                 frame.setVisible(true);
         }
 
-        public void displayEndGame() {
-                questionPanel.removeAll();
-
-                JPanel panel = new JPanel();
-
-                JLabel label = new JLabel("Jogo terminado.");
-                panel.add(label);
-
-                questionPanel.add(panel);
-
-                questionPanel.revalidate();
-                questionPanel.repaint();
-        }
-
         public void displayQuestion(Question question) {
                 selectedOption = -1;
-
                 questionPanel.removeAll();
 
-                JLabel label = new JLabel(question.getQuestion());
-                label.setHorizontalAlignment(SwingConstants.CENTER);
-                label.setVerticalAlignment(SwingConstants.CENTER);
-                questionPanel.add(label, BorderLayout.NORTH);
+                JLabel q = new JLabel(question.getQuestion());
+                q.setFont(new Font("SansSerif", Font.BOLD, 18));
+                q.setAlignmentX(Component.CENTER_ALIGNMENT);
+                q.setBorder(new EmptyBorder(10, 0, 20, 0));
 
-                JPanel optionsPanel = new JPanel(new GridLayout(2, 2));
+                JPanel opts = new JPanel();
+                opts.setLayout(new GridLayout(2, 2, 10, 10));
+                opts.setBackground(Color.WHITE);
 
                 List<String> options = question.getOptions();
+                for (int i = 0; i < options.size(); i++) {
+                        JButton b = new JButton(options.get(i));
+                        final int index = i;
+                        b.setFont(new Font("SansSerif", Font.BOLD, 14));
+                        b.setBackground(new Color(220, 220, 255));
+                        b.setFocusPainted(false);
+                        b.addActionListener(e -> {
+                                displayWaiting();
+                                selectedOption = index;
+                                notifyObservers();
+                        });
+                        b.setBorder(new LineBorder(new Color(150, 150, 220), 2));
+                        opts.add(b);
+                }
 
-                IntStream.range(0, options.size())
-                                .forEach(i -> {
-                                        JButton button = new JButton(options.get(i));
-                                        styleButton(button);
-                                        button.addActionListener(l -> {
-                                                displayWaiting();
-                                                this.selectedOption = i;
-                                                notifyObservers();
-                                        });
-                                        optionsPanel.add(button);
-                                });
+                questionPanel.add(q);
+                questionPanel.add(opts);
 
-                questionPanel.add(optionsPanel, BorderLayout.CENTER);
-
-                questionPanel.revalidate();
-                questionPanel.repaint();
+                refresh(questionPanel);
         }
 
         public void displayScoreboard(List<Score> scoreboard) {
                 scorePanel.removeAll();
-                String[] colunas = { "Nome", "Pontuação" };
-                Object[][] dados;
 
-                dados = scoreboard.stream()
-                                .map(s -> new Object[] { s.getName(), s.getScore() })
-                                .toArray(Object[][]::new);
+                JLabel header = new JLabel("Scoreboard");
+                header.setFont(new Font("SansSerif", Font.BOLD, 18));
+                header.setHorizontalAlignment(SwingConstants.CENTER);
+                header.setBorder(new EmptyBorder(0, 0, 10, 0));
 
-                JTable tabela = new JTable(dados, colunas);
-                JScrollPane scrollPane = new JScrollPane(tabela);
-                scorePanel.add(scrollPane, BorderLayout.CENTER);
+                String[] cols = { "Nome", "Pontuação" };
+                Object[][] data = new Object[scoreboard.size()][];
+                for (int i = 0; i < scoreboard.size(); i++) {
+                        Score s = scoreboard.get(i);
+                        data[i] = new Object[] { s.getName(), s.getScore() };
+                }
 
-                scorePanel.revalidate();
-                scorePanel.repaint();
+                JTable table = new JTable(data, cols);
+                table.setRowHeight(25);
+                table.setEnabled(false);
+                table.getTableHeader().setReorderingAllowed(false);
+                table.getTableHeader().setFont(new Font("SansSerif", Font.BOLD, 14));
+
+                DefaultTableCellRenderer centerRenderer = new DefaultTableCellRenderer();
+                centerRenderer.setHorizontalAlignment(SwingConstants.CENTER);
+                for (int i = 0; i < cols.length; i++)
+                        table.getColumnModel().getColumn(i).setCellRenderer(centerRenderer);
+
+                JScrollPane scroll = new JScrollPane(table);
+                scroll.setBorder(new LineBorder(new Color(180, 180, 220), 1));
+
+                scorePanel.add(header, BorderLayout.NORTH);
+                scorePanel.add(scroll, BorderLayout.CENTER);
+
+                refresh(scorePanel);
         }
 
         public void displayWaiting() {
                 questionPanel.removeAll();
-
-                JPanel panel = new JPanel();
-
-                JLabel label = new JLabel("Waiting...");
-                panel.add(label);
-
-                questionPanel.add(panel);
-
-                questionPanel.revalidate();
-                questionPanel.repaint();
+                JLabel l = new JLabel("A aguardar...");
+                l.setFont(new Font("SansSerif", Font.BOLD, 16));
+                l.setAlignmentX(Component.CENTER_ALIGNMENT);
+                questionPanel.add(l);
+                refresh(questionPanel);
         }
 
         public void displayError(String errorMsg) {
-                return;
+                questionPanel.removeAll();
+                JLabel l = new JLabel(errorMsg);
+                l.setFont(new Font("SansSerif", Font.BOLD, 16));
+                l.setForeground(Color.RED);
+                l.setAlignmentX(Component.CENTER_ALIGNMENT);
+                questionPanel.add(l);
+                refresh(questionPanel);
+        }
+
+        public void displayEndGame() {
+                questionPanel.removeAll();
+                JLabel label = new JLabel("Jogo terminado.");
+                label.setFont(new Font("SansSerif", Font.BOLD, 18));
+                label.setAlignmentX(Component.CENTER_ALIGNMENT);
+                questionPanel.add(label);
+                refresh(questionPanel);
+        }
+
+        private JPanel createHeader(String username, String teamId) {
+                JPanel p = new JPanel();
+                p.setLayout(new BorderLayout());
+                p.setBackground(new Color(50, 50, 80));
+                p.setBorder(new EmptyBorder(10, 15, 10, 15));
+
+                JLabel title = new JLabel("IsKahoot");
+                title.setFont(new Font("SansSerif", Font.BOLD, 22));
+                title.setForeground(Color.WHITE);
+
+                JPanel info = new JPanel();
+                info.setLayout(new BoxLayout(info, BoxLayout.Y_AXIS));
+                info.setBackground(new Color(50, 50, 80));
+                JLabel u = new JLabel("User: " + username);
+                JLabel t = new JLabel("Team: " + teamId);
+                u.setForeground(Color.WHITE);
+                t.setForeground(Color.WHITE);
+                info.add(u);
+                info.add(t);
+
+                p.add(title, BorderLayout.WEST);
+                p.add(info, BorderLayout.EAST);
+
+                return p;
+        }
+
+        private void refresh(JPanel p) {
+                p.revalidate();
+                p.repaint();
         }
 
         public boolean hasSelectedOption() {
@@ -129,21 +184,4 @@ public class GUI extends Observed {
         public int getSelectedOption() {
                 return selectedOption;
         }
-
-        private Object[][] getDummyScoreboard() {
-                return new Object[][] {
-                                { "Red Dragons", 50 },
-                                { "Blue Sharks", 75 },
-                                { "Green Tigers", 60 },
-                                { "Yellow Lions", 40 }
-                };
-        }
-
-        private void styleButton(JButton button) {
-                button.setFocusPainted(false);
-                button.setBackground(new Color(230, 230, 250));
-                button.setFont(new Font("SansSerif", Font.BOLD, 10));
-                button.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-        }
-
 }

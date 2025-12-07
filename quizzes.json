@@ -6,7 +6,7 @@
         {
           "question": "O que é uma thread?",
           "points": 5,
-          "correct": 2,
+          "correct": 3,
           "options": [
             "Processo",
             "Aplicação",
@@ -17,7 +17,7 @@
         {
           "question": "Qual destas operações não é um método bloqueante?",
           "points": 3,
-          "correct": 1,
+          "correct": 2,
           "options": [
             "join()",
             "sleep(<millis>)",
@@ -30,7 +30,7 @@
           "points": 2,
           "correct": 0,
           "options": [
-            "Paralelismo e Concorrência em Desenvolvimento",
+            "Programacao Concorrente e Distribuida",
             "Processamento de Computadores Distribuídos",
             "Programação com Dados",
             "Projeto de Computadores Digitais"
