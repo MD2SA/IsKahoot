@@ -9,11 +9,16 @@ import server.game.utils.Score;
 import utils.quiz.Question;
 import java.awt.*;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
+
+import utils.Timer;
 
 public class GUI extends Observed {
 
         private final JPanel questionPanel;
         private final JPanel scorePanel;
+        private JLabel timerLabel;
+        private Timer timer;
 
         private int selectedOption;
 
@@ -37,6 +42,9 @@ public class GUI extends Observed {
                 questionPanel.setBorder(new EmptyBorder(15, 15, 15, 15));
                 questionPanel.setBackground(Color.WHITE);
 
+                // Inicialização do timerLabel
+                timerLabel = new JLabel("", SwingConstants.CENTER);
+
                 JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, scorePanel, questionPanel);
                 splitPane.setResizeWeight(0.35);
                 splitPane.setDividerSize(5);
@@ -56,6 +64,14 @@ public class GUI extends Observed {
                 q.setFont(new Font("SansSerif", Font.BOLD, 18));
                 q.setAlignmentX(Component.CENTER_ALIGNMENT);
                 q.setBorder(new EmptyBorder(10, 0, 20, 0));
+
+                // Painel do timer
+                JPanel timerPanel = new JPanel();
+                timerPanel.setBackground(Color.WHITE);
+                timerPanel.setLayout(new FlowLayout(FlowLayout.CENTER));
+                timerLabel.setFont(new Font("SansSerif", Font.BOLD, 36));
+                timerLabel.setForeground(Color.BLACK);
+                timerPanel.add(timerLabel);
 
                 JPanel opts = new JPanel();
                 opts.setLayout(new GridLayout(2, 2, 10, 10));
@@ -78,9 +94,31 @@ public class GUI extends Observed {
                 }
 
                 questionPanel.add(q);
+                questionPanel.add(timerPanel);
                 questionPanel.add(opts);
 
                 refresh(questionPanel);
+        }
+
+        public void startTimer(int seconds) {
+                if (timer != null) {
+                        timer.interrupt();
+                }
+                timerLabel.setText(String.valueOf(seconds));
+
+                timer = new Timer(seconds, () -> {
+                        SwingUtilities.invokeLater(() -> {
+                                int current = timer.getTimeLeft();
+                                timerLabel.setText(String.valueOf(current));
+                                if (current <= 5) {
+                                        timerLabel.setForeground(Color.RED);
+                                } else {
+                                        timerLabel.setForeground(Color.BLACK);
+                                }
+                        });
+                }, true);
+
+                timer.start();
         }
 
         public void displayScoreboard(List<Score> scoreboard) {
@@ -184,4 +222,5 @@ public class GUI extends Observed {
         public int getSelectedOption() {
                 return selectedOption;
         }
+
 }
