@@ -67,6 +67,7 @@ public class Client extends Thread implements Observer {
                                         this.gui.displayEndGame();
                                         return;
                                 }
+                                this.gui.startTimer(Config.Features.ROUND_SECONDS);
                                 this.gui.displayQuestion(question);
                         } catch (Exception e) {
                                 // TODO: handle exception
