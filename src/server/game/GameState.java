@@ -4,7 +4,6 @@ import server.DealWithClient;
 import server.GameManager;
 import server.Server;
 import server.game.utils.Answer;
-import server.game.utils.Lock;
 import server.game.utils.ModifiedCountdownLatch;
 import server.game.utils.Player;
 import server.game.utils.Score;
@@ -12,12 +11,10 @@ import utils.quiz.Question;
 import utils.quiz.Quiz;
 import utils.tools.ConcurrentMap;
 
-import java.util.Deque;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 
@@ -31,7 +28,6 @@ public class GameState implements Runnable {
         private final GameManager gameManager;
 
         private final Set<DealWithClient> clientHandlers = ConcurrentHashMap.newKeySet();
-        private AtomicInteger numberOfRealPlayers = new AtomicInteger(0);
         // private Set<String> answeredPlayers = new HashSet<>();
 
         private volatile boolean started = false;
@@ -55,7 +51,7 @@ public class GameState implements Runnable {
                 int round;
                 int numberOfQuestions = quiz.getNumberOfQuestions();
 
-                while ((round = curRound.incrementAndGet()) < numberOfQuestions && numberOfRealPlayers.get() > 0) {
+                while ((round = curRound.incrementAndGet()) < numberOfQuestions && clientHandlers.size() > 0) {
 
                         this.latch = getGameLatch();
                         Question question = quiz.getQuestion(round);
@@ -76,7 +72,6 @@ public class GameState implements Runnable {
                         return false;
 
                 clientHandlers.add(handler);
-                numberOfRealPlayers.incrementAndGet();
                 gameManager.startGameWhenFull(id);
 
                 return true;
@@ -90,9 +85,8 @@ public class GameState implements Runnable {
 
                 if (handler == null || !clientHandlers.remove(handler))
                         return false;
-                if (started)
+                if (!started)
                         teamManager.remove(username);
-                numberOfRealPlayers.decrementAndGet();
 
                 return true;
         }
@@ -148,7 +142,7 @@ public class GameState implements Runnable {
                 return new ModifiedCountdownLatch(Config.Features.BONUS_COUNT,
                                 Config.Features.BONUS_FACTOR,
                                 Config.Features.ROUND_SECONDS,
-                                numberOfRealPlayers.get());
+                                clientHandlers.size());
         }
 
         private void scoreAnswers() {
@@ -164,6 +158,7 @@ public class GameState implements Runnable {
                         int updatedScore = player.getScore() + (points * bonusFactor);
                         player.setScore(updatedScore);
                 }
+                answers.clear();
         }
 
 }
