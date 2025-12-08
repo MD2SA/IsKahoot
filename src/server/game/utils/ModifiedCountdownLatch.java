@@ -32,8 +32,8 @@ public class ModifiedCountdownLatch {
                 int factor = (answeredCount <= bonusCount) ? bonusFactor : 1;
 
                 if (answeredCount >= totalPlayers) {
-                        notifyAll();
                         cancelTimer();
+                        notifyAll();
                 }
 
                 return factor;

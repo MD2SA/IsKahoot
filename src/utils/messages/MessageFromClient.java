@@ -15,15 +15,15 @@ public class MessageFromClient extends Message {
                 this.clientId = clientId;
                 this.gameId = gameId;
                 this.teamId = teamId;
-                this.answer = new Answer(clientId, option, roundNumber);
+                this.answer = new Answer(teamId, clientId, option, roundNumber);
         }
 
         public static MessageFromClient getRegistrationMessage(String clientId, String teamId, String gameId) {
                 return new MessageFromClient(Code.REGISTER, clientId, teamId, gameId, -1, -1);
         }
 
-        public static MessageFromClient getAnswerQuestion(String clientId, int option, int roundNumber) {
-                return new MessageFromClient(Code.ANSWER, clientId, null, null, option, roundNumber);
+        public static MessageFromClient getAnswerQuestion(String clientId, String teamId, int option, int roundNumber) {
+                return new MessageFromClient(Code.ANSWER, clientId, teamId, null, option, roundNumber);
         }
 
         public String getClientId() {

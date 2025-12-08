@@ -7,6 +7,7 @@ public class Question implements Serializable {
         private String question;
         private int points;
         private transient int correct;
+        private boolean isIndividual;
         private List<String> options;
 
         public Question(String label, int points, int correct, List<String> options) {
@@ -16,14 +17,28 @@ public class Question implements Serializable {
                 this.options = options;
         }
 
-        public String getQuestion() { return question; }
+        public String getQuestion() {
+                return question;
+        }
 
-        public int getPoints() { return points; }
+        public int getPoints() {
+                return points;
+        }
 
-        public int getCorrect() { return correct; }
+        public int getCorrect() {
+                return correct;
+        }
 
-        public List<String> getOptions() { return options; }
+        public boolean isIndividual() {
+                return isIndividual;
+        }
 
-        public boolean isCorrect(int option) { return option == correct; }
+        public List<String> getOptions() {
+                return options;
+        }
+
+        public boolean isCorrect(int option) {
+                return option == correct;
+        }
 
 }

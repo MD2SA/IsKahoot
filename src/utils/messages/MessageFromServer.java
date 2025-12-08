@@ -2,7 +2,7 @@ package utils.messages;
 
 import java.util.List;
 
-import server.game.utils.Score;
+import utils.quiz.Score;
 import utils.quiz.Question;
 
 public class MessageFromServer extends Message {

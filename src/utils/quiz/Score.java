@@ -1,4 +1,4 @@
-package server.game.utils;
+package utils.quiz;
 
 public interface Score {
 

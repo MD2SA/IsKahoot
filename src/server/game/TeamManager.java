@@ -2,7 +2,7 @@ package server.game;
 
 import server.Server;
 import server.game.utils.Player;
-import server.game.utils.Score;
+import utils.quiz.Score;
 import server.game.utils.Team;
 import utils.tools.ConcurrentMap;
 
@@ -79,6 +79,10 @@ public class TeamManager {
 
         public boolean hasPlayer(String username) {
                 return playerMap.containsKey(username);
+        }
+
+        public List<Team> getTeams() {
+                return new ArrayList<>(teamMap.values());
         }
 
 }
