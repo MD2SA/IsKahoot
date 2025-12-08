@@ -7,6 +7,7 @@
           "question": "O que é uma thread?",
           "points": 5,
           "correct": 3,
+          "isIndividual": true,
           "options": [
             "Processo",
             "Aplicação",
@@ -18,6 +19,7 @@
           "question": "Qual destas operações não é um método bloqueante?",
           "points": 3,
           "correct": 2,
+          "isIndividual": false,
           "options": [
             "join()",
             "sleep(<millis>)",
@@ -29,6 +31,7 @@
           "question": "O que significa PCD?",
           "points": 2,
           "correct": 0,
+          "isIndividual": true,
           "options": [
             "Programacao Concorrente e Distribuida",
             "Processamento de Computadores Distribuídos",
@@ -45,6 +48,7 @@
           "question": "Qual é a função do método sleep() em Java?",
           "points": 4,
           "correct": 0,
+          "isIndividual": false,
           "options": [
             "Suspender a execução de uma thread por um tempo",
             "Parar a JVM",
@@ -56,6 +60,7 @@
           "question": "O que é um deadlock?",
           "points": 5,
           "correct": 1,
+          "isIndividual": true,
           "options": [
             "Uma exceção de thread",
             "Situação em que duas ou mais threads ficam bloqueadas esperando recursos",
@@ -67,6 +72,7 @@
           "question": "Qual palavra-chave usamos para criar uma thread em Java?",
           "points": 3,
           "correct": 0,
+          "isIndividual": false,
           "options": [
             "extends Thread",
             "implements Runnable",
@@ -78,3 +84,4 @@
     }
   ]
 }
+

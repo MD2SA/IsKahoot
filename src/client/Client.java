@@ -7,7 +7,7 @@ import client.gui.Observer.Observed;
 import configs.Config;
 import utils.messages.MessageFromClient;
 import utils.messages.MessageFromServer;
-import server.game.utils.Score;
+import utils.quiz.Score;
 import utils.messages.Code;
 import utils.quiz.Question;
 
@@ -77,7 +77,7 @@ public class Client extends Thread implements Observer {
         }
 
         private void sendAnswer(int option) {
-                MessageFromClient msgSent = MessageFromClient.getAnswerQuestion(username, option, roundNumber);
+                MessageFromClient msgSent = MessageFromClient.getAnswerQuestion(username, teamId, option, roundNumber);
                 System.out.println(roundNumber);
                 try {
                         out.writeObject(msgSent);

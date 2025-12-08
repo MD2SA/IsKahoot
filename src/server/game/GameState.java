@@ -5,8 +5,10 @@ import server.GameManager;
 import server.Server;
 import server.game.utils.Answer;
 import server.game.utils.ModifiedCountdownLatch;
+import server.game.utils.ModifiedCyclicBarrier;
 import server.game.utils.Player;
-import server.game.utils.Score;
+import utils.quiz.Score;
+import server.game.utils.Team;
 import utils.quiz.Question;
 import utils.quiz.Quiz;
 import utils.tools.ConcurrentMap;
@@ -33,6 +35,8 @@ public class GameState implements Runnable {
         private volatile boolean started = false;
         private AtomicInteger curRound = new AtomicInteger(-1);
         private ModifiedCountdownLatch latch;
+        // teamId->CyclicBarrier
+        private ConcurrentMap<String, ModifiedCyclicBarrier> teamBarriers = new ConcurrentMap<>();
 
         private final ConcurrentMap<Answer, Integer> answers = new ConcurrentMap<>();
 
@@ -55,9 +59,18 @@ public class GameState implements Runnable {
 
                         this.latch = getGameLatch();
                         Question question = quiz.getQuestion(round);
+                        if (!question.isIndividual()) {
+                                teamBarriers = null;
+                                teamBarriers = new ConcurrentMap<>();
+                                for (Team team : teamManager.getTeams()) {
+                                        teamBarriers.put(team.getName(), new ModifiedCyclicBarrier(team.size()));
+                                        System.out.println("creating a team barrier witch size " + team.size());
+                                }
+                        }
                         broadcastUpdate(question, teamManager.getScoreboard());
                         try {
                                 latch.await();
+                                System.out.println("Stopped waiting");
                         } catch (InterruptedException e) {
                                 Server.getInstance().getLogger().error("GameState start latch interrupted");
                         }
@@ -96,7 +109,20 @@ public class GameState implements Runnable {
                         Server.getInstance().getLogger().info("Cannot accept answer from " + answer.getUsername());
                         return;
                 }
-                answers.put(answer, latch.countdown());
+                if (quiz.getQuestion(curRound.get()).isIndividual()) {
+                        answers.put(answer, latch.countdown());
+                } else {
+                        ModifiedCyclicBarrier barrier = teamBarriers.get(answer.getTeamId());
+                        if (barrier == null) {
+                                throw new RuntimeException();
+                        }
+                        try {
+                                answers.put(answer, barrier.await());
+                        } catch (InterruptedException e) {
+                        }
+                        System.out.println("Counted down");
+                        latch.countdown();
+                }
         }
 
         public String getId() {

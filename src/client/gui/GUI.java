@@ -5,7 +5,7 @@ import javax.swing.border.EmptyBorder;
 import javax.swing.border.LineBorder;
 import javax.swing.table.DefaultTableCellRenderer;
 import client.gui.Observer.Observed;
-import server.game.utils.Score;
+import utils.quiz.Score;
 import utils.quiz.Question;
 import java.awt.*;
 import java.util.List;

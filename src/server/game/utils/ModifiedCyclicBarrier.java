@@ -12,8 +12,10 @@ public class ModifiedCyclicBarrier {
 
         public synchronized int await() throws InterruptedException {
                 waiters++;
+                System.out.println("Waiters: " + waiters + "/" + maxWaiters);
                 while (waiters < maxWaiters || release)
                         wait();
+                notifyAll();
                 return release ? 2 : 1;
         }
 

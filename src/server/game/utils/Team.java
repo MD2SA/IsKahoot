@@ -4,6 +4,8 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
+import utils.quiz.Score;
+
 public class Team implements Score, Serializable {
 
         private final String name;
@@ -16,7 +18,9 @@ public class Team implements Score, Serializable {
         }
 
         @Override
-        public String getName() { return name; }
+        public String getName() {
+                return name;
+        }
 
         @Override
         public int getScore() {
@@ -24,9 +28,13 @@ public class Team implements Score, Serializable {
         }
 
         public boolean addPlayer(Player player) {
-                if(capacity<=players.size()) return false;
+                if (capacity <= players.size())
+                        return false;
                 return players.add(player);
         }
 
+        public int size() {
+                return players.size();
+        }
 
 }

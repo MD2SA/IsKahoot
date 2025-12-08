@@ -2,6 +2,8 @@ package server.game.utils;
 
 import java.io.Serializable;
 
+import utils.quiz.Score;
+
 public class Player implements Score, Serializable {
 
         private int score;
