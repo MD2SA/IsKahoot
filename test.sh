@@ -9,4 +9,6 @@ jrc -r client.Main test1 0 $GAME >/dev/null 2>&1 &
 jrc -r client.Main test2 1 $GAME >/dev/null 2>&1 &
 jrc -r client.Main test3 1 $GAME >/dev/null 2>&1 &
 
-wait
+echo -n "Press anything to kill all processes"
+read
+killall java
