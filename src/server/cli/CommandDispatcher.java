@@ -5,7 +5,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Scanner;
 
-import server.Server;
 import server.cli.bin.*;
 import server.cli.utils.Helpers;
 
@@ -25,6 +24,7 @@ public class CommandDispatcher {
                 register(new LogsCommand());
                 register(new HelpCommand(this));
                 register(new ExitCommand());
+                register(new ClearCommand());
         }
 
         public void register(Command command) {
@@ -44,7 +44,6 @@ public class CommandDispatcher {
                         return;
                 }
                 cmd.execute(scanner, context, args);
-
         }
 
         public void showHelp() {
