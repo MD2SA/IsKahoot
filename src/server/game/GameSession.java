@@ -5,7 +5,7 @@ import java.util.function.Consumer;
 
 import server.DealWithClient;
 import server.Server;
-import server.game.utils.Answer;
+import utils.quiz.Answer;
 import utils.quiz.Question;
 import utils.quiz.Quiz;
 import utils.quiz.Score;

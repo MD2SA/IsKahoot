@@ -61,19 +61,6 @@ public class Helpers {
                 return id;
         }
 
-        public static boolean askYesNo(Scanner scanner, String prompt) {
-                while (true) {
-                        System.out.print(prompt + " [y]es/[n]o: ");
-                        String input = scanner.nextLine().trim().toLowerCase();
-                        if (input.equals("y") || input.equals("yes"))
-                                return true;
-                        else if (input.equals("n") || input.equals("no"))
-                                return false;
-                        else
-                                System.out.println("Please answer 'y' or 'n'.");
-                }
-        }
-
         public static String readGameCode(Scanner scanner, GameManager gameManager, int length) {
 
                 System.out.printf("Game code (letters/numbers only) - press enter for random: ", length);
