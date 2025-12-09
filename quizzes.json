@@ -38,6 +38,42 @@
             "Programação com Dados",
             "Projeto de Computadores Digitais"
           ]
+        },
+        {
+          "question": "Qual é a diferença entre processo e thread?",
+          "points": 4,
+          "correct": 2,
+          "isIndividual": false,
+          "options": [
+            "Processos compartilham memória, threads não",
+            "Threads são independentes do processo",
+            "Threads compartilham memória do processo",
+            "Não há diferença"
+          ]
+        },
+        {
+          "question": "Qual método é usado para iniciar uma thread em Java?",
+          "points": 3,
+          "correct": 0,
+          "isIndividual": true,
+          "options": [
+            "run()",
+            "start()",
+            "execute()",
+            "begin()"
+          ]
+        },
+        {
+          "question": "O que é sincronização de threads?",
+          "points": 3,
+          "correct": 1,
+          "isIndividual": false,
+          "options": [
+            "Execução de threads em paralelo sem controle",
+            "Controle do acesso a recursos compartilhados",
+            "Criação de threads em tempo real",
+            "Encerramento automático de threads"
+          ]
         }
       ]
     },
@@ -78,6 +114,42 @@
             "implements Runnable",
             "synchronized",
             "static"
+          ]
+        },
+        {
+          "question": "O que significa que uma thread é 'daemon'?",
+          "points": 2,
+          "correct": 1,
+          "isIndividual": false,
+          "options": [
+            "Executa tarefas críticas do sistema",
+            "Morre automaticamente quando todas as threads não-daemon terminam",
+            "Não pode ser interrompida",
+            "É uma thread principal"
+          ]
+        },
+        {
+          "question": "Qual método força uma thread a esperar até outra terminar?",
+          "points": 3,
+          "correct": 2,
+          "isIndividual": true,
+          "options": [
+            "wait()",
+            "notify()",
+            "join()",
+            "sleep()"
+          ]
+        },
+        {
+          "question": "Qual é o objetivo da palavra-chave synchronized?",
+          "points": 3,
+          "correct": 0,
+          "isIndividual": false,
+          "options": [
+            "Evitar condições de corrida em recursos compartilhados",
+            "Criar threads automaticamente",
+            "Encerrar threads em execução",
+            "Gerenciar exceções de threads"
           ]
         }
       ]

@@ -3,7 +3,7 @@ package server.cli.bin;
 import java.util.List;
 import java.util.Scanner;
 
-import server.game.GameState;
+import server.game.GameSession;
 
 import server.cli.Command;
 import server.cli.CommandContext;
@@ -22,18 +22,17 @@ public class ListGamesCommand implements Command {
                 return "Lists all active games";
         }
 
-        //fazer aqui para dar para lista apenas os jogos que já comecaram, os que acabaram, etc..
         @Override
         public void execute(Scanner scanner, CommandContext context, String[] args) {
-                List<GameState> games = context.gameManager().getGames();
+                List<GameSession> games = context.gameManager().getGames();
 
                 System.out.println(Constants.MARGIN);
 
                 Helpers.printSectionHeader("Active games:");
-                if( games == null || games.size() == 0) {
+                if (games == null || games.size() == 0) {
                         System.out.println("    (no games)");
                 }
-                for (int i = 0; i<games.size(); i++) {
+                for (int i = 0; i < games.size(); i++) {
                         System.out.printf("%d. %s%n", i + 1, games.get(i).getId());
                 }
 

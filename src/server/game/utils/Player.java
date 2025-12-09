@@ -32,6 +32,12 @@ public class Player implements Score, Serializable {
                 this.score = score;
         }
 
+        public void increaseScore(int score) {
+                System.out.println("old score" + this.score);
+                this.score += score;
+                System.out.println("new score" + this.score);
+        }
+
         @Override
         public String toString() {
                 return "score: " + score + "- name: " + name;

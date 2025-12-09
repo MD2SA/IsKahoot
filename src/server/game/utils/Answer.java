@@ -8,6 +8,7 @@ public class Answer implements Serializable {
         private final String username;
         private final int option;
         private final int roundNumber;
+        private transient int bonus;
 
         public Answer(String teamId, String username, int option, int roundNumber) {
                 this.teamId = teamId;
@@ -30,5 +31,14 @@ public class Answer implements Serializable {
 
         public int getRoundNumber() {
                 return roundNumber;
+        }
+
+        public int getBonus() {
+                return bonus;
+        }
+
+        public void setBonus(int bonus) {
+                System.out.println("Count down bonus was" + bonus);
+                this.bonus = bonus;
         }
 }

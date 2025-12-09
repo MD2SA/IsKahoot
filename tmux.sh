@@ -9,11 +9,9 @@ tmux new-session -d -s $SESSION -n code
 # window 0: nvim
 tmux send-keys -t $SESSION:0 "nvim ." C-m
 
-# window 1: server cmd
-tmux new-window -t $SESSION -n server
-
-# window 2: client cmd
-tmux new-window -t $SESSION -n client
+# window 1: cmd
+tmux new-window -t $SESSION -n cmd
+tmux split-window -h -t $SESSION:cmd
 
 # focus on code
 tmux select-window -t $SESSION:code
