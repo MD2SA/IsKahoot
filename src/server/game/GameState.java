@@ -1,7 +1,7 @@
 package server.game;
 
 import server.Server;
-import server.game.utils.Answer;
+import utils.quiz.Answer;
 import server.game.utils.Player;
 import utils.quiz.Quiz;
 import utils.quiz.Score;

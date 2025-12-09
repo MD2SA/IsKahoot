@@ -1,6 +1,6 @@
 package utils.messages;
 
-import server.game.utils.Answer;
+import utils.quiz.Answer;
 
 public class MessageFromClient extends Message {
 

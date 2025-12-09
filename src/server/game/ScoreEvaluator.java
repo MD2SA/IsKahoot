@@ -2,7 +2,7 @@ package server.game;
 
 import java.util.Map;
 
-import server.game.utils.Answer;
+import utils.quiz.Answer;
 import server.game.utils.Player;
 import utils.quiz.Question;
 
