@@ -41,7 +41,6 @@ public class GameSession implements Runnable {
         public void receiveAnswer(Answer answer) {
                 if (syncController.isRoundReady())
                         gameState.answer(answer, syncController);
-                System.out.println("IS ROUND READY" + syncController.isRoundReady());
         }
 
         @Override
@@ -51,7 +50,7 @@ public class GameSession implements Runnable {
                 for (int round = 0; round < rounds; round++) {
                         Question question = gameState.getQuiz().getQuestion(round);
                         syncController.prepareRound(round, question.isIndividual(), clientHandlers.size(),
-                                        gameState.getTeams());
+                                        gameState);
 
                         broadcastUpdate(question, gameState.getScoreboard());
 

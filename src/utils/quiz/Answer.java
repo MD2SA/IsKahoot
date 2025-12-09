@@ -38,7 +38,6 @@ public class Answer implements Serializable {
         }
 
         public void setBonus(int bonus) {
-                System.out.println("Count down bonus was" + bonus);
                 this.bonus = bonus;
         }
 }
