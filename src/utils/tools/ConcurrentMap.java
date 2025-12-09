@@ -5,44 +5,67 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
-public class ConcurrentMap<K, V> {
+public class ConcurrentMap<K, V> implements Map<K, V> {
 
         private final Map<K, V> map = new HashMap<>();
 
-        public synchronized boolean containsKey(K key) {
-                return map.containsKey(key);
-        }
-
-        public synchronized V put(K key, V value) {
-                return map.put(key, value);
-        }
-
-        public synchronized V get(K key) {
-                return map.get(key);
-        }
-
-        public V getOrDefault(K key, V defaultValue) {
-                return map.getOrDefault(key, defaultValue);
-        }
-
-        public synchronized void clear() {
-                map.clear();
-        }
-
+        @Override
         public synchronized int size() {
                 return map.size();
         }
 
+        @Override
+        public synchronized boolean isEmpty() {
+                return map.isEmpty();
+        }
+
+        @Override
+        public synchronized boolean containsKey(Object key) {
+                return map.containsKey(key);
+        }
+
+        @Override
+        public synchronized boolean containsValue(Object value) {
+                return map.containsValue(value);
+        }
+
+        @Override
+        public synchronized V get(Object key) {
+                return map.get(key);
+        }
+
+        @Override
+        public synchronized V put(K key, V value) {
+                return map.put(key, value);
+        }
+
+        @Override
+        public synchronized V remove(Object key) {
+                return map.remove(key);
+        }
+
+        @Override
+        public synchronized void putAll(Map<? extends K, ? extends V> m) {
+                map.putAll(m);
+        }
+
+        @Override
+        public synchronized void clear() {
+                map.clear();
+        }
+
+        @Override
+        public synchronized Set<K> keySet() {
+                return map.keySet();
+        }
+
+        @Override
         public synchronized Collection<V> values() {
                 return map.values();
         }
 
-        public synchronized V remove(K key) {
-                return map.remove(key);
-        }
-
-        public synchronized Set<Map.Entry<K, V>> entrySet() {
+        @Override
+        public synchronized Set<Entry<K, V>> entrySet() {
                 return map.entrySet();
         }
-
 }

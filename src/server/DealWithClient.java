@@ -6,6 +6,7 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
 
+import server.game.GameSession;
 import server.game.GameState;
 import utils.quiz.Score;
 import utils.messages.Code;
@@ -25,7 +26,7 @@ public class DealWithClient implements Runnable, AutoCloseable {
 
         private String clientId;
         private String teamId;
-        private GameState game;
+        private GameSession game;
         private int roundNumber;
 
         public DealWithClient(Server server, Socket socket) throws IOException {
@@ -59,14 +60,9 @@ public class DealWithClient implements Runnable, AutoCloseable {
                 this.clientId = msg.getClientId();
                 this.teamId = msg.getTeamId();
 
-                GameState game = server.getGameManager().getGame(msg.getGameId());
-                if (game == null) {
-                        server.getLogger().debug("Game does not exist to register" + msg.getGameId());
-                        return false;
-                }
-                this.game = game;
+                this.game = server.getGameManager().registerToGame(this, msg.getGameId());
 
-                return game.registerPlayer(clientId, teamId, this);
+                return game != null;
         }
 
         private void serve() {
@@ -84,7 +80,7 @@ public class DealWithClient implements Runnable, AutoCloseable {
                         }
 
                         if (msg.getCode() == Code.ANSWER)
-                                this.game.answer(msg.getAnswer());
+                                this.game.receiveAnswer(msg.getAnswer());
                 }
         }
 
@@ -127,7 +123,7 @@ public class DealWithClient implements Runnable, AutoCloseable {
 
         private void cleanup() {
                 if (game != null)
-                        game.unregisterPlayer(clientId);
+                        game.leave(this);
                 closeQuietly(socket, in, out);
         }
 

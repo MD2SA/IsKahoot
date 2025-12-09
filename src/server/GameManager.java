@@ -2,7 +2,7 @@ package server;
 
 import server.cli.CommandDispatcher;
 import server.cli.CommandContext;
-import server.game.GameState;
+import server.game.GameSession;
 import utils.quiz.Quiz;
 import utils.quiz.QuizCreator;
 import utils.tools.ConcurrentMap;
@@ -18,7 +18,7 @@ import java.util.concurrent.Executors;
 public class GameManager extends Thread {
 
         private final List<Quiz> quizzes;
-        private final ConcurrentMap<String, GameState> games = new ConcurrentMap<>();
+        private final ConcurrentMap<String, GameSession> games = new ConcurrentMap<>();
 
         private final ExecutorService gameExecutor = Executors.newFixedThreadPool(5);
         private final CommandDispatcher dispatcher;
@@ -30,18 +30,25 @@ public class GameManager extends Thread {
 
         public void createGame(String gameId, int teams, int capacity, int quizNumber) {
                 Quiz quiz = quizzes.get(quizNumber);
-                GameState game = new GameState(gameId, teams, capacity, quiz, this);
+                GameSession game = new GameSession(gameId, quiz, teams, capacity);
                 games.put(gameId, game);
                 Server.getInstance().getLogger().debug("Game created: " + gameId);
         }
 
-        public void startGameWhenFull(String gameId) {
-                GameState game = games.get(gameId);
-                if (game != null && game.isFull() && !game.hasStarted())
-                        gameExecutor.submit(game);
+        public GameSession registerToGame(DealWithClient handler, String gameId) {
+                GameSession game = games.get(gameId);
+                if (game != null && game.join(handler) && game.isFull())
+                        startGame(game);
+                return game;
+
         }
 
-        public void removeGame(String gameId) {
+        private void startGame(GameSession game) {
+                games.remove(game.getId());
+                gameExecutor.submit(game);
+        }
+
+        void removeGame(String gameId) {
                 games.remove(gameId);
         }
 
@@ -60,11 +67,11 @@ public class GameManager extends Thread {
                 return quizzes;
         }
 
-        public GameState getGame(String gameId) {
+        public GameSession getGame(String gameId) {
                 return games.get(gameId);
         }
 
-        public List<GameState> getGames() {
+        public List<GameSession> getGames() {
                 return new ArrayList<>(games.values());
         }
 
