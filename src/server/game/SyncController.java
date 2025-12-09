@@ -1,6 +1,5 @@
 package server.game;
 
-import java.util.List;
 import java.util.Map;
 
 import configs.Config;
@@ -19,23 +18,24 @@ public class SyncController {
         private boolean roundReady;
         private int curRound;
 
-        public void prepareRound(int round, boolean isIndividual, int totalPlayers, List<Team> teams) {
+        void prepareRound(int round, boolean isIndividual, int totalPlayers, GameState gameState) {
                 this.curRound = round;
                 this.globalLatch = new ModifiedCountdownLatch(Config.Features.BONUS_COUNT,
                                 Config.Features.BONUS_FACTOR,
                                 Config.Features.ROUND_SECONDS,
                                 totalPlayers);
+                gameState.resetAnswers();
 
                 if (!(this.isIndividual = isIndividual)) {
                         barriers = new ConcurrentMap<>();
-                        for (Team team : teams) {
+                        for (Team team : gameState.getTeams()) {
                                 barriers.put(team.getName(), new ModifiedCyclicBarrier(team.size()));
                         }
                 }
                 roundReady = true;
         }
 
-        public void notifyAnswer(Answer answer) {
+        void notifyAnswer(Answer answer) {
                 if (answer.getRoundNumber() != curRound)
                         return;
 
@@ -46,7 +46,6 @@ public class SyncController {
 
                 try {
                         int bonus = barriers.get(answer.getTeamId()).await();
-                        System.out.println("stopped waiting on team");
                         answer.setBonus(bonus);
                 } catch (InterruptedException e) {
                 }
@@ -57,13 +56,13 @@ public class SyncController {
                 try {
                         globalLatch.await();
                         if (!isIndividual) {
-                                System.out.println("libertando");
+                                System.out.println("libertando equipas");
                                 barriers.values().forEach(b -> b.forceRelease());
                         }
-                        System.out.println("end of round");
                 } catch (InterruptedException e) {
                 }
                 roundReady = false;
+                System.out.println("end of round");
         }
 
         public boolean isRoundReady() {

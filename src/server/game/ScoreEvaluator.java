@@ -17,8 +17,6 @@ public class ScoreEvaluator {
                         if (correct != answer.getOption())
                                 continue;
                         player.increaseScore(answer.getBonus() * points);
-                        System.out.println("Player got it right" + player.getName());
-                        System.out.println(answer.getBonus());
                 }
         }
 }
