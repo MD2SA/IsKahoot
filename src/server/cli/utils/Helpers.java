@@ -108,4 +108,50 @@ public class Helpers {
                 return fallbackCode;
         }
 
+        public static int getArgOrReadPositiveInt(String[] args, int argIndex, Scanner scanner, String prompt) {
+                if (args.length > argIndex) {
+                        try {
+                                int value = Integer.parseInt(args[argIndex]);
+                                if (value <= 0)
+                                        throw new NumberFormatException();
+                                System.out.println(prompt + " " + value);
+                                return value;
+                        } catch (NumberFormatException e) {
+                                System.out.printf("Invalid argument '%s'. Falling back to input.%n", args[argIndex]);
+                        }
+                }
+                return Helpers.readPositiveInt(scanner, prompt);
+        }
+
+        public static int getArgOrReadIntInRange(String[] args, int argIndex, Scanner scanner, int min, int max,
+                        String prompt) {
+                if (args.length > argIndex) {
+                        try {
+                                int value = Integer.parseInt(args[argIndex]);
+                                if (value < min || value > max)
+                                        throw new NumberFormatException();
+                                System.out.println(prompt + " " + value);
+                                return value;
+                        } catch (NumberFormatException e) {
+                                System.out.printf("Invalid argument '%s'. Falling back to input.%n", args[argIndex]);
+                        }
+                }
+                return Helpers.readIntInRange(scanner, min, max, prompt);
+        }
+
+        public static String getArgOrReadGameCode(String[] args, int argIndex, Scanner scanner, GameManager gameManager,
+                        int length) {
+                if (args.length > argIndex) {
+                        String code = args[argIndex].trim().toUpperCase();
+                        if (code.matches("[A-Za-z0-9]+") && gameManager.getGame(code) == null) {
+                                System.out.println(
+                                                "Game code (letters/numbers only) - press enter for random: " + code);
+                                return code;
+                        } else {
+                                System.out.println("Invalid or duplicate code in arguments. Falling back to input.");
+                        }
+                }
+                return Helpers.readGameCode(scanner, gameManager, length);
+        }
+
 }

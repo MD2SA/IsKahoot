@@ -34,7 +34,7 @@ public class CommandDispatcher {
         public void processLine(Scanner scanner, String line) {
                 if (line == null || line.isBlank())
                         return;
-                String[] args = line.trim().split("\\s+", 2);
+                String[] args = line.trim().split("\\s+");
                 String cmdName = args[0].toLowerCase();
                 args = Arrays.copyOfRange(args, 1, args.length);
 
