@@ -6,6 +6,7 @@ public class Config {
                 public static final String SERVER_IP = "127.0.0.1";
                 public static final int SERVER_PORT = 8080;
                 public static final String CREATE_GAME_COMMAND = "new";
+                public static final Integer MAX_GAMES = 5;
         }
 
         public static class Features {

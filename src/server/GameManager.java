@@ -6,21 +6,22 @@ import server.game.GameSession;
 import utils.quiz.Quiz;
 import utils.quiz.QuizCreator;
 import utils.tools.ConcurrentMap;
+import utils.tools.ThreadPool;
 
 import java.util.List;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Scanner;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+
+import configs.Config;
 
 public class GameManager extends Thread {
 
         private final List<Quiz> quizzes;
         private final ConcurrentMap<String, GameSession> games = new ConcurrentMap<>();
 
-        private final ExecutorService gameExecutor = Executors.newFixedThreadPool(5);
+        private final ThreadPool pool = new ThreadPool(Config.Server.MAX_GAMES);
         private final CommandDispatcher dispatcher;
 
         public GameManager() throws IOException {
@@ -45,7 +46,7 @@ public class GameManager extends Thread {
 
         private void startGame(GameSession game) {
                 games.remove(game.getId());
-                gameExecutor.submit(game);
+                pool.submit(game);
         }
 
         void removeGame(String gameId) {
