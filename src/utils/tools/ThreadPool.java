@@ -2,8 +2,6 @@ package utils.tools;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.LinkedBlockingQueue;
 
 public class ThreadPool {
 
@@ -14,7 +12,7 @@ public class ThreadPool {
         public ThreadPool(int numThreads) {
                 if (numThreads <= 0)
                         throw new IllegalArgumentException("Number of threads must be positive");
-                this.taskQueue = new LinkedBlockingQueue<>();
+                this.taskQueue = new BlockingQueue<>();
                 this.workers = new ArrayList<>(numThreads);
 
                 for (int i = 0; i < numThreads; i++) {
@@ -29,12 +27,7 @@ public class ThreadPool {
                         throw new IllegalStateException("Thread pool is shutdown");
                 if (runnable == null)
                         throw new NullPointerException("Task cannot be null");
-                try {
-                        taskQueue.put(runnable);
-                } catch (InterruptedException e) {
-                        Thread.currentThread().interrupt();
-                        throw new RuntimeException("Interrupted while adding task", e);
-                }
+                taskQueue.put(runnable);
         }
 
         public void shutdown() {

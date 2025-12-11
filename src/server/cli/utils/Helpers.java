@@ -1,7 +1,7 @@
 package server.cli.utils;
 
+import java.util.Random;
 import java.util.Scanner;
-import java.util.concurrent.ThreadLocalRandom;
 
 import server.GameManager;
 
@@ -52,7 +52,7 @@ public class Helpers {
                 do {
                         StringBuilder sb = new StringBuilder();
                         while (sb.length() < length) {
-                                int randomIdx = ThreadLocalRandom.current().nextInt(chars.length());
+                                int randomIdx = (new Random()).nextInt(chars.length());
                                 sb.append(chars.charAt(randomIdx));
                         }
                         id = sb.toString();
