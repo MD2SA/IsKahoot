@@ -9,7 +9,6 @@ import utils.quiz.Score;
 import utils.quiz.Question;
 import java.awt.*;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import utils.Timer;
 
