@@ -18,4 +18,3 @@ tmux select-window -t $SESSION:code
 
 # attach session after setup
 tmux attach-session -t $SESSION
-
