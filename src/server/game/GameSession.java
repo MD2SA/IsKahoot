@@ -3,6 +3,7 @@ package server.game;
 import java.util.List;
 import java.util.function.Consumer;
 
+import configs.Config;
 import server.DealWithClient;
 import server.Server;
 import utils.quiz.Answer;
@@ -54,7 +55,12 @@ public class GameSession implements Runnable {
 
                         broadcastUpdate(question, gameState.getScoreboard());
 
-                        syncController.waitForRoundEnd();
+                        try {
+                                syncController.waitForRoundEnd();
+                        } catch (Exception e) {
+                                // TODO: send Error to users
+                        }
+
                         ScoreEvaluator.scoreAnswers(question, gameState.getAnswers());
                 }
                 endGame();

@@ -57,4 +57,3 @@ echo -n "Press anything to kill all processes"
 read
 
 kill "${PIDS[@]}"
-
