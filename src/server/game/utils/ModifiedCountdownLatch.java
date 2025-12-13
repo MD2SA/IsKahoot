@@ -31,7 +31,6 @@ public class ModifiedCountdownLatch {
 
                 int factor = (answeredCount <= bonusCount) ? bonusFactor : 1;
 
-                System.out.println(answeredCount + "/" + totalPlayers + " waiters in countdown");
                 if (answeredCount >= totalPlayers) {
                         cancelTimer();
                         notifyAll(); //aqui até dava para meter notify() mas nao quero ser guloso

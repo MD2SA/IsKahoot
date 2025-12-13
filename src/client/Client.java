@@ -78,7 +78,6 @@ public class Client extends Thread implements Observer {
 
         private void sendAnswer(int option) {
                 MessageFromClient msgSent = MessageFromClient.getAnswerQuestion(username, teamId, option, roundNumber);
-                System.out.println(roundNumber);
                 try {
                         out.writeObject(msgSent);
                         out.reset();

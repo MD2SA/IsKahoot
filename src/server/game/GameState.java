@@ -60,10 +60,7 @@ public class GameState {
         }
 
         boolean remove(String username) {
-                Player player = playerMap.get(username);
-                if (player == null)
-                        return true;
-                // TODO: remove from team
+                playerMap.remove(username);
                 return true;
         }
 

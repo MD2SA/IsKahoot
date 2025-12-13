@@ -33,11 +33,11 @@ public class Answer implements Serializable {
                 return roundNumber;
         }
 
-        public int getBonus() {
+        public synchronized int getBonus() {
                 return bonus;
         }
 
-        public void setBonus(int bonus) {
+        public synchronized void setBonus(int bonus) {
                 this.bonus = bonus;
         }
 }

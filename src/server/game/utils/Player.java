@@ -33,9 +33,7 @@ public class Player implements Score, Serializable {
         }
 
         public void increaseScore(int score) {
-                System.out.println("old score" + this.score);
                 this.score += score;
-                System.out.println("new score" + this.score);
         }
 
         @Override
