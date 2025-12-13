@@ -56,4 +56,4 @@ echo "All processes started."
 echo -n "Press anything to kill all processes"
 read
 
-kill "${PIDS[@]}"
+kill "${PIDS[@]}" 2>/dev/null

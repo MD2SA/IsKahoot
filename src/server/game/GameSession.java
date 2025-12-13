@@ -72,7 +72,10 @@ public class GameSession implements Runnable {
 
         private void endGame() {
                 List<Score> scoreboard = gameState.getScoreboard(); // keep outside
-                broadcast(handler -> handler.sendEndGame(scoreboard));
+                broadcast(handler -> {
+                        handler.sendEndGame(scoreboard);
+                        handler.close();
+                });
         }
 
         private void broadcast(Consumer<DealWithClient> action) {
