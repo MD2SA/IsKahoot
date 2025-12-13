@@ -7,7 +7,6 @@ import java.io.ObjectOutputStream;
 import java.net.Socket;
 
 import server.game.GameSession;
-import server.game.GameState;
 import utils.quiz.Score;
 import utils.messages.Code;
 import utils.messages.Message;
