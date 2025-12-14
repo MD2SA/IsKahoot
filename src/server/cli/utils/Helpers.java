@@ -56,7 +56,7 @@ public class Helpers {
                                 sb.append(chars.charAt(randomIdx));
                         }
                         id = sb.toString();
-                } while (gameManager.getGame(id) != null);
+                } while (gameManager.hasGame(id));
 
                 return id;
         }
@@ -81,7 +81,7 @@ public class Helpers {
 
                         String code = input.toUpperCase();
 
-                        if (gameManager.getGame(code) != null) {
+                        if (gameManager.hasGame(code)) {
                                 System.out.println("This code already exists. Try another one.");
                                 continue;
                         }
@@ -130,7 +130,7 @@ public class Helpers {
                         int length) {
                 if (args.length > argIndex) {
                         String code = args[argIndex].trim().toUpperCase();
-                        if (code.matches("[A-Za-z0-9]+") && gameManager.getGame(code) == null) {
+                        if (code.matches("[A-Za-z0-9]+") && gameManager.hasGame(code)) {
                                 System.out.println(
                                                 "Game code (letters/numbers only) - press enter for random: " + code);
                                 return code;

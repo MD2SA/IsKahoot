@@ -24,7 +24,7 @@ public class ListGamesCommand implements Command {
 
         @Override
         public void execute(Scanner scanner, CommandContext context, String[] args) {
-                List<GameSession> games = context.gameManager().getGames();
+                List<GameSession> games = context.gameManager().getAllGames();
 
                 System.out.println(Constants.MARGIN);
 
