@@ -59,6 +59,17 @@ public class GUI extends Observed {
                 selectedOption = -1;
                 questionPanel.removeAll();
 
+                String modeText = question.isIndividual() ? "Individual question" : "Team question";
+                JLabel modeLabel = new JLabel(modeText);
+                modeLabel.setFont(new Font("SansSerif", Font.PLAIN, 12));
+                modeLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+                modeLabel.setBorder(new EmptyBorder(5, 0, 5, 0));
+
+                JLabel pointsLabel = new JLabel("For " + question.getPoints() + " points");
+                pointsLabel.setFont(new Font("SansSerif", Font.PLAIN, 12));
+                pointsLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+                pointsLabel.setBorder(new EmptyBorder(0, 0, 10, 0));
+
                 JLabel q = new JLabel(question.getQuestion());
                 q.setFont(new Font("SansSerif", Font.BOLD, 18));
                 q.setAlignmentX(Component.CENTER_ALIGNMENT);
@@ -92,6 +103,8 @@ public class GUI extends Observed {
                         opts.add(b);
                 }
 
+                questionPanel.add(modeLabel);
+                questionPanel.add(pointsLabel);
                 questionPanel.add(q);
                 questionPanel.add(timerPanel);
                 questionPanel.add(opts);
