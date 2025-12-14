@@ -12,7 +12,6 @@ import utils.messages.Code;
 import utils.messages.Message;
 import utils.messages.MessageFromClient;
 import utils.messages.MessageFromServer;
-import utils.quiz.Question;
 import utils.quiz.ReducedQuestion;
 
 public class DealWithClient implements Runnable, AutoCloseable {
@@ -27,7 +26,6 @@ public class DealWithClient implements Runnable, AutoCloseable {
         private String clientId;
         private String teamId;
         private GameSession game;
-        private int roundNumber;
 
         public DealWithClient(Server server, Socket socket) throws IOException {
                 this.server = server;
@@ -79,13 +77,18 @@ public class DealWithClient implements Runnable, AutoCloseable {
                                 break;
                         }
 
-                        if (msg.getCode() == Code.ANSWER)
-                                this.game.receiveAnswer(msg.getAnswer());
+                        if (msg.getCode() == Code.ANSWER) {
+                                try {
+                                        this.game.receiveAnswer(msg.getAnswer());
+                                } catch (Exception e) {
+                                        Thread.currentThread().interrupt();
+                                }
+                        }
                 }
         }
 
-        public void sendRoundInfo(Question question, List<Score> scoreboard) {
-                send(MessageFromServer.updateMessage(roundNumber++, new ReducedQuestion(question), scoreboard));
+        public void sendRoundInfo(ReducedQuestion question, List<Score> scoreboard) {
+                send(MessageFromServer.updateMessage(question, scoreboard));
         }
 
         public void sendEndGame(List<Score> scoreboard) {
@@ -114,6 +117,7 @@ public class DealWithClient implements Runnable, AutoCloseable {
                                 }
                                 return;
                         } catch (Exception e) {
+                                e.printStackTrace();
                                 server.getLogger().warn(
                                                 "Failed to send message (attempt " + (i + 1) + ") to " + clientId);
                         }

@@ -4,32 +4,44 @@ public class ModifiedCyclicBarrier {
 
         private final int maxWaiters;
         private int waiters;
-        private int passedWaiters;
 
-        private boolean releaseLock = false;
+        private boolean released = false;
+        private final Runnable barrierAction;
 
-        public ModifiedCyclicBarrier(int maxWaiters) {
+        public ModifiedCyclicBarrier(int maxWaiters, Runnable barrierAction) {
                 this.maxWaiters = maxWaiters;
+                this.barrierAction = barrierAction;
         }
 
-        public synchronized int await() throws InterruptedException {
+        public synchronized void await() throws InterruptedException {
+                if (released)
+                        return;
+
                 waiters++;
-                while (waiters < maxWaiters && !releaseLock)
-                        wait();
-                if (passedWaiters++ == 0 && !releaseLock)
+
+                if (waiters >= maxWaiters) {
+                        released = true;
+                        if (barrierAction != null) {
+                                barrierAction.run();
+                        }
                         notifyAll();
-                if (passedWaiters == maxWaiters) {
-                        passedWaiters = 0;
-                        waiters -= maxWaiters;
+                        return;
                 }
-                return releaseLock ? 1 : 2;
+
+                while (!released)
+                        wait();
+
+                return;
+
         }
 
         public synchronized void forceRelease() {
-                if (waiters >= maxWaiters)
-                        return;
-                releaseLock = true;
-                notifyAll();
+                if (!released) {
+                        released = true;
+                        if (barrierAction != null) {
+                                barrierAction.run();
+                        }
+                        notifyAll();
+                }
         }
-
 }
