@@ -1,8 +1,12 @@
 #!/usr/bin/env bash
 
-echo -n "Insert game id: "
-read GAME;
-GAME="${GAME:-0}"
+if [ -z "$1" ]; then
+    echo -n "Insert game id: "
+    read GAME;
+    GAME="${GAME:-0}"
+else
+    GAME="$1"
+fi
 
 ./sim.sh 2 2 $GAME
 
