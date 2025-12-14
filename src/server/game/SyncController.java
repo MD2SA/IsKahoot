@@ -15,50 +15,82 @@ public class SyncController {
         private Map<String, ModifiedCyclicBarrier> barriers;
 
         private boolean isIndividual;
-        private boolean roundReady;
         private int curRound;
 
-        void prepareRound(int round, boolean isIndividual, int totalPlayers, GameState gameState) {
+        private boolean roundReady;
+        private boolean closing;
+
+        private int activeAnswers;
+
+        synchronized void prepareRound(int round, boolean isIndividual, int totalPlayers, GameState gameState) {
                 gameState.resetAnswers();
-
-                int totalWaiters = isIndividual ? totalPlayers : gameState.getTeams().size();
-
-                this.curRound = round;
+                // if isIndividual use bonus of countdown
+                // else just use globalLatch has normal countdownlatch with timer
                 this.globalLatch = new ModifiedCountdownLatch(Config.Features.BONUS_COUNT,
                                 Config.Features.BONUS_FACTOR,
                                 Config.Features.ROUND_SECONDS,
-                                totalWaiters);
+                                totalPlayers);
 
                 if (!(this.isIndividual = isIndividual)) {
                         barriers = new ConcurrentMap<>();
                         for (Team team : gameState.getTeams()) {
-                                barriers.put(team.getName(),
-                                                new ModifiedCyclicBarrier(team.size(), () -> globalLatch.countdown()));
+                                barriers.put(team.getName(), new ModifiedCyclicBarrier(team.size()));
                         }
                 }
-                roundReady = true;
+                this.curRound = round;
+                this.activeAnswers = 0;
+                this.closing = false;
+                this.roundReady = true;
         }
 
         void notifyAnswer(Answer answer) {
-                if (answer.getRoundNumber() != curRound)
-                        return;
-
-                if (isIndividual) {
-                        answer.setBonus(globalLatch.countdown());
-                        return;
+                synchronized (this) {
+                        if (!roundReady || answer.getRoundNumber() != curRound)
+                                return;
+                        activeAnswers++;
                 }
+
                 try {
-                        ModifiedCyclicBarrier barrier = barriers.get(answer.getTeamId());
-                        answer.setBonus(barrier.await());
+                        int individualBonus = globalLatch.countdown();
+                        if (isIndividual) {
+                                answer.setBonus(individualBonus);
+                        } else {
+                                ModifiedCyclicBarrier barrier = barriers.get(answer.getTeamId());
+                                if (barrier != null) {
+                                        answer.setBonus(barrier.await());
+                                }
+                        }
                 } catch (InterruptedException e) {
+                        Thread.currentThread().interrupt();
+                } finally {
+                        synchronized (this) {
+                                activeAnswers--;
+                                if (closing && activeAnswers == 0) {
+                                        System.out.println("notified all");
+                                        notifyAll();
+                                }
+                        }
                 }
         }
 
         void waitForRoundEnd() throws InterruptedException {
                 globalLatch.await();
+
+                synchronized (this) {
+                        roundReady = false;
+                        closing = true;
+                        System.out.println("closing");
+                }
+
                 if (!isIndividual)
                         barriers.values().forEach(b -> b.forceRelease());
-                roundReady = false;
+
+                synchronized (this) {
+                        while (activeAnswers > 0)
+                                wait();
+                        System.out.println("finished closing");
+                        closing = false;
+                }
         }
 
         public boolean isRoundReady() {

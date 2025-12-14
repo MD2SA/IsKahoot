@@ -7,28 +7,22 @@ public class ModifiedCyclicBarrier {
         private int passedWaiters;
 
         private boolean releaseLock = false;
-        private final Runnable runnable;
 
-        public ModifiedCyclicBarrier(int maxWaiters, Runnable runnable) {
+        public ModifiedCyclicBarrier(int maxWaiters) {
                 this.maxWaiters = maxWaiters;
-                this.runnable = runnable;
         }
 
         public synchronized int await() throws InterruptedException {
-                try {
-                        waiters++;
-                        while (waiters < maxWaiters && !releaseLock)
-                                wait();
-                        if (passedWaiters++ == 0 && !releaseLock)
-                                notifyAll();
-                        return releaseLock ? 1 : 2;
-                } finally {
-                        if (passedWaiters == maxWaiters) {
-                                passedWaiters = 0;
-                                waiters -= maxWaiters;
-                                runnable.run();
-                        }
+                waiters++;
+                while (waiters < maxWaiters && !releaseLock)
+                        wait();
+                if (passedWaiters++ == 0 && !releaseLock)
+                        notifyAll();
+                if (passedWaiters == maxWaiters) {
+                        passedWaiters = 0;
+                        waiters -= maxWaiters;
                 }
+                return releaseLock ? 1 : 2;
         }
 
         public synchronized void forceRelease() {
