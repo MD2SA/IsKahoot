@@ -3,15 +3,16 @@ package utils.messages;
 import java.util.List;
 
 import utils.quiz.Score;
-import utils.quiz.Question;
+import utils.quiz.ReducedQuestion;
 
 public class MessageFromServer extends Message {
 
         private int roundNumber = -1;
         private List<Score> scoreboard;
-        private Question question;
+        private ReducedQuestion question;
 
-        private MessageFromServer(Code code, int roundNumber, Question question, int timer, List<Score> scoreboard) {
+        private MessageFromServer(Code code, int roundNumber, ReducedQuestion question, int timer,
+                        List<Score> scoreboard) {
                 super(code);
                 this.roundNumber = roundNumber;
                 this.question = question;
@@ -22,7 +23,8 @@ public class MessageFromServer extends Message {
                 return new MessageFromServer(Code.REGISTER, -1, null, 10, null);
         }
 
-        public static MessageFromServer updateMessage(int roundNumber, Question question, List<Score> scoreboard) {
+        public static MessageFromServer updateMessage(int roundNumber, ReducedQuestion question,
+                        List<Score> scoreboard) {
                 return new MessageFromServer(Code.UPDATE, roundNumber, question, -1, scoreboard);
         }
 
@@ -34,7 +36,7 @@ public class MessageFromServer extends Message {
                 return roundNumber;
         }
 
-        public Question getQuestion() {
+        public ReducedQuestion getQuestion() {
                 return question;
         }
 

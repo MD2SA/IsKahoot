@@ -10,6 +10,7 @@ import utils.messages.MessageFromServer;
 import utils.quiz.Score;
 import utils.messages.Code;
 import utils.quiz.Question;
+import utils.quiz.ReducedQuestion;
 
 import java.io.IOException;
 import java.io.ObjectInputStream;
@@ -60,7 +61,7 @@ public class Client extends Thread implements Observer {
 
                                 this.roundNumber = msgReceived.getRoundNumber();
 
-                                Question question = msgReceived.getQuestion();
+                                ReducedQuestion question = msgReceived.getQuestion();
                                 List<Score> scoreboard = msgReceived.getScoreboard();
                                 this.gui.displayScoreboard(scoreboard);
                                 if (question == null) {

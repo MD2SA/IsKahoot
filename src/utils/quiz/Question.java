@@ -1,21 +1,13 @@
 package utils.quiz;
 
-import java.io.Serializable;
 import java.util.List;
 
-public class Question implements Serializable {
+public class Question {
         private String question;
         private int points;
-        private transient int correct;
+        private int correct;
         private boolean isIndividual;
         private List<String> options;
-
-        public Question(String label, int points, int correct, List<String> options) {
-                this.question = label;
-                this.points = points;
-                this.correct = correct;
-                this.options = options;
-        }
 
         public String getQuestion() {
                 return question;
@@ -37,9 +29,13 @@ public class Question implements Serializable {
                 return options;
         }
 
-        // in client will say option 0 is the correct one, always. So its safe
         public boolean isCorrect(int option) {
                 return option == correct;
+        }
+
+        @Override
+        public String toString() {
+                return "label: " + question + "; correct: " + correct+"-"+options.get(correct);
         }
 
 }

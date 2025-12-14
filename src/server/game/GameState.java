@@ -28,7 +28,7 @@ public class GameState {
                 this.playerMap = new ConcurrentMap<>();
                 this.numberOfTeams = numberOfTeams;
                 this.teamCapacity = teamCapacity;
-                this.teamMap = isSinglePlayer() ? null : new ConcurrentMap<>();
+                this.teamMap = new ConcurrentMap<>();
         }
 
         synchronized boolean registerPlayer(String username, String teamName) {
@@ -39,7 +39,7 @@ public class GameState {
                         return false;
                 }
 
-                if (!isSinglePlayer() && !teamMap.containsKey(teamName)) {
+                if (!teamMap.containsKey(teamName)) {
                         // max teams registered
                         if (numberOfTeams <= teamMap.size()) {
                                 Server.getInstance().getLogger().debug("TeamManager registerPlayer: max teams reached");
@@ -49,8 +49,7 @@ public class GameState {
                 }
 
                 Player player = new Player(username);
-                // failed to add to team
-                if (!isSinglePlayer() && !teamMap.get(teamName).addPlayer(player)) {
+                if (!teamMap.get(teamName).addPlayer(player)) {
                         Server.getInstance().getLogger().debug("TeamManager registerPlayer: failed to add to team");
                         return false;
                 }
@@ -89,10 +88,10 @@ public class GameState {
         }
 
         List<Score> getScoreboard() {
-                if (isSinglePlayer())
-                        return new ArrayList<>(playerMap.values());
-                else
-                        return new ArrayList<>(teamMap.values());
+                // if (isSinglePlayer())
+                // return new ArrayList<>(playerMap.values());
+                // else
+                return new ArrayList<>(teamMap.values());
         }
 
         ConcurrentMap<Player, Answer> getAnswers() {

@@ -6,7 +6,8 @@ import javax.swing.border.LineBorder;
 import javax.swing.table.DefaultTableCellRenderer;
 import client.gui.Observer.Observed;
 import utils.quiz.Score;
-import utils.quiz.Question;
+import utils.quiz.ReducedQuestion;
+
 import java.awt.*;
 import java.util.List;
 
@@ -55,7 +56,7 @@ public class GUI extends Observed {
                 frame.setVisible(true);
         }
 
-        public void displayQuestion(Question question) {
+        public void displayQuestion(ReducedQuestion question) {
                 selectedOption = -1;
                 questionPanel.removeAll();
 
