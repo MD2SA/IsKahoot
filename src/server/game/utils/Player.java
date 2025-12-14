@@ -1,43 +1,32 @@
 package server.game.utils;
 
-import java.io.Serializable;
+import java.util.Objects;
 
-import utils.quiz.Score;
+public class Player {
 
-public class Player implements Score, Serializable {
-
-        private int score;
-        private String name;
+        private final String name;
 
         public Player(String name) {
-                this(name, 0);
-        }
-
-        public Player(String name, int initialScore) {
                 this.name = name;
-                this.score = initialScore;
         }
 
-        @Override
         public String getName() {
                 return name;
         }
 
         @Override
-        public int getScore() {
-                return score;
-        }
-
-        public void setScore(int score) {
-                this.score = score;
-        }
-
-        public void increaseScore(int score) {
-                this.score += score;
+        public boolean equals(Object o) {
+                if (this == o)
+                        return true;
+                if (o == null || getClass() != o.getClass())
+                        return false;
+                Player player = (Player) o;
+                return Objects.equals(name, player.name);
         }
 
         @Override
-        public String toString() {
-                return "score: " + score + "- name: " + name;
+        public int hashCode() {
+                return Objects.hash(name);
         }
+
 }

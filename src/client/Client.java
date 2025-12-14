@@ -8,8 +8,6 @@ import configs.Config;
 import utils.messages.MessageFromClient;
 import utils.messages.MessageFromServer;
 import utils.quiz.Score;
-import utils.messages.Code;
-import utils.quiz.Question;
 import utils.quiz.ReducedQuestion;
 
 import java.io.IOException;

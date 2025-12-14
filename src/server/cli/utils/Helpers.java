@@ -130,7 +130,7 @@ public class Helpers {
                         int length) {
                 if (args.length > argIndex) {
                         String code = args[argIndex].trim().toUpperCase();
-                        if (code.matches("[A-Za-z0-9]+") && gameManager.hasGame(code)) {
+                        if (code.matches("[A-Za-z0-9]+") && !gameManager.hasGame(code)) {
                                 System.out.println(
                                                 "Game code (letters/numbers only) - press enter for random: " + code);
                                 return code;

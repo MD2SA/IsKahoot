@@ -7,33 +7,31 @@ import utils.quiz.ReducedQuestion;
 
 public class MessageFromServer extends Message {
 
-        private int roundNumber = -1;
         private List<Score> scoreboard;
         private ReducedQuestion question;
 
-        private MessageFromServer(Code code, int roundNumber, ReducedQuestion question, int timer,
+        private MessageFromServer(Code code, ReducedQuestion question, int timer,
                         List<Score> scoreboard) {
                 super(code);
-                this.roundNumber = roundNumber;
                 this.question = question;
                 this.scoreboard = scoreboard;
         }
 
         public static MessageFromServer connectionMessage() {
-                return new MessageFromServer(Code.REGISTER, -1, null, 10, null);
+                return new MessageFromServer(Code.REGISTER, null, 10, null);
         }
 
-        public static MessageFromServer updateMessage(int roundNumber, ReducedQuestion question,
+        public static MessageFromServer updateMessage(ReducedQuestion question,
                         List<Score> scoreboard) {
-                return new MessageFromServer(Code.UPDATE, roundNumber, question, -1, scoreboard);
+                return new MessageFromServer(Code.UPDATE, question, -1, scoreboard);
         }
 
         public static MessageFromServer endMessage(List<Score> scoreboard) {
-                return new MessageFromServer(Code.END, -1, null, -1, scoreboard);
+                return new MessageFromServer(Code.END, null, -1, scoreboard);
         }
 
         public int getRoundNumber() {
-                return roundNumber;
+                return question != null ? question.getRoundNumber() : -1;
         }
 
         public ReducedQuestion getQuestion() {
