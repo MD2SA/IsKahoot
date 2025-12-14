@@ -37,6 +37,7 @@ public class Question implements Serializable {
                 return options;
         }
 
+        // in client will say option 0 is the correct one, always. So its safe
         public boolean isCorrect(int option) {
                 return option == correct;
         }
