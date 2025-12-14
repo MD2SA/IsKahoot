@@ -45,8 +45,13 @@ public class GameManager extends Thread {
         }
 
         private void startGame(GameSession game) {
-                games.remove(game.getId());
-                pool.submit(game);
+                pool.submit(() -> {
+                        try {
+                                game.run();
+                        } finally {
+                                games.remove(game.getId());
+                        }
+                });
         }
 
         void removeGame(String gameId) {
