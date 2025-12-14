@@ -45,7 +45,7 @@ for (( i=0; i<TOTAL; i++ )); do
     USER="test$i"
     TEAM=$(( i / TEAM_SIZE ))
 
-    jrc -r client.Main "$USER" "$TEAM" "$GAME" > "log.tmp" 2>&1 &
+    ./jrc.sh -r client.Main "$USER" "$TEAM" "$GAME" > "log.tmp" 2>&1 &
     PIDS+=($!)
 done
 
