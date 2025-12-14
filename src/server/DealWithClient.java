@@ -13,6 +13,7 @@ import utils.messages.Message;
 import utils.messages.MessageFromClient;
 import utils.messages.MessageFromServer;
 import utils.quiz.Question;
+import utils.quiz.ReducedQuestion;
 
 public class DealWithClient implements Runnable, AutoCloseable {
 
@@ -84,7 +85,7 @@ public class DealWithClient implements Runnable, AutoCloseable {
         }
 
         public void sendRoundInfo(Question question, List<Score> scoreboard) {
-                send(MessageFromServer.updateMessage(roundNumber++, question, scoreboard));
+                send(MessageFromServer.updateMessage(roundNumber++, new ReducedQuestion(question), scoreboard));
         }
 
         public void sendEndGame(List<Score> scoreboard) {
