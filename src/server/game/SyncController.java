@@ -66,7 +66,6 @@ public class SyncController {
                         synchronized (this) {
                                 activeAnswers--;
                                 if (closing && activeAnswers == 0) {
-                                        System.out.println("notified all");
                                         notifyAll();
                                 }
                         }
@@ -79,7 +78,6 @@ public class SyncController {
                 synchronized (this) {
                         roundReady = false;
                         closing = true;
-                        System.out.println("closing");
                 }
 
                 if (!isIndividual)
@@ -88,7 +86,6 @@ public class SyncController {
                 synchronized (this) {
                         while (activeAnswers > 0)
                                 wait();
-                        System.out.println("finished closing");
                         closing = false;
                 }
         }
