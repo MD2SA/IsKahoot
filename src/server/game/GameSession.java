@@ -44,7 +44,7 @@ public class GameSession implements Runnable {
 
         @Override
         public void run() {
-                while (roundManager.hasNextQuestion()) {
+                while (roundManager.hasNextQuestion() && !clientHandlers.isEmpty()) {
                         Question question = roundManager.nextQuestion();
                         broadcastRoundUpdate(question, getScoreboard());
                         try {
