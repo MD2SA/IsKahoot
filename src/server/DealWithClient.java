@@ -95,7 +95,7 @@ public class DealWithClient implements Runnable, AutoCloseable {
                 send(MessageFromServer.endMessage(scoreboard));
         }
 
-        private void sendError(String reason) {
+        public void sendError(String reason) {
                 send(new Message(Code.ERROR, reason));
         }
 

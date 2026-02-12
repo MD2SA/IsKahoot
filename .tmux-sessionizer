@@ -1,0 +1,8 @@
+tmux rename-window code
+tmux send-keys -t code "nvim ." C-m
+
+tmux new-window -n cmd
+tmux select-window -t cmd
+tmux split-window -h
+
+tmux select-window -t code
