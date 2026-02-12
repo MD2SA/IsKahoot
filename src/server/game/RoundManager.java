@@ -36,11 +36,13 @@ public class RoundManager {
 
                 this.globalLatch = new ModifiedCountdownLatch(Features.BONUS_FACTOR, Features.BONUS_COUNT,
                                 Features.ROUND_SECONDS, teamManager.getUsernames().size());
-                teamBarriers = new ConcurrentMap<>();
-                teamManager.getTeams().values().forEach(team -> {
-                        teamBarriers.put(team.getName(),
-                                        new ModifiedCyclicBarrier(team.size(), getBarrierAction(team)));
-                });
+                if (!question.isIndividual()) {
+                        teamBarriers = new ConcurrentMap<>();
+                        teamManager.getTeams().values().forEach(team -> {
+                                teamBarriers.put(team.getName(),
+                                                new ModifiedCyclicBarrier(team.size(), getBarrierAction(team)));
+                        });
+                }
 
                 answers.clear();
                 activeAnswerCount = 0;

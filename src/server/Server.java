@@ -56,6 +56,7 @@ public class Server {
 
         private void shutdown() {
                 logger.info("Shutting down server...");
+                gameManager.shutdown();
         }
 
 }

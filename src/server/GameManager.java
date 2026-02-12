@@ -39,10 +39,12 @@ public class GameManager extends Thread {
 
         public GameSession registerToGame(DealWithClient handler, String gameId) {
                 GameSession game = waitingGames.get(gameId);
-                if (game != null && game.join(handler) && game.isFull())
+                if (game == null || !game.join(handler))
+                        return null;
+
+                if (game.isFull())
                         startGame(game);
                 return game;
-
         }
 
         private void startGame(GameSession game) {
@@ -88,6 +90,10 @@ public class GameManager extends Thread {
                 List<GameSession> allGames = new ArrayList<>(waitingGames.values());
                 allGames.addAll(activeGames.values());
                 return allGames;
+        }
+
+        void shutdown() {
+                List<Runnable> games = pool.shutdownNow();
         }
 
 }

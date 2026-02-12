@@ -2,6 +2,7 @@ package server.cli.bin;
 
 import java.util.Scanner;
 
+import server.Server;
 import server.cli.Command;
 import server.cli.CommandContext;
 import server.cli.utils.Helpers;
