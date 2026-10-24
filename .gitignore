@@ -1,29 +1,29 @@
-# macOS
-.DS_Store
+# Build output
+target/
+out/
+bin/
+build/
 
-# Windows
-Thumbs.db
-ehthumbs.db
-Desktop.ini
-
-# Eclipse
-.metadata/
-*.tmp
-*.bak
-*.swp
-*~.nib
-*.log
-bin/*
-build/*
-.settings/
-
-# IntelliJ IDEA
+# IDE
 .idea/
 *.iml
-out/
+.vscode/
+.settings/
+.classpath
+.project
+.metadata/
 
+# OS
+.DS_Store
+Thumbs.db
+Desktop.ini
 
+# Logs and temporary files
 *.log
-*.class
+log.tmp
 
-/bin/
+# Editor backups
+*.swp
+*.tmp
+*.bak
+*~
