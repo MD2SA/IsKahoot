@@ -28,5 +28,5 @@ if [ "$dirty" -eq 1 ]; then
     exit 1
 fi
 
-echo "$files" | xargs -r git add -f --
+echo "$files" | xargs -r git add --
 echo "pre-commit: formatting applied"
