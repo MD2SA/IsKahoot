@@ -142,6 +142,27 @@ Defaults are in `src/main/java/configs/Config.java`:
 ./mvnw verify
 ```
 
+## Formatting
+
+Java sources are formatted with the Eclipse formatter profile in
+`config/eclipse-formatter.xml` (4-space indent, 120 columns), applied by
+[Spotless](https://github.com/diffplug/spotless):
+
+```bash
+./mvnw spotless:apply    # reformat in place
+./mvnw spotless:check    # fails if anything is unformatted (runs in mvn verify)
+```
+
+To format automatically before each commit, enable the bundled hook once per clone:
+
+```bash
+git config core.hooksPath .githooks
+```
+
+The hook only touches the staged `*.java` files and re-stages them; use
+`git commit --no-verify` to skip it. CI still runs `spotless:check` through
+`./mvnw verify`.
+
 ## Known limitations
 
 - The client connects to the local machine only; the server address is not configurable yet.

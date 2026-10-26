@@ -1,0 +1,32 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+cd "$(git rev-parse --show-toplevel)"
+
+files=$(git diff --cached --name-only --diff-filter=ACM -- '*.java')
+[ -z "$files" ] && exit 0
+
+csv=""
+while IFS= read -r file; do
+    csv+="$PWD/$file,"
+done <<< "$files"
+csv=${csv%,}
+
+dirty=0
+while IFS= read -r file; do
+    if ! git diff --quiet -- "$file"; then
+        dirty=1
+    fi
+done <<< "$files"
+
+./mvnw -q spotless:apply -DspotlessFiles="$csv"
+
+if [ "$dirty" -eq 1 ]; then
+    echo "pre-commit: formatting applied, but these files also have unstaged changes:" >&2
+    echo "$files" | sed 's/^/    /' >&2
+    echo "Review them, then run: git add <files> && git commit" >&2
+    exit 1
+fi
+
+echo "$files" | xargs -r git add -f --
+echo "pre-commit: formatting applied"
