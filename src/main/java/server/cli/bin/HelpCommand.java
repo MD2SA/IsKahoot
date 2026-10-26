@@ -8,25 +8,25 @@ import server.cli.CommandDispatcher;
 
 public class HelpCommand implements Command {
 
-        private final CommandDispatcher dispatcher;
+    private final CommandDispatcher dispatcher;
 
-        public HelpCommand(CommandDispatcher dispatcher) {
-                this.dispatcher = dispatcher;
-        }
+    public HelpCommand(CommandDispatcher dispatcher) {
+        this.dispatcher = dispatcher;
+    }
 
-        @Override
-        public String getName() {
-                return "help";
-        }
+    @Override
+    public String getName() {
+        return "help";
+    }
 
-        @Override
-        public String getDescription() {
-                return "Provides help";
-        }
+    @Override
+    public String getDescription() {
+        return "Provides help";
+    }
 
-        @Override
-        public void execute(Scanner scanner, CommandContext context, String[] args) {
-                dispatcher.showHelp();
-        }
+    @Override
+    public void execute(Scanner scanner, CommandContext context, String[] args) {
+        dispatcher.showHelp();
+    }
 
 }

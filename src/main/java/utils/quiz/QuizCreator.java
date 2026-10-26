@@ -11,14 +11,14 @@ import com.google.gson.Gson;
 
 public class QuizCreator {
 
-        private List<Quiz> quizzes;
+    private List<Quiz> quizzes;
 
-        public static List<Quiz> getFrom(InputStream input) throws IOException {
-                try (Reader reader = new InputStreamReader(input, StandardCharsets.UTF_8)) {
-                        QuizCreator creator = new Gson().fromJson(reader, QuizCreator.class);
-                        if (creator == null || creator.quizzes == null)
-                                throw new IOException("The quiz file does not contain a valid 'quizzes' list");
-                        return creator.quizzes;
-                }
+    public static List<Quiz> getFrom(InputStream input) throws IOException {
+        try (Reader reader = new InputStreamReader(input, StandardCharsets.UTF_8)) {
+            QuizCreator creator = new Gson().fromJson(reader, QuizCreator.class);
+            if (creator == null || creator.quizzes == null)
+                throw new IOException("The quiz file does not contain a valid 'quizzes' list");
+            return creator.quizzes;
         }
+    }
 }

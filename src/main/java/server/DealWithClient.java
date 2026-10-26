@@ -16,143 +16,141 @@ import utils.quiz.ReducedQuestion;
 
 public class DealWithClient implements Runnable, AutoCloseable {
 
-        private static final int MAX_FAILS = 3;
+    private static final int MAX_FAILS = 3;
 
-        private final Server server;
-        private Socket socket;
-        private ObjectOutputStream out;
-        private ObjectInputStream in;
+    private final Server server;
+    private Socket socket;
+    private ObjectOutputStream out;
+    private ObjectInputStream in;
 
-        private String clientId;
-        private String teamId;
-        private GameSession game;
+    private String clientId;
+    private String teamId;
+    private GameSession game;
 
-        public DealWithClient(Server server, Socket socket) throws IOException {
-                this.server = server;
-                this.socket = socket;
-                out = new ObjectOutputStream(socket.getOutputStream());
-                in = new ObjectInputStream(socket.getInputStream());
+    public DealWithClient(Server server, Socket socket) throws IOException {
+        this.server = server;
+        this.socket = socket;
+        out = new ObjectOutputStream(socket.getOutputStream());
+        in = new ObjectInputStream(socket.getInputStream());
+    }
+
+    @Override
+    public void run() {
+        try {
+            if (!registerClient()) {
+                server.getLogger().info("Registration failed for client " + clientId);
+                sendError("Registration failed");
+                return;
+            }
+            serve();
+        } catch (IOException e) {
+            server.getLogger().warn("Client disconnected after exception: " + clientId);
+        } finally {
+            cleanup();
         }
+    }
 
-        @Override
-        public void run() {
+    private boolean registerClient() throws IOException {
+        MessageFromClient msg = readMessage();
+        if (msg == null || msg.getCode() != Code.REGISTER)
+            return false;
+
+        this.clientId = msg.getClientId();
+        this.teamId = msg.getTeamId();
+
+        this.game = server.getGameManager().registerToGame(this, msg.getGameId());
+
+        return game != null;
+    }
+
+    private void serve() {
+        while (!Thread.currentThread().isInterrupted()) {
+            MessageFromClient msg = readMessage();
+            if (msg == null) {
+                server.getLogger().info("Message from client: " + clientId + " was null.");
+                break;
+            }
+
+            if (!clientId.equals(msg.getClientId())) {
+                server.getLogger().info("Message from client was invalid");
+                sendError("Invalid client ID");
+                break;
+            }
+
+            if (msg.getCode() == Code.ANSWER) {
                 try {
-                        if (!registerClient()) {
-                                server.getLogger().info("Registration failed for client " + clientId);
-                                sendError("Registration failed");
-                                return;
-                        }
-                        serve();
-                } catch (IOException e) {
-                        server.getLogger().warn("Client disconnected after exception: " + clientId);
-                } finally {
-                        cleanup();
+                    this.game.receiveAnswer(msg.getAnswer());
+                } catch (Exception e) {
+                    Thread.currentThread().interrupt();
                 }
+            }
         }
+    }
 
-        private boolean registerClient() throws IOException {
-                MessageFromClient msg = readMessage();
-                if (msg == null || msg.getCode() != Code.REGISTER)
-                        return false;
+    public void sendRoundInfo(ReducedQuestion question, List<Score> scoreboard) {
+        send(MessageFromServer.updateMessage(question, scoreboard));
+    }
 
-                this.clientId = msg.getClientId();
-                this.teamId = msg.getTeamId();
+    public void sendEndGame(List<Score> scoreboard) {
+        send(MessageFromServer.endMessage(scoreboard));
+    }
 
-                this.game = server.getGameManager().registerToGame(this, msg.getGameId());
+    public void sendError(String reason) {
+        send(new Message(Code.ERROR, reason));
+    }
 
-                return game != null;
+    private MessageFromClient readMessage() {
+        try {
+            return (MessageFromClient) in.readObject();
+        } catch (IOException | ClassNotFoundException | ClassCastException e) {
+            return null;
         }
+    }
 
-        private void serve() {
-                while (!Thread.currentThread().isInterrupted()) {
-                        MessageFromClient msg = readMessage();
-                        if (msg == null) {
-                                server.getLogger().info("Message from client: " + clientId + " was null.");
-                                break;
-                        }
-
-                        if (!clientId.equals(msg.getClientId())) {
-                                server.getLogger().info("Message from client was invalid");
-                                sendError("Invalid client ID");
-                                break;
-                        }
-
-                        if (msg.getCode() == Code.ANSWER) {
-                                try {
-                                        this.game.receiveAnswer(msg.getAnswer());
-                                } catch (Exception e) {
-                                        Thread.currentThread().interrupt();
-                                }
-                        }
+    private void send(Message msg) {
+        for (int i = 0; i < MAX_FAILS; i++) {
+            try {
+                synchronized (out) {
+                    out.writeObject(msg);
+                    out.flush();
+                    out.reset();
                 }
+                return;
+            } catch (Exception e) {
+                server.getLogger().debug("Failed to send message (attempt " + (i + 1) + "): " + e.getMessage());
+                server.getLogger().warn("Failed to send message (attempt " + (i + 1) + ") to " + clientId);
+            }
         }
+        server.getLogger().warn("Failed to send message after " + MAX_FAILS + " attempts");
+    }
 
-        public void sendRoundInfo(ReducedQuestion question, List<Score> scoreboard) {
-                send(MessageFromServer.updateMessage(question, scoreboard));
-        }
+    private void cleanup() {
+        if (game != null)
+            game.leave(this);
+        closeQuietly(socket, in, out);
+    }
 
-        public void sendEndGame(List<Score> scoreboard) {
-                send(MessageFromServer.endMessage(scoreboard));
+    private void closeQuietly(AutoCloseable... closeables) {
+        for (AutoCloseable c : closeables) {
+            try {
+                if (c != null)
+                    c.close();
+            } catch (Exception e) {
+            }
         }
+    }
 
-        public void sendError(String reason) {
-                send(new Message(Code.ERROR, reason));
-        }
+    @Override
+    public void close() {
+        cleanup();
+    }
 
-        private MessageFromClient readMessage() {
-                try {
-                        return (MessageFromClient) in.readObject();
-                } catch (IOException | ClassNotFoundException | ClassCastException e) {
-                        return null;
-                }
-        }
+    public String getClientId() {
+        return clientId;
+    }
 
-        private void send(Message msg) {
-                for (int i = 0; i < MAX_FAILS; i++) {
-                        try {
-                                synchronized (out) {
-                                        out.writeObject(msg);
-                                        out.flush();
-                                        out.reset();
-                                }
-                                return;
-                        } catch (Exception e) {
-                                server.getLogger().debug(
-                                                "Failed to send message (attempt " + (i + 1) + "): " + e.getMessage());
-                                server.getLogger().warn(
-                                                "Failed to send message (attempt " + (i + 1) + ") to " + clientId);
-                        }
-                }
-                server.getLogger().warn("Failed to send message after " + MAX_FAILS + " attempts");
-        }
-
-        private void cleanup() {
-                if (game != null)
-                        game.leave(this);
-                closeQuietly(socket, in, out);
-        }
-
-        private void closeQuietly(AutoCloseable... closeables) {
-                for (AutoCloseable c : closeables) {
-                        try {
-                                if (c != null)
-                                        c.close();
-                        } catch (Exception e) { // error ignored
-                        }
-                }
-        }
-
-        @Override
-        public void close() {
-                cleanup();
-        }
-
-        public String getClientId() {
-                return clientId;
-        }
-
-        public String getTeamId() {
-                return teamId;
-        }
+    public String getTeamId() {
+        return teamId;
+    }
 
 }

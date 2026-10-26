@@ -9,21 +9,20 @@ import server.cli.utils.Helpers;
 
 public class ExitCommand implements Command {
 
-        @Override
-        public String getName() {
-                return "exit";
-        }
+    @Override
+    public String getName() {
+        return "exit";
+    }
 
-        @Override
-        public String getDescription() {
-                return "Exits the server console";
-        }
+    @Override
+    public String getDescription() {
+        return "Exits the server console";
+    }
 
-        @Override
-        public void execute(Scanner scanner, CommandContext context, String[] args) {
-                Helpers.printSectionHeader("Goodbye!");
-                System.exit(0);
-        }
+    @Override
+    public void execute(Scanner scanner, CommandContext context, String[] args) {
+        Helpers.printSectionHeader("Goodbye!");
+        System.exit(0);
+    }
 
 }
-
