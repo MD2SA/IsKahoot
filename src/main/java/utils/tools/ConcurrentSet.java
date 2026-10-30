@@ -4,7 +4,6 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
-import java.util.function.Predicate;
 import java.util.stream.Stream;
 
 public class ConcurrentSet<T> implements Set<T> {
@@ -23,11 +22,6 @@ public class ConcurrentSet<T> implements Set<T> {
     @Override
     public synchronized boolean remove(Object element) {
         return elements.remove(element);
-    }
-
-    @Override
-    public synchronized boolean removeIf(Predicate<? super T> filter) {
-        return elements.removeIf(filter);
     }
 
     @Override
