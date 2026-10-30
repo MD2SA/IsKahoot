@@ -70,14 +70,8 @@ public class GameSession implements Runnable {
     }
 
     private void broadcast(Consumer<DealWithClient> action) {
-        clientHandlers.removeIf(handler -> {
-            try {
-                action.accept(handler);
-                return false;
-            } catch (Exception e) {
-                return true;
-            }
-        });
+        for (DealWithClient handler : clientHandlers)
+            action.accept(handler);
     }
 
     public List<Score> getScoreboard() {
