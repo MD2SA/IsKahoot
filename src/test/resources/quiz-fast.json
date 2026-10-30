@@ -1,0 +1,23 @@
+{
+  "quizzes": [
+    {
+      "name": "Fast quiz",
+      "questions": [
+        {
+          "question": "Which keyword starts a thread?",
+          "points": 5,
+          "correct": 1,
+          "isIndividual": true,
+          "options": ["run", "start", "execute", "begin"]
+        },
+        {
+          "question": "Which collection is synchronized?",
+          "points": 10,
+          "correct": 2,
+          "isIndividual": false,
+          "options": ["HashMap", "ArrayList", "ConcurrentMap", "HashSet"]
+        }
+      ]
+    }
+  ]
+}
