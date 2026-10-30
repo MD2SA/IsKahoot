@@ -20,11 +20,7 @@ public class ModifiedCyclicBarrier {
         waiters++;
 
         if (waiters >= maxWaiters) {
-            released = true;
-            if (barrierAction != null) {
-                barrierAction.run();
-            }
-            notifyAll();
+            release();
             return;
         }
 
@@ -36,11 +32,16 @@ public class ModifiedCyclicBarrier {
     }
 
     public synchronized void forceRelease() {
-        if (!released) {
-            released = true;
-            if (barrierAction != null) {
+        if (!released)
+            release();
+    }
+
+    private void release() {
+        released = true;
+        try {
+            if (barrierAction != null)
                 barrierAction.run();
-            }
+        } finally {
             notifyAll();
         }
     }
