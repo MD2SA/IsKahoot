@@ -1,17 +1,16 @@
 package server.game;
 
-import configs.Config.Features;
+import java.util.Map;
 
-import utils.quiz.Answer;
-import utils.quiz.Question;
-import server.game.utils.Player;
-import utils.quiz.Quiz;
-import server.game.utils.Team;
-import utils.tools.ConcurrentMap;
+import configs.Config.Features;
 import server.game.utils.ModifiedCountdownLatch;
 import server.game.utils.ModifiedCyclicBarrier;
-
-import java.util.Map;
+import server.game.utils.Player;
+import server.game.utils.Team;
+import utils.quiz.Answer;
+import utils.quiz.Question;
+import utils.quiz.Quiz;
+import utils.tools.ConcurrentMap;
 
 public class RoundManager {
 
@@ -21,9 +20,12 @@ public class RoundManager {
     private final ConcurrentMap<String, Answer> answers = new ConcurrentMap<>();
     private ModifiedCountdownLatch globalLatch;
     private Map<String, ModifiedCyclicBarrier> teamBarriers;
-    private boolean roundReady;
-    private boolean closing;
     private int activeAnswerCount;
+    private Phase phase;
+
+    private enum Phase {
+        OPEN, CLOSING, CLOSED
+    }
 
     public RoundManager(Quiz quiz, TeamManager teamManager) {
         this.quiz = quiz;
@@ -45,15 +47,14 @@ public class RoundManager {
 
         answers.clear();
         activeAnswerCount = 0;
-        closing = false;
-        roundReady = true;
+        phase = Phase.OPEN;
 
         return question;
     }
 
     public void answer(Answer answer) throws InterruptedException {
         synchronized (this) {
-            if (!roundReady)
+            if (phase != Phase.OPEN)
                 return;
             activeAnswerCount++;
         }
@@ -75,7 +76,7 @@ public class RoundManager {
         } finally {
             synchronized (this) {
                 activeAnswerCount--;
-                if (closing && activeAnswerCount == 0)
+                if (phase == Phase.CLOSING && activeAnswerCount == 0)
                     notifyAll();
             }
         }
@@ -85,8 +86,7 @@ public class RoundManager {
         globalLatch.await();
 
         synchronized (this) {
-            roundReady = false;
-            closing = true;
+            phase = Phase.CLOSING;
         }
 
         if (!getCurrentQuestion().isIndividual()) {
@@ -96,7 +96,7 @@ public class RoundManager {
         synchronized (this) {
             while (activeAnswerCount > 0)
                 wait();
-            closing = false;
+            phase = Phase.CLOSED;
         }
     }
 
@@ -128,7 +128,7 @@ public class RoundManager {
     }
 
     public boolean isRoundReady() {
-        return roundReady;
+        return phase == Phase.OPEN;
     }
 
     public int getRoundNumber() {
