@@ -2,13 +2,16 @@ package server.game;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
 import java.util.function.Consumer;
 
 import server.DealWithClient;
+import server.Server;
 import utils.quiz.Answer;
 import utils.quiz.Question;
 import utils.quiz.Quiz;
 import utils.quiz.ReducedQuestion;
+import utils.quiz.RoundResult;
 import utils.quiz.Score;
 import utils.tools.ConcurrentSet;
 
@@ -45,26 +48,31 @@ public class GameSession implements Runnable {
     @Override
     public void run() {
         while (roundManager.hasNextQuestion() && !clientHandlers.isEmpty()) {
-            Question question = roundManager.nextQuestion();
-            broadcastRoundUpdate(question, getScoreboard());
+            RoundState round = roundManager.openRound();
+            broadcastQuestion(roundManager.getCurrentQuestion());
+
             try {
-                roundManager.waitForRoundEnd();
-            } catch (InterruptedException e) {
-                break;
+                RoundResult result = round.getRoundResult();
+                broadcastResult(result);
+            } catch (InterruptedException | ExecutionException e) {
+                Server.getInstance().getLogger().warn("Unexpected exception while waiting for results");
             }
         }
         endGame();
     }
 
-    private void broadcastRoundUpdate(Question question, List<Score> scoreboard) {
+    private void broadcastQuestion(Question question) {
         ReducedQuestion reducedQuestion = new ReducedQuestion(question, roundManager.getRoundNumber());
-        broadcast(handler -> handler.sendRoundInfo(reducedQuestion, scoreboard));
+        broadcast(handler -> handler.sendQuestion(reducedQuestion));
+    }
+
+    private void broadcastResult(RoundResult result) {
+        broadcast(handler -> handler.sendResult(result));
     }
 
     private void endGame() {
-        List<Score> scoreboard = getScoreboard();
         broadcast(handler -> {
-            handler.sendEndGame(scoreboard);
+            handler.sendEndGame();
             handler.close();
         });
     }

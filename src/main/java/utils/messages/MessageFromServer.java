@@ -1,31 +1,33 @@
 package utils.messages;
 
-import java.util.List;
-
-import utils.quiz.Score;
 import utils.quiz.ReducedQuestion;
+import utils.quiz.RoundResult;
 
 public class MessageFromServer extends Message {
 
-    private List<Score> scoreboard;
+    private RoundResult result;
     private ReducedQuestion question;
 
-    private MessageFromServer(Code code, ReducedQuestion question, int timer, List<Score> scoreboard) {
+    private MessageFromServer(Code code, ReducedQuestion question, int timer, RoundResult result) {
         super(code);
         this.question = question;
-        this.scoreboard = scoreboard;
+        this.result = result;
     }
 
     public static MessageFromServer connectionMessage() {
         return new MessageFromServer(Code.REGISTER, null, 10, null);
     }
 
-    public static MessageFromServer updateMessage(ReducedQuestion question, List<Score> scoreboard) {
-        return new MessageFromServer(Code.UPDATE, question, -1, scoreboard);
+    public static MessageFromServer questionMessage(ReducedQuestion question) {
+        return new MessageFromServer(Code.QUESTION, question, -1, null);
     }
 
-    public static MessageFromServer endMessage(List<Score> scoreboard) {
-        return new MessageFromServer(Code.END, null, -1, scoreboard);
+    public static MessageFromServer resultMessage(RoundResult result) {
+        return new MessageFromServer(Code.QUESTION, null, -1, null);
+    }
+
+    public static MessageFromServer endMessage() {
+        return new MessageFromServer(Code.END, null, -1, null);
     }
 
     public int getRoundNumber() {
@@ -36,8 +38,8 @@ public class MessageFromServer extends Message {
         return question;
     }
 
-    public List<Score> getScoreboard() {
-        return scoreboard;
+    public RoundResult getResult() {
+        return result;
     }
 
 }

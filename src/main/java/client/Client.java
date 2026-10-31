@@ -1,21 +1,18 @@
 package client;
 
-import client.gui.GUI;
-import client.gui.Observer.Observer;
-import client.gui.Observer.Observed;
-
-import configs.Config;
-import utils.messages.MessageFromClient;
-import utils.messages.MessageFromServer;
-import utils.quiz.Score;
-import utils.quiz.ReducedQuestion;
-
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.InetAddress;
 import java.net.Socket;
-import java.util.List;
+
+import client.gui.GUI;
+import client.gui.Observer.Observed;
+import client.gui.Observer.Observer;
+import configs.Config;
+import utils.messages.MessageFromClient;
+import utils.messages.MessageFromServer;
+import utils.quiz.ReducedQuestion;
 
 public class Client extends Thread implements Observer {
 
@@ -60,14 +57,16 @@ public class Client extends Thread implements Observer {
                 this.roundNumber = msgReceived.getRoundNumber();
 
                 ReducedQuestion question = msgReceived.getQuestion();
-                List<Score> scoreboard = msgReceived.getScoreboard();
-                this.gui.displayScoreboard(scoreboard);
+                // this.gui.displayScoreboard(scoreboard);
                 if (question == null) {
                     this.gui.displayEndGame();
                     return;
                 }
+
                 this.gui.startTimer(Config.Features.ROUND_SECONDS);
                 this.gui.displayQuestion(question);
+                MessageFromServer t = (MessageFromServer) in.readObject();
+
             } catch (Exception e) {
                 gui.displayError("Erro ao comunicar com o servidor.");
                 break;

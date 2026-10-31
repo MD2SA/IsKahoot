@@ -1,18 +1,17 @@
 package server;
 
-import java.util.List;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
 
 import server.game.GameSession;
-import utils.quiz.Score;
 import utils.messages.Code;
 import utils.messages.Message;
 import utils.messages.MessageFromClient;
 import utils.messages.MessageFromServer;
 import utils.quiz.ReducedQuestion;
+import utils.quiz.RoundResult;
 
 public class DealWithClient implements Runnable, AutoCloseable {
 
@@ -58,6 +57,8 @@ public class DealWithClient implements Runnable, AutoCloseable {
         this.clientId = msg.getClientId();
         this.teamId = msg.getTeamId();
 
+        Thread.currentThread().setName(clientId);
+
         this.game = server.getGameManager().registerToGame(this, msg.getGameId());
 
         return game != null;
@@ -87,12 +88,16 @@ public class DealWithClient implements Runnable, AutoCloseable {
         }
     }
 
-    public void sendRoundInfo(ReducedQuestion question, List<Score> scoreboard) {
-        send(MessageFromServer.updateMessage(question, scoreboard));
+    public void sendQuestion(ReducedQuestion question) {
+        send(MessageFromServer.questionMessage(question));
     }
 
-    public void sendEndGame(List<Score> scoreboard) {
-        send(MessageFromServer.endMessage(scoreboard));
+    public void sendResult(RoundResult result) {
+        send(MessageFromServer.resultMessage(result));
+    }
+
+    public void sendEndGame() {
+        send(MessageFromServer.endMessage());
     }
 
     public void sendError(String reason) {
