@@ -1,12 +1,10 @@
 package server.game;
 
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 
-import server.game.utils.Phase;
 import server.game.utils.Scorer;
 import utils.quiz.Answer;
 import utils.quiz.Question;
@@ -14,49 +12,82 @@ import utils.quiz.RoundResult;
 
 public class RoundState {
 
-    private Phase phase;
+    private enum Phase {
+        PREPARED, OPEN, CLOSED
+    }
+
     private final int round;
     private final Question question;
-    private final Set<String> roster;
-    private final Map<String, Answer> answers = new HashMap<>();
-    private final CompletableFuture<RoundResult> finished = new CompletableFuture<>();
+    private final Map<String, String> roster;
+    private final Map<String, Answer> answers = new LinkedHashMap<>();
+    private final CompletableFuture<RoundResult> result = new CompletableFuture<>();
 
-    public RoundState(int round, Question question, Set<String> roster) {
+    private Phase phase = Phase.PREPARED;
+
+    public RoundState(int round, Question question, Map<String, String> roster) {
         this.round = round;
-        this.roster = roster;
         this.question = question;
+        this.roster = Map.copyOf(roster);
+    }
+
+    synchronized void open() {
+        if (phase != Phase.PREPARED)
+            throw new IllegalStateException("Round is not prepared");
+
         phase = Phase.OPEN;
     }
 
-    void submitAnswer(String username, int round, Answer answer) {
+    synchronized boolean isOpen() {
+        return phase == Phase.OPEN;
+    }
+
+    boolean submitAnswer(String username, Answer answer) {
+        Map<String, Answer> snapshot = null;
+
         synchronized (this) {
-            if (phase != Phase.OPEN || round != this.round || !roster.contains(username)
-                    || answers.containsKey(username))
-                return;
+            String teamId = roster.get(username);
+
+            if (phase != Phase.OPEN || answer == null || answer.getRoundNumber() != round || teamId == null
+                    || !teamId.equals(answer.getTeamId()) || answers.containsKey(username))
+                return false;
+
             answers.put(username, answer);
+
+            if (answers.size() == roster.size()) {
+                phase = Phase.CLOSED;
+                snapshot = Map.copyOf(answers);
+            }
         }
 
-        if (allAnswered())
-            finishRound();
+        if (snapshot != null)
+            completeResult(snapshot);
+
+        return snapshot != null;
     }
 
-    private boolean allAnswered() {
-        return answers.size() == roster.size();
-    }
+    void timeout() {
+        Map<String, Answer> snapshot;
 
-    private void finishRound() {
         synchronized (this) {
             if (phase != Phase.OPEN)
                 return;
+
             phase = Phase.CLOSED;
+            snapshot = Map.copyOf(answers);
         }
 
-        RoundResult result = Scorer.score(question, answers);
-        finished.complete(result);
+        completeResult(snapshot);
     }
 
-    public RoundResult getRoundResult() throws InterruptedException, ExecutionException {
-        return finished.get();
+    private void completeResult(Map<String, Answer> snapshot) {
+        try {
+            result.complete(Scorer.score(question, roster, snapshot));
+        } catch (RuntimeException e) {
+            result.completeExceptionally(e);
+        }
     }
 
+    RoundResult awaitResult() throws InterruptedException, ExecutionException {
+        return result.get();
+    }
 }

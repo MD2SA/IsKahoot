@@ -1,40 +1,99 @@
 package server.game;
 
+import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.ExecutionException;
+
+import configs.Config.Features;
+import server.game.utils.Player;
+import server.game.utils.Team;
+import utils.RoundTimer;
 import utils.quiz.Answer;
 import utils.quiz.Question;
 import utils.quiz.Quiz;
+import utils.quiz.RoundResult;
 
-public class RoundManager {
+public class RoundManager implements AutoCloseable {
 
     private final Quiz quiz;
-    private int curRound = -1;
     private final TeamManager teamManager;
-    private RoundState roundState;
+    private final RoundTimer timer = new RoundTimer();
+
+    private int currentRound = -1;
+    private RoundState activeRound;
 
     public RoundManager(Quiz quiz, TeamManager teamManager) {
         this.quiz = quiz;
         this.teamManager = teamManager;
     }
 
-    public RoundState openRound() {
-        roundState = new RoundState(++curRound, getCurrentQuestion(), teamManager.getUsernames());
-        return roundState;
+    public synchronized boolean hasNextRound() {
+        return currentRound + 1 < quiz.getNumberOfQuestions();
     }
 
-    public void answer(Answer answer) throws InterruptedException {
-        roundState.submitAnswer(Thread.currentThread().getName(), answer.getRoundNumber(), answer);
+    public synchronized Question prepareNextRound() {
+        if (!hasNextRound())
+            throw new IllegalStateException("No more rounds");
+
+        currentRound++;
+        Question question = quiz.getQuestion(currentRound);
+        activeRound = new RoundState(currentRound, question, rosterSnapshot());
+
+        return question;
     }
 
-    public Question getCurrentQuestion() {
-        return quiz.getQuestion(curRound);
+    public synchronized void openRound() {
+        requireActiveRound().open();
     }
 
-    public boolean hasNextQuestion() {
-        return quiz.getNumberOfQuestions() > curRound;
+    public synchronized void startTimer() {
+        RoundState round = requireActiveRound();
+
+        if (round.isOpen())
+            timer.schedule(Features.ROUND_SECONDS, round::timeout);
     }
 
-    public int getRoundNumber() {
-        return curRound;
+    public synchronized void answer(String authenticatedUsername, Answer answer) {
+        RoundState round = requireActiveRound();
+
+        if (round.submitAnswer(authenticatedUsername, answer))
+            timer.cancel();
     }
 
+    public RoundResult awaitResult() throws InterruptedException, ExecutionException {
+        RoundState round;
+
+        synchronized (this) {
+            round = requireActiveRound();
+        }
+
+        return round.awaitResult();
+    }
+
+    public synchronized int getRoundNumber() {
+        return currentRound;
+    }
+
+    @Override
+    public void close() {
+        timer.close();
+    }
+
+    private RoundState requireActiveRound() {
+        if (activeRound == null)
+            throw new IllegalStateException("No active round");
+
+        return activeRound;
+    }
+
+    private Map<String, String> rosterSnapshot() {
+        Map<String, String> roster = new HashMap<>();
+
+        for (Team team : teamManager.getTeams().values()) {
+            for (Player player : team.getPlayers())
+                roster.put(player.getName(), team.getName());
+        }
+
+        return Map.copyOf(roster);
+    }
 }

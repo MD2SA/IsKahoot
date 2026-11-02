@@ -79,11 +79,7 @@ public class DealWithClient implements Runnable, AutoCloseable {
             }
 
             if (msg.getCode() == Code.ANSWER) {
-                try {
-                    this.game.receiveAnswer(msg.getAnswer());
-                } catch (Exception e) {
-                    Thread.currentThread().interrupt();
-                }
+                this.game.receiveAnswer(clientId, msg.getAnswer());
             }
         }
     }

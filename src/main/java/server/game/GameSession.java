@@ -1,7 +1,5 @@
 package server.game;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.function.Consumer;
 
@@ -12,7 +10,6 @@ import utils.quiz.Question;
 import utils.quiz.Quiz;
 import utils.quiz.ReducedQuestion;
 import utils.quiz.RoundResult;
-import utils.quiz.Score;
 import utils.tools.ConcurrentSet;
 
 public class GameSession implements Runnable {
@@ -41,22 +38,33 @@ public class GameSession implements Runnable {
         return true;
     }
 
-    public void receiveAnswer(Answer answer) throws InterruptedException {
-        roundManager.answer(answer);
+    public void receiveAnswer(String authenticatedUsername, Answer answer) {
+        roundManager.answer(authenticatedUsername, answer);
     }
 
     @Override
     public void run() {
-        while (roundManager.hasNextQuestion() && !clientHandlers.isEmpty()) {
-            RoundState round = roundManager.openRound();
-            broadcastQuestion(roundManager.getCurrentQuestion());
+        try {
+            while (roundManager.hasNextRound() && !clientHandlers.isEmpty()) {
+                Question question = roundManager.prepareNextRound();
 
-            try {
-                RoundResult result = round.getRoundResult();
-                broadcastResult(result);
-            } catch (InterruptedException | ExecutionException e) {
-                Server.getInstance().getLogger().warn("Unexpected exception while waiting for results");
+                roundManager.openRound();
+                broadcastQuestion(question);
+                roundManager.startTimer();
+
+                try {
+                    RoundResult result = roundManager.awaitResult();
+                    broadcastResult(result);
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    break;
+                } catch (ExecutionException e) {
+                    Server.getInstance().getLogger().warn("Unexpected exception while waiting for results");
+                    break;
+                }
             }
+        } finally {
+            roundManager.close();
         }
         endGame();
     }
@@ -80,10 +88,6 @@ public class GameSession implements Runnable {
     private void broadcast(Consumer<DealWithClient> action) {
         for (DealWithClient handler : clientHandlers)
             action.accept(handler);
-    }
-
-    public List<Score> getScoreboard() {
-        return new ArrayList<>(teamManager.getTeams().values());
     }
 
     public boolean isFull() {
