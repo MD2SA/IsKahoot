@@ -7,17 +7,21 @@ import java.awt.FlowLayout;
 import java.awt.Font;
 import java.awt.GridLayout;
 import java.util.List;
+import java.util.Map;
 
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
+import javax.swing.JTable;
 import javax.swing.SwingConstants;
 import javax.swing.Timer;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.LineBorder;
+import javax.swing.table.DefaultTableCellRenderer;
 
 import client.gui.Observer.Observed;
 import utils.quiz.ReducedQuestion;
@@ -153,53 +157,46 @@ public class GUI extends Observed {
         timerLabel.setForeground(secondsLeft <= 5 ? Color.RED : Color.BLACK);
     }
 
-    // public void displayScoreboard(List<Score> scoreboard) {
-    // scorePanel.removeAll();
-    //
-    // JLabel header = new JLabel("Classificação");
-    // header.setFont(new Font("SansSerif", Font.BOLD, 18));
-    // header.setHorizontalAlignment(SwingConstants.CENTER);
-    // header.setBorder(new EmptyBorder(0, 0, 10, 0));
-    //
-    // String[] cols = {"Nome", "Pontuação"};
-    // Object[][] data = new Object[scoreboard.size()][];
-    // for (int i = 0; i < scoreboard.size(); i++) {
-    // Score s = scoreboard.get(i);
-    // data[i] = new Object[]{s.getName(), s.getScore()};
-    // }
-    //
-    // JTable table = new JTable(data, cols);
-    // table.setRowHeight(25);
-    // table.setEnabled(false);
-    // table.getTableHeader().setReorderingAllowed(false);
-    // table.getTableHeader().setFont(new Font("SansSerif", Font.BOLD, 14));
-    //
-    // DefaultTableCellRenderer centerRenderer = new DefaultTableCellRenderer();
-    // centerRenderer.setHorizontalAlignment(SwingConstants.CENTER);
-    // for (int i = 0; i < cols.length; i++)
-    // table.getColumnModel().getColumn(i).setCellRenderer(centerRenderer);
-    //
-    // JScrollPane scroll = new JScrollPane(table);
-    // scroll.setBorder(new LineBorder(new Color(180, 180, 220), 1));
-    //
-    // scorePanel.add(header, BorderLayout.NORTH);
-    // scorePanel.add(scroll, BorderLayout.CENTER);
-    //
-    // refresh(scorePanel);
-    // }
+    public void displayScoreboard(Map<String, Integer> scoreboard) {
+        scorePanel.removeAll();
+
+        JLabel header = new JLabel("Classificação");
+        header.setFont(new Font("SansSerif", Font.BOLD, 18));
+        header.setHorizontalAlignment(SwingConstants.CENTER);
+        header.setBorder(new EmptyBorder(0, 0, 10, 0));
+
+        String[] cols = {"Nome", "Pontuação"};
+        Object[][] data = new Object[scoreboard.size()][];
+        //
+        // this is a code smell, i will deal with after
+        int it = 0;
+        for (var entry : scoreboard.entrySet()) {
+            data[it++] = new Object[]{entry.getKey(), entry.getValue()};
+        }
+
+        JTable table = new JTable(data, cols);
+        table.setRowHeight(25);
+        table.setEnabled(false);
+        table.getTableHeader().setReorderingAllowed(false);
+        table.getTableHeader().setFont(new Font("SansSerif", Font.BOLD, 14));
+
+        DefaultTableCellRenderer centerRenderer = new DefaultTableCellRenderer();
+        centerRenderer.setHorizontalAlignment(SwingConstants.CENTER);
+        for (int i = 0; i < cols.length; i++)
+            table.getColumnModel().getColumn(i).setCellRenderer(centerRenderer);
+
+        JScrollPane scroll = new JScrollPane(table);
+        scroll.setBorder(new LineBorder(new Color(180, 180, 220), 1));
+
+        scorePanel.add(header, BorderLayout.NORTH);
+        scorePanel.add(scroll, BorderLayout.CENTER);
+
+        refresh(scorePanel);
+    }
 
     public void displayWaiting() {
         questionPanel.removeAll();
         JLabel l = new JLabel("A aguardar...");
-        l.setFont(new Font("SansSerif", Font.BOLD, 16));
-        l.setAlignmentX(Component.CENTER_ALIGNMENT);
-        questionPanel.add(l);
-        refresh(questionPanel);
-    }
-
-    public void displayRoundResult() {
-        questionPanel.removeAll();
-        JLabel l = new JLabel("Resultados da ronda");
         l.setFont(new Font("SansSerif", Font.BOLD, 16));
         l.setAlignmentX(Component.CENTER_ALIGNMENT);
         questionPanel.add(l);

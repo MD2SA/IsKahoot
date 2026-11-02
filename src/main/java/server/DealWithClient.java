@@ -11,7 +11,7 @@ import utils.messages.Message;
 import utils.messages.MessageFromClient;
 import utils.messages.MessageFromServer;
 import utils.quiz.ReducedQuestion;
-import utils.quiz.RoundResult;
+import utils.quiz.Scoreboard;
 
 public class DealWithClient implements Runnable, AutoCloseable {
 
@@ -88,8 +88,8 @@ public class DealWithClient implements Runnable, AutoCloseable {
         send(MessageFromServer.questionMessage(question));
     }
 
-    public void sendResult(RoundResult result) {
-        send(MessageFromServer.resultMessage(result));
+    public void sendScoreboard(Scoreboard scoreboard) {
+        send(MessageFromServer.scoreboardMessage(scoreboard));
     }
 
     public void sendEndGame() {

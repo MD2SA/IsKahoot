@@ -12,12 +12,14 @@ import utils.quiz.Answer;
 import utils.quiz.Question;
 import utils.quiz.Quiz;
 import utils.quiz.RoundResult;
+import utils.quiz.Scoreboard;
 
 public class RoundManager implements AutoCloseable {
 
     private final Quiz quiz;
     private final TeamManager teamManager;
     private final RoundTimer timer = new RoundTimer();
+    private final Scoreboard scoreboard = new Scoreboard();
 
     private int currentRound = -1;
     private RoundState activeRound;
@@ -60,14 +62,16 @@ public class RoundManager implements AutoCloseable {
             timer.cancel();
     }
 
-    public RoundResult awaitResult() throws InterruptedException, ExecutionException {
+    public Scoreboard awaitResult() throws InterruptedException, ExecutionException {
         RoundState round;
 
         synchronized (this) {
             round = requireActiveRound();
         }
 
-        return round.awaitResult();
+        RoundResult result = round.awaitResult();
+        scoreboard.applyResult(result);
+        return scoreboard;
     }
 
     public synchronized int getRoundNumber() {

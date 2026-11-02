@@ -11,7 +11,7 @@ import java.io.ObjectOutputStream;
 
 import org.junit.jupiter.api.Test;
 
-import utils.quiz.RoundResult;
+import utils.quiz.Scoreboard;
 
 class ProtocolSerializationTest {
 
@@ -39,10 +39,10 @@ class ProtocolSerializationTest {
 
     @Test
     void roundTripsTheResultMessage() throws Exception {
-        MessageFromServer message = roundTrip(MessageFromServer.resultMessage(new RoundResult()));
+        MessageFromServer message = roundTrip(MessageFromServer.scoreboardMessage(new Scoreboard()));
 
-        assertEquals(Code.RESULTS, message.getCode());
-        assertNotNull(message.getResult());
+        assertEquals(Code.SCOREBOARD, message.getCode());
+        assertNotNull(message.getScoreboard());
     }
 
     @SuppressWarnings("unchecked")

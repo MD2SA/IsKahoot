@@ -9,7 +9,7 @@ import utils.quiz.Answer;
 import utils.quiz.Question;
 import utils.quiz.Quiz;
 import utils.quiz.ReducedQuestion;
-import utils.quiz.RoundResult;
+import utils.quiz.Scoreboard;
 import utils.tools.ConcurrentSet;
 
 public class GameSession implements Runnable {
@@ -53,8 +53,8 @@ public class GameSession implements Runnable {
                 roundManager.startTimer();
 
                 try {
-                    RoundResult result = roundManager.awaitResult();
-                    broadcastResult(result);
+                    Scoreboard scoreboard = roundManager.awaitResult();
+                    broadcastResult(scoreboard);
                 } catch (InterruptedException e) {
                     Thread.currentThread().interrupt();
                     break;
@@ -74,8 +74,8 @@ public class GameSession implements Runnable {
         broadcast(handler -> handler.sendQuestion(reducedQuestion));
     }
 
-    private void broadcastResult(RoundResult result) {
-        broadcast(handler -> handler.sendResult(result));
+    private void broadcastResult(Scoreboard scoreboard) {
+        broadcast(handler -> handler.sendScoreboard(scoreboard));
     }
 
     private void endGame() {

@@ -5,6 +5,7 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.InetAddress;
 import java.net.Socket;
+import java.util.Map;
 
 import javax.swing.SwingUtilities;
 
@@ -54,7 +55,7 @@ public class Client extends Thread implements Observer {
 
             switch (message.getCode()) {
                 case QUESTION -> handleQuestion(message);
-                case RESULTS -> handleResults();
+                case SCOREBOARD -> handleScoreboard(message);
                 case END -> {
                     SwingUtilities.invokeLater(gui::displayEndGame);
                     return;
@@ -84,10 +85,14 @@ public class Client extends Thread implements Observer {
         });
     }
 
-    private void handleResults() {
+    private void handleScoreboard(MessageFromServer message) {
+        Map<String, Integer> scoreboard = message.getScoreboard();
+        if (scoreboard == null)
+            return;
+
         SwingUtilities.invokeLater(() -> {
             gui.stopTimer();
-            gui.displayRoundResult();
+            gui.displayScoreboard(scoreboard);
         });
     }
 

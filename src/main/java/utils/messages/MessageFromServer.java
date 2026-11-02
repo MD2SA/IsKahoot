@@ -1,17 +1,19 @@
 package utils.messages;
 
+import java.util.Map;
+
 import utils.quiz.ReducedQuestion;
-import utils.quiz.RoundResult;
+import utils.quiz.Scoreboard;
 
 public class MessageFromServer extends Message {
 
-    private RoundResult result;
+    private Scoreboard scoreboard;
     private ReducedQuestion question;
 
-    private MessageFromServer(Code code, ReducedQuestion question, int timer, RoundResult result) {
+    private MessageFromServer(Code code, ReducedQuestion question, int timer, Scoreboard scoreboard) {
         super(code);
         this.question = question;
-        this.result = result;
+        this.scoreboard = scoreboard;
     }
 
     public static MessageFromServer connectionMessage() {
@@ -22,8 +24,8 @@ public class MessageFromServer extends Message {
         return new MessageFromServer(Code.QUESTION, question, -1, null);
     }
 
-    public static MessageFromServer resultMessage(RoundResult result) {
-        return new MessageFromServer(Code.RESULTS, null, -1, result);
+    public static MessageFromServer scoreboardMessage(Scoreboard scoreboard) {
+        return new MessageFromServer(Code.SCOREBOARD, null, -1, scoreboard);
     }
 
     public static MessageFromServer endMessage() {
@@ -38,8 +40,8 @@ public class MessageFromServer extends Message {
         return question;
     }
 
-    public RoundResult getResult() {
-        return result;
+    public Map<String, Integer> getScoreboard() {
+        return scoreboard.getScoreboard();
     }
 
 }
