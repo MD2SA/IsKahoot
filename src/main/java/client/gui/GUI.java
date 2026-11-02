@@ -1,17 +1,26 @@
 package client.gui;
 
-import javax.swing.*;
-import javax.swing.border.EmptyBorder;
-import javax.swing.border.LineBorder;
-import javax.swing.table.DefaultTableCellRenderer;
-import client.gui.Observer.Observed;
-import utils.quiz.Score;
-import utils.quiz.ReducedQuestion;
-
-import java.awt.*;
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.FlowLayout;
+import java.awt.Font;
+import java.awt.GridLayout;
 import java.util.List;
 
-import utils.Timer;
+import javax.swing.BoxLayout;
+import javax.swing.JButton;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JSplitPane;
+import javax.swing.SwingConstants;
+import javax.swing.Timer;
+import javax.swing.border.EmptyBorder;
+import javax.swing.border.LineBorder;
+
+import client.gui.Observer.Observed;
+import utils.quiz.ReducedQuestion;
 
 public class GUI extends Observed {
 
@@ -19,6 +28,7 @@ public class GUI extends Observed {
     private final JPanel scorePanel;
     private JLabel timerLabel;
     private Timer timer;
+    private int secondsLeft;
 
     private int selectedOption;
 
@@ -112,60 +122,71 @@ public class GUI extends Observed {
     }
 
     public void startTimer(int seconds) {
-        if (timer != null) {
-            timer.interrupt();
-        }
+        stopTimer();
+
+        secondsLeft = seconds;
         timerLabel.setText(String.valueOf(seconds));
+        timerLabel.setForeground(seconds <= 5 ? Color.RED : Color.BLACK);
 
-        timer = new Timer(seconds, () -> {
-            SwingUtilities.invokeLater(() -> {
-                int current = timer.getTimeLeft();
-                timerLabel.setText(String.valueOf(current));
-                if (current <= 5) {
-                    timerLabel.setForeground(Color.RED);
-                } else {
-                    timerLabel.setForeground(Color.BLACK);
-                }
-            });
-        }, true);
-
+        timer = new Timer(1000, event -> tickTimer());
         timer.start();
     }
 
-    public void displayScoreboard(List<Score> scoreboard) {
-        scorePanel.removeAll();
+    public void stopTimer() {
+        if (timer != null) {
+            timer.stop();
+            timer = null;
+        }
+    }
 
-        JLabel header = new JLabel("Classificação");
-        header.setFont(new Font("SansSerif", Font.BOLD, 18));
-        header.setHorizontalAlignment(SwingConstants.CENTER);
-        header.setBorder(new EmptyBorder(0, 0, 10, 0));
+    private void tickTimer() {
+        secondsLeft--;
 
-        String[] cols = {"Nome", "Pontuação"};
-        Object[][] data = new Object[scoreboard.size()][];
-        for (int i = 0; i < scoreboard.size(); i++) {
-            Score s = scoreboard.get(i);
-            data[i] = new Object[]{s.getName(), s.getScore()};
+        if (secondsLeft <= 0) {
+            stopTimer();
+            timerLabel.setText("0");
+            timerLabel.setForeground(Color.RED);
+            return;
         }
 
-        JTable table = new JTable(data, cols);
-        table.setRowHeight(25);
-        table.setEnabled(false);
-        table.getTableHeader().setReorderingAllowed(false);
-        table.getTableHeader().setFont(new Font("SansSerif", Font.BOLD, 14));
-
-        DefaultTableCellRenderer centerRenderer = new DefaultTableCellRenderer();
-        centerRenderer.setHorizontalAlignment(SwingConstants.CENTER);
-        for (int i = 0; i < cols.length; i++)
-            table.getColumnModel().getColumn(i).setCellRenderer(centerRenderer);
-
-        JScrollPane scroll = new JScrollPane(table);
-        scroll.setBorder(new LineBorder(new Color(180, 180, 220), 1));
-
-        scorePanel.add(header, BorderLayout.NORTH);
-        scorePanel.add(scroll, BorderLayout.CENTER);
-
-        refresh(scorePanel);
+        timerLabel.setText(String.valueOf(secondsLeft));
+        timerLabel.setForeground(secondsLeft <= 5 ? Color.RED : Color.BLACK);
     }
+
+    // public void displayScoreboard(List<Score> scoreboard) {
+    // scorePanel.removeAll();
+    //
+    // JLabel header = new JLabel("Classificação");
+    // header.setFont(new Font("SansSerif", Font.BOLD, 18));
+    // header.setHorizontalAlignment(SwingConstants.CENTER);
+    // header.setBorder(new EmptyBorder(0, 0, 10, 0));
+    //
+    // String[] cols = {"Nome", "Pontuação"};
+    // Object[][] data = new Object[scoreboard.size()][];
+    // for (int i = 0; i < scoreboard.size(); i++) {
+    // Score s = scoreboard.get(i);
+    // data[i] = new Object[]{s.getName(), s.getScore()};
+    // }
+    //
+    // JTable table = new JTable(data, cols);
+    // table.setRowHeight(25);
+    // table.setEnabled(false);
+    // table.getTableHeader().setReorderingAllowed(false);
+    // table.getTableHeader().setFont(new Font("SansSerif", Font.BOLD, 14));
+    //
+    // DefaultTableCellRenderer centerRenderer = new DefaultTableCellRenderer();
+    // centerRenderer.setHorizontalAlignment(SwingConstants.CENTER);
+    // for (int i = 0; i < cols.length; i++)
+    // table.getColumnModel().getColumn(i).setCellRenderer(centerRenderer);
+    //
+    // JScrollPane scroll = new JScrollPane(table);
+    // scroll.setBorder(new LineBorder(new Color(180, 180, 220), 1));
+    //
+    // scorePanel.add(header, BorderLayout.NORTH);
+    // scorePanel.add(scroll, BorderLayout.CENTER);
+    //
+    // refresh(scorePanel);
+    // }
 
     public void displayWaiting() {
         questionPanel.removeAll();
@@ -176,7 +197,17 @@ public class GUI extends Observed {
         refresh(questionPanel);
     }
 
+    public void displayRoundResult() {
+        questionPanel.removeAll();
+        JLabel l = new JLabel("Resultados da ronda");
+        l.setFont(new Font("SansSerif", Font.BOLD, 16));
+        l.setAlignmentX(Component.CENTER_ALIGNMENT);
+        questionPanel.add(l);
+        refresh(questionPanel);
+    }
+
     public void displayError(String errorMsg) {
+        stopTimer();
         questionPanel.removeAll();
         JLabel l = new JLabel(errorMsg);
         l.setFont(new Font("SansSerif", Font.BOLD, 16));
@@ -187,6 +218,7 @@ public class GUI extends Observed {
     }
 
     public void displayEndGame() {
+        stopTimer();
         questionPanel.removeAll();
         JLabel label = new JLabel("Jogo terminado.");
         label.setFont(new Font("SansSerif", Font.BOLD, 18));

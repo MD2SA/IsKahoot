@@ -1,6 +1,7 @@
 package utils.messages;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -9,6 +10,8 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 
 import org.junit.jupiter.api.Test;
+
+import utils.quiz.RoundResult;
 
 class ProtocolSerializationTest {
 
@@ -32,6 +35,14 @@ class ProtocolSerializationTest {
         assertEquals("A", message.getAnswer().getTeamId());
         assertEquals(2, message.getAnswer().getOption());
         assertEquals(3, message.getAnswer().getRoundNumber());
+    }
+
+    @Test
+    void roundTripsTheResultMessage() throws Exception {
+        MessageFromServer message = roundTrip(MessageFromServer.resultMessage(new RoundResult()));
+
+        assertEquals(Code.RESULTS, message.getCode());
+        assertNotNull(message.getResult());
     }
 
     @SuppressWarnings("unchecked")

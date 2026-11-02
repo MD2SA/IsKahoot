@@ -6,6 +6,8 @@ import java.io.ObjectOutputStream;
 import java.net.InetAddress;
 import java.net.Socket;
 
+import javax.swing.SwingUtilities;
+
 import client.gui.GUI;
 import client.gui.Observer.Observed;
 import client.gui.Observer.Observer;
@@ -21,7 +23,8 @@ public class Client extends Thread implements Observer {
     private final String gameId;
     private final String teamId;
 
-    private int roundNumber = -1;
+    private volatile int roundNumber = -1;
+    private int answeredRound = -1;
 
     private Socket socket;
     private ObjectOutputStream out;
@@ -41,46 +44,71 @@ public class Client extends Thread implements Observer {
         socket = new Socket(addr, Config.Server.SERVER_PORT);
         this.out = new ObjectOutputStream(socket.getOutputStream());
         this.in = new ObjectInputStream(socket.getInputStream());
-        MessageFromClient msgSent = MessageFromClient.getRegistrationMessage(username, teamId, gameId);
-        out.writeObject(msgSent);
-        out.reset();
+
+        send(MessageFromClient.getRegistrationMessage(username, teamId, gameId));
     }
 
-    private void communicate() {
+    private void communicate() throws IOException, ClassNotFoundException {
         while (true) {
-            MessageFromClient msgSent = MessageFromClient.getRegistrationMessage(username, teamId, gameId);
-            try {
-                out.writeObject(msgSent);
-                out.reset();
-                MessageFromServer msgReceived = (MessageFromServer) in.readObject();
+            MessageFromServer message = (MessageFromServer) in.readObject();
 
-                this.roundNumber = msgReceived.getRoundNumber();
-
-                ReducedQuestion question = msgReceived.getQuestion();
-                // this.gui.displayScoreboard(scoreboard);
-                if (question == null) {
-                    this.gui.displayEndGame();
+            switch (message.getCode()) {
+                case QUESTION -> handleQuestion(message);
+                case RESULTS -> handleResults();
+                case END -> {
+                    SwingUtilities.invokeLater(gui::displayEndGame);
                     return;
                 }
-
-                this.gui.startTimer(Config.Features.ROUND_SECONDS);
-                this.gui.displayQuestion(question);
-                MessageFromServer t = (MessageFromServer) in.readObject();
-
-            } catch (Exception e) {
-                gui.displayError("Erro ao comunicar com o servidor.");
-                break;
+                case ERROR -> {
+                    SwingUtilities.invokeLater(() -> gui.displayError(message.getInfo()));
+                    return;
+                }
+                default -> {
+                    // Ignore messages that are not part of the game loop.
+                }
             }
         }
     }
 
+    private void handleQuestion(MessageFromServer message) {
+        ReducedQuestion question = message.getQuestion();
+        if (question == null)
+            return;
+
+        roundNumber = question.getRoundNumber();
+        answeredRound = -1;
+
+        SwingUtilities.invokeLater(() -> {
+            gui.startTimer(Config.Features.ROUND_SECONDS);
+            gui.displayQuestion(question);
+        });
+    }
+
+    private void handleResults() {
+        SwingUtilities.invokeLater(() -> {
+            gui.stopTimer();
+            gui.displayRoundResult();
+        });
+    }
+
     private void sendAnswer(int option) {
-        MessageFromClient msgSent = MessageFromClient.getAnswerQuestion(username, teamId, option, roundNumber);
+        int round = roundNumber;
+        if (round < 0 || answeredRound == round)
+            return;
+
         try {
-            out.writeObject(msgSent);
-            out.reset();
-        } catch (Exception e) {
+            send(MessageFromClient.getAnswerQuestion(username, teamId, option, round));
+            answeredRound = round;
+        } catch (IOException e) {
             gui.displayError("Erro ao enviar a resposta ao servidor.");
+        }
+    }
+
+    private void send(MessageFromClient message) throws IOException {
+        synchronized (out) {
+            out.writeObject(message);
+            out.flush();
+            out.reset();
         }
     }
 
@@ -95,9 +123,10 @@ public class Client extends Thread implements Observer {
         try {
             connectToServer();
             communicate();
-        } catch (IOException e) {
-            gui.displayError("Não foi possível ligar ao servidor.");
+        } catch (IOException | ClassNotFoundException e) {
+            SwingUtilities.invokeLater(() -> gui.displayError("Erro ao comunicar com o servidor."));
         } finally {
+            SwingUtilities.invokeLater(gui::stopTimer);
             closeResources();
         }
     }

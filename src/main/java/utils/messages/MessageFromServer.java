@@ -23,7 +23,7 @@ public class MessageFromServer extends Message {
     }
 
     public static MessageFromServer resultMessage(RoundResult result) {
-        return new MessageFromServer(Code.QUESTION, null, -1, null);
+        return new MessageFromServer(Code.RESULTS, null, -1, result);
     }
 
     public static MessageFromServer endMessage() {
