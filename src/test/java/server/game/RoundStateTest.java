@@ -25,8 +25,8 @@ class RoundStateTest {
         RoundState round = new RoundState(0, individualQuestion(), ROSTER);
         round.open();
 
-        assertFalse(round.submitAnswer("alice", new Answer("A", "alice", 1, 0)));
-        assertTrue(round.submitAnswer("bob", new Answer("A", "bob", 1, 0)));
+        assertEquals(AnswerStatus.ACCEPTED, round.submitAnswer("alice", new Answer("A", "alice", 1, 0)));
+        assertEquals(AnswerStatus.ROUND_COMPLETED, round.submitAnswer("bob", new Answer("A", "bob", 1, 0)));
 
         RoundResult result = round.awaitResult();
         assertEquals(20, result.getResult().get("A"));
@@ -37,8 +37,9 @@ class RoundStateTest {
         RoundState round = new RoundState(0, individualQuestion(), Map.of("alice", "A"));
         round.open();
 
-        assertFalse(round.submitAnswer("alice", new Answer("B", "alice", 1, 0)));
-        assertTrue(round.submitAnswer("alice", new Answer("A", "alice", 1, 0)));
+        assertEquals(AnswerStatus.REJECTED, round.submitAnswer("alice", new Answer("B", "alice", 1, 0)));
+        assertEquals(AnswerStatus.REJECTED, round.submitAnswer("alice", new Answer("A", "alice", 99, 0)));
+        assertEquals(AnswerStatus.ROUND_COMPLETED, round.submitAnswer("alice", new Answer("A", "alice", 1, 0)));
     }
 
     @Test
@@ -46,7 +47,7 @@ class RoundStateTest {
         RoundState round = new RoundState(0, individualQuestion(), ROSTER);
         round.open();
 
-        assertFalse(round.submitAnswer("alice", new Answer("A", "alice", 1, 0)));
+        assertEquals(AnswerStatus.ACCEPTED, round.submitAnswer("alice", new Answer("A", "alice", 1, 0)));
 
         round.timeout();
 
@@ -61,7 +62,7 @@ class RoundStateTest {
 
         round.timeout();
 
-        assertFalse(round.submitAnswer("alice", new Answer("A", "alice", 1, 0)));
+        assertEquals(AnswerStatus.REJECTED, round.submitAnswer("alice", new Answer("A", "alice", 1, 0)));
     }
 
     @Test
@@ -69,9 +70,9 @@ class RoundStateTest {
         RoundState round = new RoundState(1, teamQuestion(), ROSTER);
         round.open();
 
-        assertFalse(round.submitAnswer("alice", new Answer("A", "alice", 2, 1)));
+        assertEquals(AnswerStatus.ACCEPTED, round.submitAnswer("alice", new Answer("A", "alice", 2, 1)));
         assertTrue(round.playerLeft("bob"));
-        assertFalse(round.submitAnswer("bob", new Answer("A", "bob", 2, 1)));
+        assertEquals(AnswerStatus.REJECTED, round.submitAnswer("bob", new Answer("A", "bob", 2, 1)));
 
         RoundResult result = round.awaitResult();
         assertEquals(10, result.getResult().get("A"));

@@ -39,8 +39,8 @@ public class GameSession implements Runnable {
         return true;
     }
 
-    public void receiveAnswer(String authenticatedUsername, Answer answer) {
-        roundManager.answer(authenticatedUsername, answer);
+    public AnswerStatus receiveAnswer(String authenticatedUsername, Answer answer) {
+        return roundManager.answer(authenticatedUsername, answer);
     }
 
     @Override
@@ -81,10 +81,7 @@ public class GameSession implements Runnable {
     }
 
     private void endGame() {
-        broadcast(handler -> {
-            handler.sendEndGame();
-            handler.close();
-        });
+        broadcast(DealWithClient::sendEndGame);
     }
 
     private void broadcast(Consumer<DealWithClient> action) {

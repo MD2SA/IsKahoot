@@ -3,6 +3,7 @@ package server;
 import server.utils.Logger;
 
 import java.io.IOException;
+import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 
@@ -40,7 +41,8 @@ public class Server {
     public void start() throws IOException {
         logger.info("Server starting on port: " + Config.Server.SERVER_PORT);
 
-        try (ServerSocket ss = new ServerSocket(Config.Server.SERVER_PORT)) {
+        InetAddress bindAddress = InetAddress.getByName(Config.Server.SERVER_IP);
+        try (ServerSocket ss = new ServerSocket(Config.Server.SERVER_PORT, 50, bindAddress)) {
             while (true) {
                 Socket socket = ss.accept();
                 logger.info("New connection from " + socket.getRemoteSocketAddress());

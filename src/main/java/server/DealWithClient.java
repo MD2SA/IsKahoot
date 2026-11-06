@@ -1,142 +1,221 @@
 package server;
 
 import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
+import java.io.InvalidObjectException;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
 import java.net.Socket;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
+import server.game.AnswerStatus;
 import server.game.GameSession;
-import utils.messages.Code;
-import utils.messages.Message;
-import utils.messages.MessageFromClient;
-import utils.messages.MessageFromServer;
+import utils.messages.ClientMessage;
+import utils.messages.MessageCodec;
+import utils.messages.Protocol;
+import utils.messages.ProtocolObjectFilters;
+import utils.messages.ServerMessage;
+import utils.quiz.Answer;
 import utils.quiz.ReducedQuestion;
 import utils.quiz.Scoreboard;
 
 public class DealWithClient implements Runnable, AutoCloseable {
 
-    private static final int MAX_FAILS = 3;
+    private static final int OUTBOUND_CAPACITY = 64;
+    private static final int REGISTRATION_TIMEOUT_MILLIS = 10_000;
+    private static final long TERMINAL_WRITE_TIMEOUT_SECONDS = 2;
 
     private final Server server;
-    private Socket socket;
-    private ObjectOutputStream out;
-    private ObjectInputStream in;
+    private final Socket socket;
+    private final BlockingQueue<ServerMessage> outbound = new ArrayBlockingQueue<>(OUTBOUND_CAPACITY);
+    private final AtomicBoolean closed = new AtomicBoolean();
+    private final CountDownLatch writerStopped = new CountDownLatch(1);
 
-    private String clientId;
-    private String teamId;
-    private GameSession game;
+    private volatile DataOutputStream out;
+    private volatile DataInputStream in;
+    private volatile Thread writerThread;
 
-    public DealWithClient(Server server, Socket socket) throws IOException {
+    private volatile String clientId;
+    private volatile String teamId;
+    private volatile GameSession game;
+
+    public DealWithClient(Server server, Socket socket) {
         this.server = server;
         this.socket = socket;
-        out = new ObjectOutputStream(socket.getOutputStream());
-        in = new ObjectInputStream(socket.getInputStream());
     }
 
     @Override
     public void run() {
         try {
-            if (!registerClient()) {
-                server.getLogger().info("Registration failed for client " + clientId);
-                sendError("Registration failed");
+            initializeStreams();
+            startWriter();
+
+            if (!registerClient())
                 return;
-            }
+
+            socket.setSoTimeout(0);
             serve();
-        } catch (IOException e) {
-            server.getLogger().warn("Client disconnected after exception: " + clientId);
+        } catch (IOException | ClassNotFoundException e) {
+            if (!closed.get())
+                server.getLogger().warn("Client connection ended after exception: " + clientId + ": " + e.getMessage());
         } finally {
             cleanup();
         }
     }
 
-    private boolean registerClient() throws IOException {
-        MessageFromClient msg = readMessage();
-        if (msg == null || msg.getCode() != Code.REGISTER)
-            return false;
-
-        this.clientId = msg.getClientId();
-        this.teamId = msg.getTeamId();
-
-        Thread.currentThread().setName(clientId);
-
-        this.game = server.getGameManager().registerToGame(this, msg.getGameId());
-
-        return game != null;
+    private void initializeStreams() throws IOException {
+        socket.setSoTimeout(REGISTRATION_TIMEOUT_MILLIS);
+        out = new DataOutputStream(socket.getOutputStream());
+        in = new DataInputStream(socket.getInputStream());
     }
 
-    private void serve() {
-        while (!Thread.currentThread().isInterrupted()) {
-            MessageFromClient msg = readMessage();
-            if (msg == null) {
-                server.getLogger().info("Message from client: " + clientId + " was null.");
-                break;
-            }
+    private void startWriter() {
+        writerThread = new Thread(this::writeLoop, "client-writer-" + socket.getRemoteSocketAddress());
+        writerThread.setDaemon(true);
+        writerThread.start();
+    }
 
-            if (!clientId.equals(msg.getClientId())) {
-                server.getLogger().info("Message from client was invalid");
-                sendError("Invalid client ID");
-                break;
-            }
+    private boolean registerClient() throws IOException, ClassNotFoundException {
+        ClientMessage message = readMessage();
+        if (!(message instanceof ClientMessage.Register registration)) {
+            sendTerminalError("Expected registration message");
+            return false;
+        }
 
-            if (msg.getCode() == Code.ANSWER) {
-                this.game.receiveAnswer(clientId, msg.getAnswer());
+        if (registration.protocolVersion() != Protocol.CURRENT_VERSION) {
+            sendTerminalError("Unsupported protocol version");
+            return false;
+        }
+
+        clientId = registration.clientId();
+        teamId = registration.teamId();
+        Thread.currentThread().setName("client-" + clientId);
+
+        game = server.getGameManager().registerToGame(this, registration.gameId());
+        if (game == null) {
+            sendTerminalError("Registration failed");
+            return false;
+        }
+
+        return true;
+    }
+
+    private void serve() throws IOException, ClassNotFoundException {
+        while (!closed.get() && !Thread.currentThread().isInterrupted()) {
+            ClientMessage message = readMessage();
+            switch (message) {
+                case ClientMessage.SubmitAnswer answer -> handleAnswer(answer);
+                case ClientMessage.Register ignored -> {
+                    sendTerminalError("Already registered");
+                    return;
+                }
             }
         }
+    }
+
+    private void handleAnswer(ClientMessage.SubmitAnswer answer) {
+        Answer submitted = new Answer(teamId, clientId, answer.option(), answer.roundNumber());
+        AnswerStatus status = game.receiveAnswer(clientId, submitted);
+
+        switch (status) {
+            case ACCEPTED, ROUND_COMPLETED -> enqueue(new ServerMessage.AnswerAccepted(answer.roundNumber()));
+            case REJECTED -> enqueue(
+                    new ServerMessage.AnswerRejected(answer.roundNumber(), "Answer was not accepted for this round"));
+        }
+    }
+
+    private ClientMessage readMessage() throws IOException, ClassNotFoundException {
+        Object value = MessageCodec.read(in, ProtocolObjectFilters.clientToServer());
+        if (value instanceof ClientMessage message)
+            return message;
+
+        throw new InvalidObjectException("Unexpected client message type");
     }
 
     public void sendQuestion(ReducedQuestion question) {
-        send(MessageFromServer.questionMessage(question));
+        enqueue(new ServerMessage.Question(question));
     }
 
     public void sendScoreboard(Scoreboard scoreboard) {
-        send(MessageFromServer.scoreboardMessage(scoreboard));
+        enqueue(new ServerMessage.Scoreboard(scoreboard.getScoreboard()));
     }
 
     public void sendEndGame() {
-        send(MessageFromServer.endMessage());
+        enqueue(new ServerMessage.End());
     }
 
-    public void sendError(String reason) {
-        send(new Message(Code.ERROR, reason));
+    private void sendTerminalError(String reason) {
+        if (enqueue(new ServerMessage.Error(reason)))
+            awaitWriterStop();
     }
 
-    private MessageFromClient readMessage() {
+    private boolean enqueue(ServerMessage message) {
+        if (closed.get())
+            return false;
+
+        if (outbound.offer(message))
+            return true;
+
+        server.getLogger().warn("Outbound queue full for client " + clientId + "; disconnecting");
+        cleanup();
+        return false;
+    }
+
+    private void writeLoop() {
         try {
-            return (MessageFromClient) in.readObject();
-        } catch (IOException | ClassNotFoundException | ClassCastException e) {
-            return null;
+            while (!closed.get()) {
+                ServerMessage message = outbound.take();
+                MessageCodec.write(out, message);
+
+                if (message instanceof ServerMessage.End || message instanceof ServerMessage.Error)
+                    return;
+            }
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        } catch (IOException e) {
+            if (!closed.get())
+                server.getLogger().warn("Failed to write to client " + clientId + ": " + e.getMessage());
+        } finally {
+            writerStopped.countDown();
+            cleanup();
         }
     }
 
-    private void send(Message msg) {
-        for (int i = 0; i < MAX_FAILS; i++) {
-            try {
-                synchronized (out) {
-                    out.writeObject(msg);
-                    out.flush();
-                    out.reset();
-                }
-                return;
-            } catch (Exception e) {
-                server.getLogger().debug("Failed to send message (attempt " + (i + 1) + "): " + e.getMessage());
-                server.getLogger().warn("Failed to send message (attempt " + (i + 1) + ") to " + clientId);
-            }
+    private void awaitWriterStop() {
+        try {
+            if (!writerStopped.await(TERMINAL_WRITE_TIMEOUT_SECONDS, TimeUnit.SECONDS))
+                cleanup();
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            cleanup();
         }
-        server.getLogger().warn("Failed to send message after " + MAX_FAILS + " attempts");
     }
 
     private void cleanup() {
-        if (game != null)
-            game.leave(this);
+        if (!closed.compareAndSet(false, true))
+            return;
+
+        GameSession currentGame = game;
+        if (currentGame != null)
+            currentGame.leave(this);
+
         closeQuietly(socket, in, out);
+
+        Thread writer = writerThread;
+        if (writer != null && writer != Thread.currentThread())
+            writer.interrupt();
     }
 
     private void closeQuietly(AutoCloseable... closeables) {
-        for (AutoCloseable c : closeables) {
+        for (AutoCloseable closeable : closeables) {
             try {
-                if (c != null)
-                    c.close();
+                if (closeable != null)
+                    closeable.close();
             } catch (Exception e) {
+                server.getLogger().debug("Error closing client resource: " + e.getMessage());
             }
         }
     }
@@ -153,5 +232,4 @@ public class DealWithClient implements Runnable, AutoCloseable {
     public String getTeamId() {
         return teamId;
     }
-
 }

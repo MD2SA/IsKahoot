@@ -11,7 +11,7 @@
                                        |     +-- active games
                                        |     +-- ThreadPool (MAX_GAMES)
                                        |
-                                       +-- DealWithClient (one thread per connection)
+                                        +-- DealWithClient (reader + bounded writer queue)
                                        |
                                         +-- GameSession
                                               +-- TeamManager
@@ -24,8 +24,8 @@
 
 `Server` is a singleton that owns the `Logger`, the `GameManager` and the listening socket. On
 startup it launches the game manager thread (which serves the console CLI) and then accepts
-connections forever. Every accepted socket is handed to a new `DealWithClient` instance running on
-its own thread.
+connections forever on the configured loopback address. Every accepted socket is handed to a
+`DealWithClient` reader thread; each connection also owns a single writer thread.
 
 `GameManager` owns:
 
@@ -38,10 +38,11 @@ When a player registers, `GameManager` finds the lobby, asks the session to add 
 starts the game in the pool if the lobby is now full. The game is moved from the waiting map to
 the active map for the duration of its run.
 
-`DealWithClient` owns the socket streams for one player. It performs registration, then loops
-reading answer messages. All writes are serialised on the output stream so that game threads and
-the connection thread can both send safely. Failures to send are retried a fixed number of times
-before the connection is considered dead.
+`DealWithClient` owns the socket streams for one player. Its connection thread reads and validates
+client messages; a dedicated writer drains a bounded outbound queue so game threads never perform
+socket writes. A write failure or full queue closes the connection rather than retrying on a stream
+that may already be corrupted. Input streams use direction-specific object filters and protocol
+version checks.
 
 ## Session
 
@@ -79,9 +80,10 @@ mutable backing collections.
 ## Client
 
 `Client` is a thread that connects to the server and performs the request/response loop with the
-GUI. `GUI` is a Swing frame wrapped in a small observer implementation: when the player selects
-an option, the GUI notifies the client, which sends the answer and shows a waiting screen until
-the next update arrives.
+server. A separate writer queue keeps socket output off the Swing event thread. `GUI` is a Swing
+frame wrapped in a small observer implementation: selecting an option queues an answer, shows a
+submitting state, then shows a waiting state after acknowledgement. Incoming state changes are
+applied on the Swing event-dispatch thread.
 
 ## Concurrency utilities
 

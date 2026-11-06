@@ -1,7 +1,6 @@
 package server.game;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.IOException;
@@ -23,12 +22,12 @@ class RoundManagerTest {
         TeamManager teams = new TeamManager(1, 1);
         RoundManager manager = new RoundManager(loadQuiz(), teams);
         try {
-            assertDoesNotThrow(() -> manager.answer("alice", new Answer("A", "alice", 1, 0)));
+            assertEquals(AnswerStatus.REJECTED, manager.answer("alice", new Answer("A", "alice", 1, 0)));
 
             assertTrue(teams.registerPlayer("alice", "A"));
             manager.prepareNextRound();
             manager.openRound();
-            manager.answer("alice", new Answer("A", "alice", 0, 0));
+            assertEquals(AnswerStatus.ROUND_COMPLETED, manager.answer("alice", new Answer("A", "alice", 0, 0)));
 
             Scoreboard scoreboard = manager.awaitResult();
             assertEquals(List.of(new Score("A", 0)), scoreboard.getScoreboard());

@@ -55,19 +55,22 @@ public class RoundState {
         return phase == Phase.OPEN;
     }
 
-    boolean submitAnswer(String username, Answer answer) {
+    AnswerStatus submitAnswer(String username, Answer answer) {
         Map<String, Answer> snapshot = null;
 
         synchronized (this) {
             if (username == null)
-                return false;
+                return AnswerStatus.REJECTED;
 
             String teamId = roster.get(username);
+            int option = answer == null ? -1 : answer.getOption();
+            if (question.getOptions() == null || option < 0 || option >= question.getOptions().size())
+                return AnswerStatus.REJECTED;
 
             if (phase != Phase.OPEN || answer == null || answer.getRoundNumber() != round || teamId == null
                     || !teamId.equals(answer.getTeamId()) || !username.equals(answer.getUsername())
                     || answers.containsKey(username) || departedPlayers.contains(username))
-                return false;
+                return AnswerStatus.REJECTED;
 
             answers.put(username, answer);
 
@@ -80,7 +83,7 @@ public class RoundState {
         if (snapshot != null)
             completeResult(snapshot);
 
-        return snapshot != null;
+        return snapshot != null ? AnswerStatus.ROUND_COMPLETED : AnswerStatus.ACCEPTED;
     }
 
     boolean playerLeft(String username) {

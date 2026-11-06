@@ -1,36 +1,31 @@
 # Wire protocol
 
-The client and server exchange Java objects over a TCP socket using
-`java.io.ObjectOutputStream` / `ObjectInputStream`. Every message extends `Message` and carries a
-`Code`:
-
-| Code | Direction | Purpose |
-| --- | --- | --- |
-| `REGISTER` | client → server | Join a game with a username, team and game code |
-| `UPDATE` | server → client | New question and current scoreboard |
-| `ANSWER` | client → server | Submit an option for the current round |
-| `END` | server → client | Final scoreboard; the game is over |
-| `ERROR` | server → client | Registration or validation failure |
+The client and server exchange typed Java records over TCP. Each object is serialized into an
+independent frame with a four-byte length prefix, then deserialized with a fresh
+`ObjectInputStream`. Frames are limited to 16 MiB. The wire types are directional sealed
+interfaces: `ClientMessage` for requests and `ServerMessage` for responses. Each frame gets a
+direction-specific `ObjectInputFilter`, so byte/reference limits apply per message rather than
+accumulating over the whole connection.
 
 ## Message types
 
-```text
-Message
-  code : Code
-  info : String
+`ClientMessage` variants:
 
-MessageFromClient extends Message
-  clientId : String
-  gameId   : String
-  teamId   : String
-  answer   : Answer
+- `Register(clientId, teamId, gameId, protocolVersion)` joins a game.
+- `SubmitAnswer(option, roundNumber)` submits an answer for the registered connection. Identity is
+  taken from registration rather than repeated in every answer.
 
-MessageFromServer extends Message
-  question   : ReducedQuestion
-  scoreboard : List<Score>
-```
+`ServerMessage` variants:
 
-`Answer` contains `teamId`, `username`, `option` and `roundNumber`.
+- `Question(ReducedQuestion)` starts a round.
+- `Scoreboard(List<Score>)` publishes the standings.
+- `AnswerAccepted(roundNumber)` acknowledges a valid answer; for the last answer, it may race with
+  the scoreboard response, and clients ignore acknowledgements for rounds that have already ended.
+- `AnswerRejected(roundNumber, reason)` explains a rejected answer.
+- `End` ends the game; `Error(reason)` reports a terminal connection/protocol error.
+
+The internal server-side `Answer` includes the registered username and team, which the server adds
+after receiving a `SubmitAnswer`.
 
 `ReducedQuestion` is the client-safe view of a question. It deliberately omits `correct`, so the
 right answer never reaches the client:
@@ -46,40 +41,43 @@ ReducedQuestion
 ```
 
 The deadline is the server's absolute round deadline; clients use it for the visible countdown.
-`Score` is a serializable value containing a team ID and points. Scoreboard messages carry a
-serialized `Scoreboard`, exposed to the client as a sorted list of `Score` values.
+`Score` is a serializable value containing a team ID and points. Scoreboard messages carry an
+immutable sorted list of `Score` values.
 
 ## Flow
 
 ```text
 client                                server
-  |  REGISTER(username, team, game)     |
+  |  Register(username, team, game, v)   |
   |------------------------------------>|  DealWithClient.registerClient()
   |                                     |  GameManager.registerToGame()
   |                                     |  GameSession.join()
   |                                     |
-  |  QUESTION(question, deadline)        |  (when the lobby is full)
+  |  Question(question, deadline)        |  (when the lobby is full)
   |<------------------------------------|
-  |  ANSWER(option, round)              |
+  |  SubmitAnswer(option, round)          |
   |------------------------------------>|  RoundManager.answer()
   |                                     |
-  |  SCOREBOARD(scoreboard)              |  (when the round ends)
-  |  QUESTION(next question, deadline)   |  (for the next round)
+  |  AnswerAccepted(round)               |  (after the server accepts the answer)
+  |<------------------------------------|
+  |  Scoreboard(scores)                  |  (when the round ends)
+  |<------------------------------------|
+  |  Question(next question, deadline)   |  (for the next round)
   |<------------------------------------|
   |                 ...                 |
-  |  SCOREBOARD(final scoreboard)        |
-  |  END                                 |
+  |  Scoreboard(final scores)            |
+  |  End                                 |
   |<------------------------------------|
 ```
 
 ## Notes
 
-- Rounds are zero-based on the server. The first question is round `0`, which is why an unanswered
-  registration uses `-1`.
-- The username and team carried in an answer must match the connection's registered identity.
-- An answer received before a round opens is ignored; invalid or late answers do not terminate the
-  connection.
-- Registration failures are reported with an `ERROR` message and the connection is closed by the
+- Rounds are zero-based on the server. The first question is round `0`.
+- `protocolVersion` is checked during registration.
+- An answer received before a round opens, after it closes, or for another round is rejected without
+  terminating the connection.
+- Registration failures are reported with an `Error` message and the connection is closed by the
   server.
-- `ObjectOutputStream.reset()` is called after every write so that changed objects are not sent as
-  back-references.
+- The server uses one bounded outbound queue/writer per connection. Queue overflow disconnects a
+  slow client; terminal `Error` and `End` messages are written after earlier queued messages.
+- Registration has a read timeout; after registration, the connection remains open for the game.

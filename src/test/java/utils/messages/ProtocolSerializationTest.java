@@ -1,13 +1,18 @@
 package utils.messages;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
 import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
 import java.io.InputStream;
+import java.io.InvalidClassException;
+import java.io.ObjectInputFilter;
+import java.io.StreamCorruptedException;
 import java.util.List;
 
 import org.junit.jupiter.api.Test;
@@ -16,48 +21,86 @@ import utils.quiz.Quiz;
 import utils.quiz.QuizCreator;
 import utils.quiz.ReducedQuestion;
 import utils.quiz.Score;
-import utils.quiz.Scoreboard;
 
 class ProtocolSerializationTest {
 
     @Test
-    void roundTripsTheRegistrationMessage() throws Exception {
-        MessageFromClient message = roundTrip(MessageFromClient.getRegistrationMessage("alice", "A", "ABCD"));
+    void roundTripsRegistrationRequestThroughClientFilter() throws Exception {
+        ClientMessage.Register registration = roundTrip(
+                new ClientMessage.Register("alice", "A", "ABCD", Protocol.CURRENT_VERSION),
+                ProtocolObjectFilters.clientToServer());
 
-        assertEquals(Code.REGISTER, message.getCode());
-        assertEquals("alice", message.getClientId());
-        assertEquals("A", message.getTeamId());
-        assertEquals("ABCD", message.getGameId());
-        assertEquals(-1, message.getAnswer().getRoundNumber());
+        assertEquals("alice", registration.clientId());
+        assertEquals("A", registration.teamId());
+        assertEquals("ABCD", registration.gameId());
+        assertEquals(Protocol.CURRENT_VERSION, registration.protocolVersion());
     }
 
     @Test
-    void roundTripsTheAnswerMessage() throws Exception {
-        MessageFromClient message = roundTrip(MessageFromClient.getAnswerQuestion("alice", "A", 2, 3));
+    void roundTripsAnswerRequestWithoutResendingConnectionIdentity() throws Exception {
+        ClientMessage.SubmitAnswer answer = roundTrip(new ClientMessage.SubmitAnswer(2, 3),
+                ProtocolObjectFilters.clientToServer());
 
-        assertEquals(Code.ANSWER, message.getCode());
-        assertEquals("alice", message.getAnswer().getUsername());
-        assertEquals("A", message.getAnswer().getTeamId());
-        assertEquals(2, message.getAnswer().getOption());
-        assertEquals(3, message.getAnswer().getRoundNumber());
+        assertEquals(2, answer.option());
+        assertEquals(3, answer.roundNumber());
     }
 
     @Test
-    void roundTripsQuestionDeadline() throws Exception {
+    void roundTripsQuestionAndDeadlineThroughServerFilter() throws Exception {
         ReducedQuestion question = new ReducedQuestion(loadQuiz().getQuestion(0), 0, 123_456L);
-        MessageFromServer message = roundTrip(MessageFromServer.questionMessage(question));
+        ServerMessage.Question message = roundTrip(new ServerMessage.Question(question),
+                ProtocolObjectFilters.serverToClient());
 
-        assertEquals(Code.QUESTION, message.getCode());
-        assertEquals(123_456L, message.getQuestion().getDeadlineEpochMillis());
+        assertEquals(123_456L, message.question().getDeadlineEpochMillis());
     }
 
     @Test
-    void roundTripsScoreboardMessage() throws Exception {
-        Scoreboard scoreboard = new Scoreboard(List.of("A"));
-        MessageFromServer message = roundTrip(MessageFromServer.scoreboardMessage(scoreboard));
+    void roundTripsScoreboardAndTypedErrorThroughServerFilter() throws Exception {
+        ServerMessage.Scoreboard scoreboard = roundTrip(new ServerMessage.Scoreboard(List.of(new Score("A", 10))),
+                ProtocolObjectFilters.serverToClient());
+        ServerMessage error = roundTrip(new ServerMessage.Error("Registration failed"),
+                ProtocolObjectFilters.serverToClient());
 
-        assertEquals(Code.SCOREBOARD, message.getCode());
-        assertEquals(List.of(new Score("A", 0)), message.getScoreboard());
+        assertEquals(List.of(new Score("A", 10)), scoreboard.scores());
+        assertInstanceOf(ServerMessage.Error.class, error);
+    }
+
+    @Test
+    void inputFilterRejectsUnexpectedSerializedClasses() throws Exception {
+        assertThrows(InvalidClassException.class,
+                () -> roundTrip(new java.util.Date(), ProtocolObjectFilters.clientToServer()));
+        assertThrows(InvalidClassException.class,
+                () -> roundTrip(new ClientMessage.Register("alice", "A", "ABCD", Protocol.CURRENT_VERSION),
+                        ProtocolObjectFilters.serverToClient()));
+    }
+
+    @Test
+    void framesHaveIndependentPerMessageDeserializationLimits() throws Exception {
+        ByteArrayOutputStream bytes = new ByteArrayOutputStream();
+        try (DataOutputStream output = new DataOutputStream(bytes)) {
+            MessageCodec.write(output, new ClientMessage.SubmitAnswer(1, 0));
+            MessageCodec.write(output, new ClientMessage.SubmitAnswer(2, 1));
+        }
+
+        try (DataInputStream input = new DataInputStream(new ByteArrayInputStream(bytes.toByteArray()))) {
+            assertEquals(new ClientMessage.SubmitAnswer(1, 0),
+                    MessageCodec.read(input, ProtocolObjectFilters.clientToServer()));
+            assertEquals(new ClientMessage.SubmitAnswer(2, 1),
+                    MessageCodec.read(input, ProtocolObjectFilters.clientToServer()));
+        }
+    }
+
+    @Test
+    void rejectsFramesAboveTheConfiguredMaximumBeforeAllocatingPayload() throws Exception {
+        ByteArrayOutputStream bytes = new ByteArrayOutputStream();
+        try (DataOutputStream output = new DataOutputStream(bytes)) {
+            output.writeInt(MessageCodec.MAX_FRAME_BYTES + 1);
+        }
+
+        try (DataInputStream input = new DataInputStream(new ByteArrayInputStream(bytes.toByteArray()))) {
+            assertThrows(StreamCorruptedException.class,
+                    () -> MessageCodec.read(input, ProtocolObjectFilters.clientToServer()));
+        }
     }
 
     private static Quiz loadQuiz() throws IOException {
@@ -68,14 +111,13 @@ class ProtocolSerializationTest {
     }
 
     @SuppressWarnings("unchecked")
-    private static <T> T roundTrip(T value) throws IOException, ClassNotFoundException {
+    private static <T> T roundTrip(T value, ObjectInputFilter filter) throws IOException, ClassNotFoundException {
         ByteArrayOutputStream bytes = new ByteArrayOutputStream();
-        try (ObjectOutputStream out = new ObjectOutputStream(bytes)) {
-            out.writeObject(value);
+        try (DataOutputStream output = new DataOutputStream(bytes)) {
+            MessageCodec.write(output, (java.io.Serializable) value);
         }
-        try (ObjectInputStream in = new ObjectInputStream(new ByteArrayInputStream(bytes.toByteArray()))) {
-            return (T) in.readObject();
+        try (DataInputStream input = new DataInputStream(new ByteArrayInputStream(bytes.toByteArray()))) {
+            return (T) MessageCodec.read(input, filter);
         }
     }
-
 }

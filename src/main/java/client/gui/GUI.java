@@ -108,7 +108,6 @@ public class GUI extends Observed {
             b.setBackground(new Color(220, 220, 255));
             b.setFocusPainted(false);
             b.addActionListener(e -> {
-                displayWaiting();
                 selectedOption = index;
                 notifyObservers();
             });
@@ -195,6 +194,15 @@ public class GUI extends Observed {
         l.setFont(new Font("SansSerif", Font.BOLD, 16));
         l.setAlignmentX(Component.CENTER_ALIGNMENT);
         questionPanel.add(l);
+        refresh(questionPanel);
+    }
+
+    public void displaySubmitting() {
+        questionPanel.removeAll();
+        JLabel label = new JLabel("A enviar resposta...");
+        label.setFont(new Font("SansSerif", Font.BOLD, 16));
+        label.setAlignmentX(Component.CENTER_ALIGNMENT);
+        questionPanel.add(label);
         refresh(questionPanel);
     }
 

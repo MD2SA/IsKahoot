@@ -60,13 +60,15 @@ public class RoundManager implements AutoCloseable {
         return roundDeadlineEpochMillis;
     }
 
-    public synchronized void answer(String authenticatedUsername, Answer answer) {
+    public synchronized AnswerStatus answer(String authenticatedUsername, Answer answer) {
         RoundState round = activeRound;
         if (round == null)
-            return;
+            return AnswerStatus.REJECTED;
 
-        if (round.submitAnswer(authenticatedUsername, answer))
+        AnswerStatus status = round.submitAnswer(authenticatedUsername, answer);
+        if (status == AnswerStatus.ROUND_COMPLETED)
             timer.cancel();
+        return status;
     }
 
     public synchronized void playerLeft(String username) {
