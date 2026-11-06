@@ -2,6 +2,7 @@ package server.game;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import org.junit.jupiter.api.Test;
 
@@ -46,5 +47,24 @@ class TeamManagerTest {
         assertFalse(manager.isFull());
         manager.registerPlayer("bob", "A");
         assertTrue(manager.isFull());
+    }
+
+    @Test
+    void rejectsInvalidConfigurationAndBlankIdentity() {
+        assertThrows(IllegalArgumentException.class, () -> new TeamManager(0, 2));
+        assertThrows(IllegalArgumentException.class, () -> new TeamManager(2, 0));
+
+        TeamManager manager = new TeamManager(1, 1);
+        assertFalse(manager.registerPlayer(" ", "A"));
+        assertFalse(manager.registerPlayer("alice", " "));
+    }
+
+    @Test
+    void returnedRosterCollectionsCannotMutateManagerState() {
+        TeamManager manager = new TeamManager(1, 1);
+        assertTrue(manager.registerPlayer("alice", "A"));
+
+        assertThrows(UnsupportedOperationException.class, () -> manager.getUsernames().clear());
+        assertThrows(UnsupportedOperationException.class, () -> manager.getRosterSnapshot().clear());
     }
 }

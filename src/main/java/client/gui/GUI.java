@@ -7,7 +7,6 @@ import java.awt.FlowLayout;
 import java.awt.Font;
 import java.awt.GridLayout;
 import java.util.List;
-import java.util.Map;
 
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
@@ -25,6 +24,7 @@ import javax.swing.table.DefaultTableCellRenderer;
 
 import client.gui.Observer.Observed;
 import utils.quiz.ReducedQuestion;
+import utils.quiz.Score;
 
 public class GUI extends Observed {
 
@@ -32,7 +32,7 @@ public class GUI extends Observed {
     private final JPanel scorePanel;
     private JLabel timerLabel;
     private Timer timer;
-    private int secondsLeft;
+    private long timerDeadlineEpochMillis;
 
     private int selectedOption;
 
@@ -125,14 +125,13 @@ public class GUI extends Observed {
         refresh(questionPanel);
     }
 
-    public void startTimer(int seconds) {
+    public void startTimer(long deadlineEpochMillis) {
         stopTimer();
 
-        secondsLeft = seconds;
-        timerLabel.setText(String.valueOf(seconds));
-        timerLabel.setForeground(seconds <= 5 ? Color.RED : Color.BLACK);
+        timerDeadlineEpochMillis = deadlineEpochMillis;
+        updateTimerDisplay();
 
-        timer = new Timer(1000, event -> tickTimer());
+        timer = new Timer(100, event -> updateTimerDisplay());
         timer.start();
     }
 
@@ -143,21 +142,18 @@ public class GUI extends Observed {
         }
     }
 
-    private void tickTimer() {
-        secondsLeft--;
-
-        if (secondsLeft <= 0) {
-            stopTimer();
-            timerLabel.setText("0");
-            timerLabel.setForeground(Color.RED);
-            return;
-        }
-
+    private void updateTimerDisplay() {
+        long remainingMillis = Math.max(0L, timerDeadlineEpochMillis - System.currentTimeMillis());
+        int secondsLeft = (int) ((remainingMillis + 999L) / 1_000L);
         timerLabel.setText(String.valueOf(secondsLeft));
         timerLabel.setForeground(secondsLeft <= 5 ? Color.RED : Color.BLACK);
+
+        if (secondsLeft == 0) {
+            stopTimer();
+        }
     }
 
-    public void displayScoreboard(Map<String, Integer> scoreboard) {
+    public void displayScoreboard(List<Score> scoreboard) {
         scorePanel.removeAll();
 
         JLabel header = new JLabel("Classificação");
@@ -167,11 +163,10 @@ public class GUI extends Observed {
 
         String[] cols = {"Nome", "Pontuação"};
         Object[][] data = new Object[scoreboard.size()][];
-        //
-        // this is a code smell, i will deal with after
-        int it = 0;
-        for (var entry : scoreboard.entrySet()) {
-            data[it++] = new Object[]{entry.getKey(), entry.getValue()};
+
+        for (int i = 0; i < scoreboard.size(); i++) {
+            Score score = scoreboard.get(i);
+            data[i] = new Object[]{score.teamId(), score.points()};
         }
 
         JTable table = new JTable(data, cols);

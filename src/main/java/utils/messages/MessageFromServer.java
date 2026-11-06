@@ -1,8 +1,9 @@
 package utils.messages;
 
-import java.util.Map;
+import java.util.List;
 
 import utils.quiz.ReducedQuestion;
+import utils.quiz.Score;
 import utils.quiz.Scoreboard;
 
 public class MessageFromServer extends Message {
@@ -40,7 +41,7 @@ public class MessageFromServer extends Message {
         return question;
     }
 
-    public Map<String, Integer> getScoreboard() {
+    public List<Score> getScoreboard() {
         return scoreboard.getScoreboard();
     }
 

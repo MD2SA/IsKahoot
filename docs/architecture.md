@@ -13,11 +13,11 @@
                                        |
                                        +-- DealWithClient (one thread per connection)
                                        |
-                                       +-- GameSession
-                                             +-- TeamManager
-                                             +-- RoundManager
-                                                   +-- ModifiedCountdownLatch
-                                                   +-- ModifiedCyclicBarrier (per team)
+                                        +-- GameSession
+                                              +-- TeamManager
+                                              +-- RoundManager
+                                                    +-- RoundState (per question)
+                                                    +-- RoundTimer
 ```
 
 ## Server
@@ -45,35 +45,36 @@ before the connection is considered dead.
 
 ## Session
 
-`GameSession` is the runnable task submitted to the pool. Its loop is:
+`GameSession` is the runnable task submitted to the pool. Once the lobby is full, its loop is:
 
-1. take the next question from `RoundManager`;
-2. broadcast the reduced question plus the current scoreboard;
-3. wait for the round to end;
-4. repeat until the quiz is exhausted or every client has left;
-5. broadcast the final scoreboard and close the connections.
+1. snapshot the current roster and prepare the next question;
+2. open the round and start the authoritative server deadline;
+3. broadcast the reduced question, including that deadline;
+4. wait for all participants to answer, leave, or for the deadline to expire;
+5. broadcast the updated scoreboard, then repeat until the quiz ends or no clients remain;
+6. send the end message and close the connections.
 
-`TeamManager` keeps the registered usernames and the teams, enforcing team capacity and rejecting
-duplicate usernames.
+`TeamManager` keeps the registered usernames and teams, enforcing positive capacities, team limits,
+non-blank identities, and unique usernames. Its collection accessors return snapshots rather than
+mutable backing collections.
 
 ## Round synchronisation
 
-`RoundManager` is the concurrency core of the game.
+`RoundManager` coordinates each question through a `RoundState` and a `RoundTimer`.
 
-- **Round end** is decided by a `ModifiedCountdownLatch`, a hand-written latch with a built-in
-  timer. It is created with the number of active players, the bonus count and factor, and the
-  round duration. `await()` returns when every player has answered or the timer expires.
-- **Scoring** uses the same latch: `countdown()` returns the bonus multiplier for that answer, so
-  the first `BONUS_COUNT` answers earn `BONUS_FACTOR × points`.
-- **Team questions** add a `ModifiedCyclicBarrier` per team. Each member's answer thread waits at
-  the barrier; when the last member arrives (or the round timer force-releases it), the barrier
-  action compares the team's answers. The best correct answer scores, and the score is doubled
-  when every member answered correctly.
-- **Late answers** are rejected by validating the round number and by a `roundReady` flag that is
-  cleared before the barriers are released. `activeAnswerCount` makes the round wait until
-  in-flight answer handlers finish before the next broadcast.
-
-The barrier is single-use: a fresh barrier is created for every team question and every round.
+- **Round state** moves once from prepared to open to closed. Answers must match the registered
+  username/team and current round; duplicates, departed players, and late answers are rejected.
+- **Round end** occurs when every roster member has answered or left, or when the deadline expires.
+  A player who leaves without answering counts as missing for scoring; the round need not wait for
+  that player's timer to expire.
+- **Individual scoring** doubles the first `BONUS_COUNT` accepted answers, whether or not those
+  answers are correct. This is the configured speed-bonus rule.
+- **Team scoring** awards the best correct answer. The team score is doubled only if every player
+  in the round's roster snapshot answered correctly; a missing/departed answer prevents the bonus.
+- **Deadline display** uses the server's absolute deadline carried with the reduced question, so the
+  client countdown tracks the same round cutoff as the server.
+- **Scoreboard initialization** happens from the first round's roster snapshot, after lobby
+  registration, so teams with zero points remain visible.
 
 ## Client
 
@@ -97,7 +98,9 @@ the next update arrives.
 
 ## Lifecycle and failure handling
 
-- A client that disconnects is removed from its session and from its team.
-- Broadcasts to dead clients are removed from the session's client set.
-- An empty session ends its loop and broadcasts the final scoreboard.
+- A client that disconnects is removed from its session and from its team; an unanswered active
+  round entry is marked missing so the round can resolve without waiting for timeout.
+- Broadcasts use a snapshot of the current client set; connection cleanup removes departed clients.
+- An empty session ends its loop after the active round resolves and sends the end message to any
+  remaining connections.
 - `GameManager.shutdown()` drains the task queue and interrupts the workers.

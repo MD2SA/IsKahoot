@@ -5,7 +5,7 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.InetAddress;
 import java.net.Socket;
-import java.util.Map;
+import java.util.List;
 
 import javax.swing.SwingUtilities;
 
@@ -16,6 +16,7 @@ import configs.Config;
 import utils.messages.MessageFromClient;
 import utils.messages.MessageFromServer;
 import utils.quiz.ReducedQuestion;
+import utils.quiz.Score;
 
 public class Client extends Thread implements Observer {
 
@@ -80,13 +81,13 @@ public class Client extends Thread implements Observer {
         answeredRound = -1;
 
         SwingUtilities.invokeLater(() -> {
-            gui.startTimer(Config.Features.ROUND_SECONDS);
+            gui.startTimer(question.getDeadlineEpochMillis());
             gui.displayQuestion(question);
         });
     }
 
     private void handleScoreboard(MessageFromServer message) {
-        Map<String, Integer> scoreboard = message.getScoreboard();
+        List<Score> scoreboard = message.getScoreboard();
         if (scoreboard == null)
             return;
 

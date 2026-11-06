@@ -1,12 +1,10 @@
 package server.game;
 
-import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
 
 import configs.Config.Features;
-import server.game.utils.Player;
-import server.game.utils.Team;
 import utils.RoundTimer;
 import utils.quiz.Answer;
 import utils.quiz.Question;
@@ -19,10 +17,11 @@ public class RoundManager implements AutoCloseable {
     private final Quiz quiz;
     private final TeamManager teamManager;
     private final RoundTimer timer = new RoundTimer();
-    private final Scoreboard scoreboard = new Scoreboard();
+    private Scoreboard scoreboard;
 
     private int currentRound = -1;
     private RoundState activeRound;
+    private long roundDeadlineEpochMillis;
 
     public RoundManager(Quiz quiz, TeamManager teamManager) {
         this.quiz = quiz;
@@ -39,7 +38,10 @@ public class RoundManager implements AutoCloseable {
 
         currentRound++;
         Question question = quiz.getQuestion(currentRound);
-        activeRound = new RoundState(currentRound, question, rosterSnapshot());
+        Map<String, String> roster = rosterSnapshot();
+        if (scoreboard == null)
+            scoreboard = new Scoreboard(new HashSet<>(roster.values()));
+        activeRound = new RoundState(currentRound, question, roster);
 
         return question;
     }
@@ -48,17 +50,27 @@ public class RoundManager implements AutoCloseable {
         requireActiveRound().open();
     }
 
-    public synchronized void startTimer() {
+    public synchronized long startTimer() {
         RoundState round = requireActiveRound();
 
-        if (round.isOpen())
+        roundDeadlineEpochMillis = System.currentTimeMillis() + Features.ROUND_SECONDS * 1_000L;
+        if (round.isOpen()) {
             timer.schedule(Features.ROUND_SECONDS, round::timeout);
+        }
+        return roundDeadlineEpochMillis;
     }
 
     public synchronized void answer(String authenticatedUsername, Answer answer) {
-        RoundState round = requireActiveRound();
+        RoundState round = activeRound;
+        if (round == null)
+            return;
 
         if (round.submitAnswer(authenticatedUsername, answer))
+            timer.cancel();
+    }
+
+    public synchronized void playerLeft(String username) {
+        if (activeRound != null && activeRound.playerLeft(username))
             timer.cancel();
     }
 
@@ -91,13 +103,6 @@ public class RoundManager implements AutoCloseable {
     }
 
     private Map<String, String> rosterSnapshot() {
-        Map<String, String> roster = new HashMap<>();
-
-        for (Team team : teamManager.getTeams().values()) {
-            for (Player player : team.getPlayers())
-                roster.put(player.getName(), team.getName());
-        }
-
-        return Map.copyOf(roster);
+        return teamManager.getRosterSnapshot();
     }
 }

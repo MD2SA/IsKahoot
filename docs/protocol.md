@@ -42,10 +42,12 @@ ReducedQuestion
   isIndividual : boolean
   options      : List<String>
   roundNumber  : int
+  deadlineEpochMillis : long
 ```
 
-`Score` is an interface implemented by `Team`, exposing `name` and `score`. The scoreboard sent to
-clients is therefore a serialized list of teams.
+The deadline is the server's absolute round deadline; clients use it for the visible countdown.
+`Score` is a serializable value containing a team ID and points. Scoreboard messages carry a
+serialized `Scoreboard`, exposed to the client as a sorted list of `Score` values.
 
 ## Flow
 
@@ -56,15 +58,17 @@ client                                server
   |                                     |  GameManager.registerToGame()
   |                                     |  GameSession.join()
   |                                     |
-  |  UPDATE(question, scoreboard)       |  (when the lobby is full)
+  |  QUESTION(question, deadline)        |  (when the lobby is full)
   |<------------------------------------|
   |  ANSWER(option, round)              |
   |------------------------------------>|  RoundManager.answer()
   |                                     |
-  |  UPDATE(next question, scoreboard)  |  (when the round ends)
+  |  SCOREBOARD(scoreboard)              |  (when the round ends)
+  |  QUESTION(next question, deadline)   |  (for the next round)
   |<------------------------------------|
   |                 ...                 |
-  |  END(scoreboard)                    |
+  |  SCOREBOARD(final scoreboard)        |
+  |  END                                 |
   |<------------------------------------|
 ```
 
@@ -72,8 +76,9 @@ client                                server
 
 - Rounds are zero-based on the server. The first question is round `0`, which is why an unanswered
   registration uses `-1`.
-- The client re-sends its registration before each update. The server treats a message as an
-  answer only when its code is `ANSWER`, so the extra registration is effectively a keep-alive.
+- The username and team carried in an answer must match the connection's registered identity.
+- An answer received before a round opens is ignored; invalid or late answers do not terminate the
+  connection.
 - Registration failures are reported with an `ERROR` message and the connection is closed by the
   server.
 - `ObjectOutputStream.reset()` is called after every write so that changed objects are not sent as

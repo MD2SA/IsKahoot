@@ -35,6 +35,7 @@ public class GameSession implements Runnable {
     public boolean leave(DealWithClient handler) {
         clientHandlers.remove(handler);
         teamManager.removePlayer(handler.getClientId());
+        roundManager.playerLeft(handler.getClientId());
         return true;
     }
 
@@ -49,8 +50,8 @@ public class GameSession implements Runnable {
                 Question question = roundManager.prepareNextRound();
 
                 roundManager.openRound();
-                broadcastQuestion(question);
-                roundManager.startTimer();
+                long deadlineEpochMillis = roundManager.startTimer();
+                broadcastQuestion(question, deadlineEpochMillis);
 
                 try {
                     Scoreboard scoreboard = roundManager.awaitResult();
@@ -69,8 +70,9 @@ public class GameSession implements Runnable {
         endGame();
     }
 
-    private void broadcastQuestion(Question question) {
-        ReducedQuestion reducedQuestion = new ReducedQuestion(question, roundManager.getRoundNumber());
+    private void broadcastQuestion(Question question, long deadlineEpochMillis) {
+        ReducedQuestion reducedQuestion = new ReducedQuestion(question, roundManager.getRoundNumber(),
+                deadlineEpochMillis);
         broadcast(handler -> handler.sendQuestion(reducedQuestion));
     }
 

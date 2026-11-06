@@ -1,16 +1,21 @@
 package utils.messages;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.io.InputStream;
+import java.util.List;
 
 import org.junit.jupiter.api.Test;
 
+import utils.quiz.Quiz;
+import utils.quiz.QuizCreator;
+import utils.quiz.ReducedQuestion;
+import utils.quiz.Score;
 import utils.quiz.Scoreboard;
 
 class ProtocolSerializationTest {
@@ -38,11 +43,28 @@ class ProtocolSerializationTest {
     }
 
     @Test
-    void roundTripsTheResultMessage() throws Exception {
-        MessageFromServer message = roundTrip(MessageFromServer.scoreboardMessage(new Scoreboard()));
+    void roundTripsQuestionDeadline() throws Exception {
+        ReducedQuestion question = new ReducedQuestion(loadQuiz().getQuestion(0), 0, 123_456L);
+        MessageFromServer message = roundTrip(MessageFromServer.questionMessage(question));
+
+        assertEquals(Code.QUESTION, message.getCode());
+        assertEquals(123_456L, message.getQuestion().getDeadlineEpochMillis());
+    }
+
+    @Test
+    void roundTripsScoreboardMessage() throws Exception {
+        Scoreboard scoreboard = new Scoreboard(List.of("A"));
+        MessageFromServer message = roundTrip(MessageFromServer.scoreboardMessage(scoreboard));
 
         assertEquals(Code.SCOREBOARD, message.getCode());
-        assertNotNull(message.getScoreboard());
+        assertEquals(List.of(new Score("A", 0)), message.getScoreboard());
+    }
+
+    private static Quiz loadQuiz() throws IOException {
+        try (InputStream input = ProtocolSerializationTest.class.getClassLoader()
+                .getResourceAsStream("quiz-fast.json")) {
+            return QuizCreator.getFrom(input).get(0);
+        }
     }
 
     @SuppressWarnings("unchecked")

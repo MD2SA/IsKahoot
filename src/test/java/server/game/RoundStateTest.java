@@ -64,10 +64,41 @@ class RoundStateTest {
         assertFalse(round.submitAnswer("alice", new Answer("A", "alice", 1, 0)));
     }
 
+    @Test
+    void departureCompletesRoundAndCountsMissingTeamAnswerAsWrong() throws Exception {
+        RoundState round = new RoundState(1, teamQuestion(), ROSTER);
+        round.open();
+
+        assertFalse(round.submitAnswer("alice", new Answer("A", "alice", 2, 1)));
+        assertTrue(round.playerLeft("bob"));
+        assertFalse(round.submitAnswer("bob", new Answer("A", "bob", 2, 1)));
+
+        RoundResult result = round.awaitResult();
+        assertEquals(10, result.getResult().get("A"));
+    }
+
+    @Test
+    void departuresBeforeOpenAreAccountedForWhenTheRoundOpens() throws Exception {
+        RoundState round = new RoundState(0, individualQuestion(), ROSTER);
+
+        assertFalse(round.playerLeft("alice"));
+        assertFalse(round.playerLeft("bob"));
+        round.open();
+
+        assertTrue(round.awaitResult().getResult().isEmpty());
+    }
+
     private static Question individualQuestion() throws IOException {
         try (InputStream input = RoundStateTest.class.getClassLoader().getResourceAsStream("quiz-fast.json")) {
             Quiz quiz = QuizCreator.getFrom(input).get(0);
             return quiz.getQuestion(0);
+        }
+    }
+
+    private static Question teamQuestion() throws IOException {
+        try (InputStream input = RoundStateTest.class.getClassLoader().getResourceAsStream("quiz-fast.json")) {
+            Quiz quiz = QuizCreator.getFrom(input).get(0);
+            return quiz.getQuestion(1);
         }
     }
 }
