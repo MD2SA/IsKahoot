@@ -4,6 +4,8 @@ import java.io.Serializable;
 import java.util.List;
 
 public class ReducedQuestion implements Serializable {
+
+    private static final long serialVersionUID = 1L;
     private final String question;
     private final int points;
     private final boolean isIndividual;

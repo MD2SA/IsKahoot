@@ -8,7 +8,7 @@ import utils.quiz.Answer;
 import utils.quiz.Question;
 import utils.quiz.RoundResult;
 
-public class Scorer {
+public final class Scorer {
 
     private Scorer() {
     }

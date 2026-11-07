@@ -7,7 +7,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 
-public class Team implements Serializable {
+public final class Team implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
@@ -29,9 +29,7 @@ public class Team implements Serializable {
     }
 
     public synchronized boolean addPlayer(Player player) {
-        if (capacity <= players.size())
-            return false;
-        return players.add(player);
+        return capacity > players.size() && players.add(player);
     }
 
     public synchronized void removePlayer(String username) {

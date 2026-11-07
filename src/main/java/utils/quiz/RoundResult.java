@@ -6,6 +6,8 @@ import java.util.TreeMap;
 
 public class RoundResult implements Serializable {
 
+    private static final long serialVersionUID = 1L;
+
     private final Map<String, Integer> results = new TreeMap<>();
 
     public void increaseScore(int score, String teamId) {

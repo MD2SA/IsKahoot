@@ -23,7 +23,7 @@ public class LogsCommand implements Command {
     }
 
     @Override
-    public void execute(Scanner scanner, CommandContext context, String[] args) {
+    public void execute(Scanner scanner, CommandContext context, String... args) {
         Logger logger = Server.getInstance().getLogger();
 
         if (args.length == 0) {
@@ -34,31 +34,34 @@ public class LogsCommand implements Command {
             return;
         }
 
-        for (String arg : args) {
-            switch (arg) {
-                case "-a", "--all" -> {
-                    Helpers.printSectionHeader("ALL LOGS");
-                    printLogs(logger.getAll());
-                }
-                case "-d", "--debug" -> {
-                    Helpers.printSectionHeader("DEBUG LOGS");
-                    printLogs(logger.getLogs(log -> log.level == Logger.Level.DEBUG));
-                }
-                case "-i", "--info" -> {
-                    Helpers.printSectionHeader("INFO LOGS");
-                    printLogs(logger.getLogs(log -> log.level == Logger.Level.INFO));
-                }
-                case "-e", "--errors" -> {
-                    Helpers.printSectionHeader("WARNINGS + ERRORS");
-                    printLogs(logger.getErrors());
-                }
-                case "-c", "--clear" -> {
-                    logger.clear();
-                    System.out.println("Logs cleared.");
-                }
-                case "-h", "--help", "?" -> help();
-                default -> System.out.println("Unknown option: " + arg + " (use -h for help)");
+        for (String arg : args)
+            handleOption(logger, arg);
+    }
+
+    private void handleOption(Logger logger, String arg) {
+        switch (arg) {
+            case "-a", "--all" -> {
+                Helpers.printSectionHeader("ALL LOGS");
+                printLogs(logger.getAll());
             }
+            case "-d", "--debug" -> {
+                Helpers.printSectionHeader("DEBUG LOGS");
+                printLogs(logger.getLogs(log -> log.level == Logger.Level.DEBUG));
+            }
+            case "-i", "--info" -> {
+                Helpers.printSectionHeader("INFO LOGS");
+                printLogs(logger.getLogs(log -> log.level == Logger.Level.INFO));
+            }
+            case "-e", "--errors" -> {
+                Helpers.printSectionHeader("WARNINGS + ERRORS");
+                printLogs(logger.getErrors());
+            }
+            case "-c", "--clear" -> {
+                logger.clear();
+                System.out.println("Logs cleared.");
+            }
+            case "-h", "--help", "?" -> help();
+            default -> System.out.println("Unknown option: " + arg + " (use -h for help)");
         }
     }
 

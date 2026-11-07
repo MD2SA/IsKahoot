@@ -4,6 +4,8 @@ import java.io.Serializable;
 
 public class Answer implements Serializable {
 
+    private static final long serialVersionUID = 1L;
+
     private final String teamId;
     private final String username;
     private final int option;

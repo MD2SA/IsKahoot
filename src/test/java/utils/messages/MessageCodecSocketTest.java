@@ -18,11 +18,11 @@ class MessageCodecSocketTest {
         InetAddress loopback = InetAddress.getLoopbackAddress();
         try (ServerSocket listener = new ServerSocket(0, 1, loopback);
                 Socket client = new Socket(loopback, listener.getLocalPort());
-                Socket server = listener.accept()) {
-            DataInputStream clientInput = new DataInputStream(client.getInputStream());
-            DataOutputStream clientOutput = new DataOutputStream(client.getOutputStream());
-            DataInputStream serverInput = new DataInputStream(server.getInputStream());
-            DataOutputStream serverOutput = new DataOutputStream(server.getOutputStream());
+                Socket server = listener.accept();
+                DataInputStream clientInput = new DataInputStream(client.getInputStream());
+                DataOutputStream clientOutput = new DataOutputStream(client.getOutputStream());
+                DataInputStream serverInput = new DataInputStream(server.getInputStream());
+                DataOutputStream serverOutput = new DataOutputStream(server.getOutputStream())) {
 
             MessageCodec.write(serverOutput, new ServerMessage.Error("Registration failed"));
             Object response = MessageCodec.read(clientInput, ProtocolObjectFilters.serverToClient());

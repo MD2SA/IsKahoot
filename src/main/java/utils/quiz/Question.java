@@ -26,7 +26,7 @@ public class Question {
     }
 
     public List<String> getOptions() {
-        return options;
+        return options == null ? List.of() : List.copyOf(options);
     }
 
     public boolean isCorrect(int option) {

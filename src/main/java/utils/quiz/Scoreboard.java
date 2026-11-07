@@ -3,11 +3,14 @@ package utils.quiz;
 
 import java.io.Serializable;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 public class Scoreboard implements Serializable {
+
+    private static final long serialVersionUID = 1L;
 
     private final Map<String, Integer> totals = new HashMap<>();
 
@@ -29,7 +32,8 @@ public class Scoreboard implements Serializable {
     }
 
     public List<Score> getScoreboard() {
-        return totals.entrySet().stream().map(e -> new Score(e.getKey(), e.getValue())).sorted().toList();
+        return totals.entrySet().stream().map(e -> new Score(e.getKey(), e.getValue()))
+                .sorted(Comparator.comparingInt(Score::points).reversed().thenComparing(Score::teamId)).toList();
     }
 
 }

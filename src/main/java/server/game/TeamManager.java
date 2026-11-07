@@ -9,7 +9,7 @@ import server.game.utils.Team;
 import utils.tools.ConcurrentMap;
 import utils.tools.ConcurrentSet;
 
-public class TeamManager {
+public final class TeamManager {
 
     private final ConcurrentSet<String> usernames = new ConcurrentSet<>();
     private final ConcurrentMap<String, Team> teams = new ConcurrentMap<>();

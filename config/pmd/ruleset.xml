@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ruleset name="iskahoot"
+         xmlns="http://pmd.sourceforge.net/ruleset/2.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://pmd.sourceforge.net/ruleset/2.0.0 https://pmd.sourceforge.io/ruleset_2_0_0.xsd">
+
+    <description>
+        Regras de qualidade do IsKahoot.
+
+        Foco em code smells e boas praticas que fazem sentido num jogo com CLI,
+        Swing, sockets e concorrencia manual. Regras de estilo/formatacao ficam
+        a cargo do Spotless e as regras de sincronizacao foram desafinadas
+        porque o desenho do servidor assenta em locks explicitos.
+    </description>
+
+    <!-- Design: manter os cheiros relevantes e ajustar os limiares ao projeto. -->
+    <rule ref="category/java/design.xml">
+        <!-- Demasiado ruidoso em codigo orientado a eventos/UI. -->
+        <exclude name="LawOfDemeter"/>
+        <!-- DTOs records are not treated as design smells here. -->
+        <exclude name="DataClass"/>
+        <!-- Campos usados num unico metodo sao comuns em nos de estruturas internas. -->
+        <exclude name="SingularField"/>
+        <!-- Re-adicionadas abaixo com limiares proprios. -->
+        <exclude name="CyclomaticComplexity"/>
+        <exclude name="CognitiveComplexity"/>
+        <exclude name="TooManyMethods"/>
+        <!-- Java EE package boundaries are not used by this standalone app. -->
+        <exclude name="LoosePackageCoupling"/>
+    </rule>
+
+    <rule ref="category/java/design.xml/CyclomaticComplexity">
+        <properties>
+            <property name="methodReportLevel" value="15"/>
+        </properties>
+    </rule>
+
+    <rule ref="category/java/design.xml/CognitiveComplexity">
+        <properties>
+            <property name="reportLevel" value="20"/>
+        </properties>
+    </rule>
+
+    <rule ref="category/java/design.xml/TooManyMethods">
+        <properties>
+            <property name="maxmethods" value="25"/>
+        </properties>
+    </rule>
+
+    <rule ref="category/java/bestpractices.xml">
+        <!-- A CLI escreve para o terminal de proposito. -->
+        <exclude name="SystemPrintln"/>
+        <!-- These project-specific concurrent wrappers are intentional concrete types. -->
+        <exclude name="LooseCoupling"/>
+        <!-- O Logger nao tem API de log lazy. -->
+        <exclude name="GuardLogStatement"/>
+        <!-- Mensagens em asserts e varios asserts por teste sao aceitaveis aqui. -->
+        <exclude name="UnitTestAssertionsShouldIncludeMessage"/>
+        <exclude name="UnitTestContainsTooManyAsserts"/>
+    </rule>
+
+    <rule ref="category/java/errorprone.xml">
+        <!-- Muitos literais repetidos sao mensagens de protocolo/UI. -->
+        <exclude name="AvoidDuplicateLiterals"/>
+        <!-- Inicializacao/limpeza com null e uma escolha explicita. -->
+        <exclude name="NullAssignment"/>
+        <!-- Padroes como while ((x = read()) != null) sao usados no protocolo. -->
+        <exclude name="AssignmentInOperand"/>
+        <exclude name="AvoidFieldNameMatchingMethodName"/>
+        <exclude name="AvoidFieldNameMatchingTypeName"/>
+        <exclude name="AvoidBranchingStatementAsLastInLoop"/>
+        <!-- These checks target Java/JEE applications running inside containers. -->
+        <exclude name="UseProperClassLoader"/>
+        <exclude name="DoNotTerminateVM"/>
+        <!-- O formato de rede usa java.util.Date de proposito. -->
+        <exclude name="ReplaceJavaUtilDate"/>
+    </rule>
+
+    <rule ref="category/java/multithreading.xml">
+        <!-- Threads e sockets sao o core do servidor. -->
+        <exclude name="DoNotUseThreads"/>
+        <!-- O servidor usa sincronizacao explicita (metodos e blocos). -->
+        <exclude name="AvoidSynchronizedAtMethodLevel"/>
+        <exclude name="AvoidSynchronizedStatement"/>
+        <exclude name="UseConcurrentHashMap"/>
+    </rule>
+
+</ruleset>

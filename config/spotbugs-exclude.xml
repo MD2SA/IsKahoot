@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<FindBugsFilter>
+    <!-- DealWithClient intentionally owns the socket for the connection lifetime. -->
+    <Match>
+        <Class name="server.DealWithClient"/>
+        <Method name="&lt;init&gt;"/>
+        <Bug pattern="EI_EXPOSE_REP2"/>
+    </Match>
+
+    <!-- The mutable Logger is intentionally shared as a service by the server. -->
+    <Match>
+        <Class name="server.Server"/>
+        <Method name="getLogger"/>
+        <Bug pattern="EI_EXPOSE_REP"/>
+    </Match>
+
+    <!-- The CLI's exit command intentionally terminates this standalone process. -->
+    <Match>
+        <Class name="server.cli.bin.ExitCommand"/>
+        <Method name="execute"/>
+        <Bug pattern="DM_EXIT"/>
+    </Match>
+
+    <!-- RoundManager intentionally shares the live TeamManager for roster snapshots. -->
+    <Match>
+        <Class name="server.game.RoundManager"/>
+        <Method name="&lt;init&gt;"/>
+        <Bug pattern="EI_EXPOSE_REP2"/>
+    </Match>
+</FindBugsFilter>

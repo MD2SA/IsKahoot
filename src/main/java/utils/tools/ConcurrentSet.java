@@ -79,6 +79,7 @@ public class ConcurrentSet<T> implements Set<T> {
         return elements.toArray(a);
     }
 
+    @Override
     public synchronized Stream<T> stream() {
         return elements.stream();
     }

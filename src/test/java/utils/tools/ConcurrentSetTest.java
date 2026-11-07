@@ -13,8 +13,10 @@ class ConcurrentSetTest {
         set.add("alice");
 
         assertDoesNotThrow(() -> {
-            for (String name : set)
+            for (String name : set) {
+                assertEquals("alice", name);
                 set.add("bob");
+            }
         });
 
         assertEquals(2, set.size());

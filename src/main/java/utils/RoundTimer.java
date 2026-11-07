@@ -48,6 +48,7 @@ public class RoundTimer implements AutoCloseable {
         }
     }
 
+    @SuppressWarnings({"PMD.CognitiveComplexity", "PMD.CyclomaticComplexity", "PMD.AvoidCatchingGenericException"})
     private void runLoop() {
         while (true) {
             Runnable expired;

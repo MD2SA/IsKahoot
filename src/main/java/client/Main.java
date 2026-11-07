@@ -2,10 +2,15 @@ package client;
 
 import java.io.IOException;
 
-public class Main {
+public final class Main {
+
+    private static final int EXPECTED_ARGUMENT_COUNT = 3;
+
+    private Main() {
+    }
 
     public static void main(String[] args) throws IOException {
-        if (args.length != 3) {
+        if (args.length != EXPECTED_ARGUMENT_COUNT) {
             System.err.println("args needed: <username> <teamId> <gameId>");
             System.exit(1);
         }
@@ -19,7 +24,7 @@ public class Main {
             System.exit(1);
         }
 
-        new Client(username, teamId, gameId).start();
+        new Thread(new Client(username, teamId, gameId), "client-" + username).start();
     }
 
 }

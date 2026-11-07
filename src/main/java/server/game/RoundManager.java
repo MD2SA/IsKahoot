@@ -20,6 +20,7 @@ public class RoundManager implements AutoCloseable {
     private Scoreboard scoreboard;
 
     private int currentRound = -1;
+    private int lastAppliedRound = -1;
     private RoundState activeRound;
     private long roundDeadlineEpochMillis;
 
@@ -78,14 +79,21 @@ public class RoundManager implements AutoCloseable {
 
     public Scoreboard awaitResult() throws InterruptedException, ExecutionException {
         RoundState round;
+        int roundNumber;
 
         synchronized (this) {
             round = requireActiveRound();
+            roundNumber = currentRound;
         }
 
         RoundResult result = round.awaitResult();
-        scoreboard.applyResult(result);
-        return scoreboard;
+        synchronized (this) {
+            if (lastAppliedRound < roundNumber) {
+                scoreboard.applyResult(result);
+                lastAppliedRound = roundNumber;
+            }
+            return scoreboard;
+        }
     }
 
     public synchronized int getRoundNumber() {

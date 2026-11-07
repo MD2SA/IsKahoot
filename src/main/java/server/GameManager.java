@@ -11,13 +11,14 @@ import utils.tools.ThreadPool;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
 
 import configs.Config;
 
-public class GameManager extends Thread {
+public final class GameManager implements Runnable {
 
     private static final String QUIZ_RESOURCE = "quizzes.json";
 
@@ -34,7 +35,7 @@ public class GameManager extends Thread {
     }
 
     private static List<Quiz> loadQuizzes() throws IOException {
-        InputStream input = GameManager.class.getClassLoader().getResourceAsStream(QUIZ_RESOURCE);
+        InputStream input = Thread.currentThread().getContextClassLoader().getResourceAsStream(QUIZ_RESOURCE);
         if (input == null)
             throw new FileNotFoundException("Missing quiz resource: " + QUIZ_RESOURCE);
         return QuizCreator.getFrom(input);
@@ -71,17 +72,18 @@ public class GameManager extends Thread {
 
     @Override
     public void run() {
-        Scanner scanner = new Scanner(System.in);
-        System.out.println("Server console ready. Type 'help' for commands.\n");
-        while (true) {
-            System.out.print("> ");
-            String line = scanner.nextLine();
-            dispatcher.processLine(scanner, line);
+        try (Scanner scanner = new Scanner(System.in, StandardCharsets.UTF_8)) {
+            System.out.println("Server console ready. Type 'help' for commands.\n");
+            while (true) {
+                System.out.print("> ");
+                String line = scanner.nextLine();
+                dispatcher.processLine(scanner, line);
+            }
         }
     }
 
     public List<Quiz> getQuizzes() {
-        return quizzes;
+        return List.copyOf(quizzes);
     }
 
     public boolean hasGame(String gameId) {

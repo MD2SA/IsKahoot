@@ -59,17 +59,7 @@ public class RoundState {
         Map<String, Answer> snapshot = null;
 
         synchronized (this) {
-            if (username == null)
-                return AnswerStatus.REJECTED;
-
-            String teamId = roster.get(username);
-            int option = answer == null ? -1 : answer.getOption();
-            if (question.getOptions() == null || option < 0 || option >= question.getOptions().size())
-                return AnswerStatus.REJECTED;
-
-            if (phase != Phase.OPEN || answer == null || answer.getRoundNumber() != round || teamId == null
-                    || !teamId.equals(answer.getTeamId()) || !username.equals(answer.getUsername())
-                    || answers.containsKey(username) || departedPlayers.contains(username))
+            if (!acceptsAnswer(username, answer))
                 return AnswerStatus.REJECTED;
 
             answers.put(username, answer);
@@ -84,6 +74,18 @@ public class RoundState {
             completeResult(snapshot);
 
         return snapshot != null ? AnswerStatus.ROUND_COMPLETED : AnswerStatus.ACCEPTED;
+    }
+
+    private boolean acceptsAnswer(String username, Answer answer) {
+        if (phase != Phase.OPEN || username == null || answer == null || answers.containsKey(username)
+                || departedPlayers.contains(username))
+            return false;
+
+        String teamId = roster.get(username);
+        int option = answer.getOption();
+        return teamId != null && answer.getRoundNumber() == round && option >= 0
+                && option < question.getOptions().size() && teamId.equals(answer.getTeamId())
+                && username.equals(answer.getUsername());
     }
 
     boolean playerLeft(String username) {
@@ -123,6 +125,7 @@ public class RoundState {
         completeResult(snapshot);
     }
 
+    @SuppressWarnings("PMD.AvoidCatchingGenericException")
     private void completeResult(Map<String, Answer> snapshot) {
         try {
             result.complete(Scorer.score(question, roster, snapshot));

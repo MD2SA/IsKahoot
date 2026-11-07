@@ -45,7 +45,7 @@ public class GameSession implements Runnable {
 
     @Override
     public void run() {
-        try {
+        try (roundManager) {
             while (roundManager.hasNextRound() && !clientHandlers.isEmpty()) {
                 Question question = roundManager.prepareNextRound();
 
@@ -64,8 +64,6 @@ public class GameSession implements Runnable {
                     break;
                 }
             }
-        } finally {
-            roundManager.close();
         }
         endGame();
     }
@@ -84,6 +82,8 @@ public class GameSession implements Runnable {
         broadcast(DealWithClient::sendEndGame);
     }
 
+    // The connection writer flushes End and owns socket cleanup.
+    @SuppressWarnings("PMD.CloseResource")
     private void broadcast(Consumer<DealWithClient> action) {
         for (DealWithClient handler : clientHandlers)
             action.accept(handler);

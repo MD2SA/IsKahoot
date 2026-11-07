@@ -2,12 +2,15 @@ package utils.tools;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
+import java.util.concurrent.atomic.AtomicBoolean;
 
-public class ThreadPool {
+public final class ThreadPool {
 
     private final BlockingQueue<Runnable> taskQueue;
-    private final List<WorkerThread> workers;
-    private volatile boolean shutdownInitiated = false;
+    private final List<Thread> workers;
+    private final AtomicBoolean shutdownInitiated = new AtomicBoolean();
+    private boolean workersStarted;
 
     public ThreadPool(int numThreads) {
         if (numThreads <= 0)
@@ -16,51 +19,55 @@ public class ThreadPool {
         this.workers = new ArrayList<>(numThreads);
 
         for (int i = 0; i < numThreads; i++) {
-            WorkerThread worker = new WorkerThread();
+            Thread worker = new Thread(this::workerLoop, "iskahoot-worker-" + i);
             workers.add(worker);
-            worker.start();
         }
     }
 
-    public void submit(Runnable runnable) {
-        if (shutdownInitiated)
+    public synchronized void submit(Runnable runnable) {
+        if (shutdownInitiated.get())
             throw new IllegalStateException("Thread pool is shutdown");
-        if (runnable == null)
-            throw new NullPointerException("Task cannot be null");
-        taskQueue.put(runnable);
+        taskQueue.put(Objects.requireNonNull(runnable, "runnable"));
+        if (!workersStarted) {
+            workersStarted = true;
+            workers.forEach(Thread::start);
+        }
     }
 
-    public void shutdown() {
-        shutdownInitiated = true;
-        for (WorkerThread worker : workers)
+    public synchronized void shutdown() {
+        shutdownInitiated.set(true);
+        for (Thread worker : workers)
             worker.interrupt();
     }
 
-    public List<Runnable> shutdownNow() {
-        shutdownInitiated = true;
+    public synchronized List<Runnable> shutdownNow() {
+        shutdownInitiated.set(true);
         List<Runnable> remainingTasks = new ArrayList<>();
         taskQueue.drainTo(remainingTasks);
-        for (WorkerThread worker : workers)
+        for (Thread worker : workers)
             worker.interrupt();
         return remainingTasks;
     }
 
     public boolean isShutdown() {
-        return shutdownInitiated;
+        return shutdownInitiated.get();
     }
 
-    private class WorkerThread extends Thread {
-        @Override
-        public void run() {
-            while (!shutdownInitiated || !taskQueue.isEmpty()) {
+    @SuppressWarnings("PMD.AvoidCatchingGenericException")
+    private void workerLoop() {
+        while (!shutdownInitiated.get() || !taskQueue.isEmpty()) {
+            try {
+                Runnable task = taskQueue.take();
                 try {
-                    Runnable task = taskQueue.take();
                     task.run();
-                } catch (InterruptedException e) {
-                    if (shutdownInitiated) {
-                        Thread.currentThread().interrupt();
-                        break;
-                    }
+                } catch (RuntimeException e) {
+                    Thread current = Thread.currentThread();
+                    current.getUncaughtExceptionHandler().uncaughtException(current, e);
+                }
+            } catch (InterruptedException e) {
+                if (shutdownInitiated.get()) {
+                    Thread.currentThread().interrupt();
+                    break;
                 }
             }
         }

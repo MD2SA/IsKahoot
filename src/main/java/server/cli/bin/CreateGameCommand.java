@@ -10,7 +10,8 @@ import utils.quiz.Quiz;
 import server.cli.Command;
 import server.cli.CommandContext;
 
-import server.cli.utils.*;
+import server.cli.utils.Constants;
+import server.cli.utils.Helpers;
 
 public class CreateGameCommand implements Command {
 
@@ -27,7 +28,7 @@ public class CreateGameCommand implements Command {
     }
 
     @Override
-    public void execute(Scanner scanner, CommandContext context, String[] args) {
+    public void execute(Scanner scanner, CommandContext context, String... args) {
         GameManager gameManager = context.gameManager();
         List<Quiz> quizzes = gameManager.getQuizzes();
 
@@ -50,7 +51,7 @@ public class CreateGameCommand implements Command {
 
         String id = Helpers.getArgOrReadGameCode(args, argIndex, scanner, gameManager, GAME_ID_LENGTH);
 
-        System.out.printf("\nCreating a game with %d teams of %d players with the quiz %d\n\n", numberOfTeams,
+        System.out.printf("%nCreating a game with %d teams of %d players with the quiz %d%n%n", numberOfTeams,
                 teamCapacity, quizNumber + 1);
 
         gameManager.createGame(id, numberOfTeams, teamCapacity, quizNumber);

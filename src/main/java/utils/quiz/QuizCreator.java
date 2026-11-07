@@ -18,7 +18,7 @@ public class QuizCreator {
             QuizCreator creator = new Gson().fromJson(reader, QuizCreator.class);
             if (creator == null || creator.quizzes == null)
                 throw new IOException("The quiz file does not contain a valid 'quizzes' list");
-            return creator.quizzes;
+            return List.copyOf(creator.quizzes);
         }
     }
 }

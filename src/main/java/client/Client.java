@@ -23,7 +23,7 @@ import utils.messages.ProtocolObjectFilters;
 import utils.messages.ServerMessage;
 import utils.quiz.ReducedQuestion;
 
-public class Client extends Thread implements Observer {
+public final class Client implements Runnable, Observer {
 
     private static final int OUTBOUND_CAPACITY = 16;
 
@@ -38,10 +38,10 @@ public class Client extends Thread implements Observer {
     private int roundNumber = -1;
     private int answeredRound = -1;
 
-    private volatile Socket socket;
-    private volatile DataOutputStream out;
-    private volatile DataInputStream in;
-    private volatile Thread writerThread;
+    private Socket socket;
+    private DataOutputStream out;
+    private DataInputStream in;
+    private Thread writerThread;
 
     public Client(String username, String teamId, String gameId) {
         this.username = username;
@@ -181,6 +181,7 @@ public class Client extends Thread implements Observer {
         }
     }
 
+    @SuppressWarnings("PMD.CompareObjectsWithEquals")
     private void closeResources() {
         if (!resourcesClosed.compareAndSet(false, true))
             return;
@@ -192,21 +193,8 @@ public class Client extends Thread implements Observer {
             System.err.println("Failed to close client socket: " + e.getMessage());
         }
 
-        closeQuietly(in, out);
-
         Thread writer = writerThread;
         if (writer != null && writer != Thread.currentThread())
             writer.interrupt();
-    }
-
-    private void closeQuietly(AutoCloseable... closeables) {
-        for (AutoCloseable closeable : closeables) {
-            try {
-                if (closeable != null)
-                    closeable.close();
-            } catch (Exception e) {
-                System.err.println("Failed to close client resource: " + e.getMessage());
-            }
-        }
     }
 }

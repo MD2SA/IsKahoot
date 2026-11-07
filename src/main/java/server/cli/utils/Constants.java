@@ -1,6 +1,9 @@
 package server.cli.utils;
 
-public class Constants {
+public final class Constants {
+
+    private Constants() {
+    }
 
     public static final String MARGIN = "\r\n";
     public static final String NUMBER_OF_TEAMS = "Number of teams:";

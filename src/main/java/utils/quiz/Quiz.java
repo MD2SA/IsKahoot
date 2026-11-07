@@ -2,7 +2,8 @@ package utils.quiz;
 
 import java.util.List;
 
-public class Quiz {
+@SuppressWarnings({"PMD.ImmutableField", "PMD.MissingStaticMethodInNonInstantiatableClass"})
+public final class Quiz {
 
     private String name;
     private List<Question> questions;

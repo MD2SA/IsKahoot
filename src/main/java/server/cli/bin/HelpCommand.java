@@ -25,7 +25,7 @@ public class HelpCommand implements Command {
     }
 
     @Override
-    public void execute(Scanner scanner, CommandContext context, String[] args) {
+    public void execute(Scanner scanner, CommandContext context, String... args) {
         dispatcher.showHelp();
     }
 

@@ -2,13 +2,19 @@ package server.cli;
 
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Scanner;
 
-import server.cli.bin.*;
+import server.cli.bin.ClearCommand;
+import server.cli.bin.CreateGameCommand;
+import server.cli.bin.ExitCommand;
+import server.cli.bin.HelpCommand;
+import server.cli.bin.ListGamesCommand;
+import server.cli.bin.LogsCommand;
 import server.cli.utils.Helpers;
 
-public class CommandDispatcher {
+public final class CommandDispatcher {
 
     private final Map<String, Command> commands = new HashMap<>();
     private final CommandContext context;
@@ -27,15 +33,15 @@ public class CommandDispatcher {
         register(new ClearCommand());
     }
 
-    public void register(Command command) {
-        commands.put(command.getName().toLowerCase(), command);
+    public final void register(Command command) {
+        commands.put(command.getName().toLowerCase(Locale.ROOT), command);
     }
 
     public void processLine(Scanner scanner, String line) {
         if (line == null || line.isBlank())
             return;
         String[] args = line.trim().split("\\s+");
-        String cmdName = args[0].toLowerCase();
+        String cmdName = args[0].toLowerCase(Locale.ROOT);
         args = Arrays.copyOfRange(args, 1, args.length);
 
         Command cmd = commands.get(cmdName);

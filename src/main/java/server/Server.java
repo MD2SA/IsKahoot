@@ -9,7 +9,7 @@ import java.net.Socket;
 
 import configs.Config;
 
-public class Server {
+public final class Server {
 
     private static final Server INSTANCE = new Server();
 
@@ -20,9 +20,9 @@ public class Server {
         try {
             this.logger = new Logger();
             this.gameManager = new GameManager();
-            gameManager.start();
+            new Thread(gameManager, "game-manager").start();
         } catch (IOException e) {
-            throw new RuntimeException("Failed to initialize server", e);
+            throw new IllegalStateException("Failed to initialize server", e);
         }
     }
 
@@ -38,6 +38,8 @@ public class Server {
         return gameManager;
     }
 
+    // Each accepted socket is transferred to DealWithClient for its lifetime.
+    @SuppressWarnings("PMD.CloseResource")
     public void start() throws IOException {
         logger.info("Server starting on port: " + Config.Server.SERVER_PORT);
 
@@ -46,6 +48,7 @@ public class Server {
             while (true) {
                 Socket socket = ss.accept();
                 logger.info("New connection from " + socket.getRemoteSocketAddress());
+                // Ownership transfers to DealWithClient, which closes the socket after the session.
                 new Thread(new DealWithClient(this, socket)).start();
             }
         } catch (IOException e) {

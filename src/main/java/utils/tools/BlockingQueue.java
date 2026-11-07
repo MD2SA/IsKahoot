@@ -49,11 +49,11 @@ public class BlockingQueue<T> {
         return size;
     }
 
-    private class Node {
-        T val;
+    private final class Node {
+        final T val;
         Node next;
 
-        public Node(T val, Node next) {
+        private Node(T val, Node next) {
             this.val = val;
             this.next = next;
         }

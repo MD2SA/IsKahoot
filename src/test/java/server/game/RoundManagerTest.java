@@ -20,8 +20,7 @@ class RoundManagerTest {
     @Test
     void rejectsAnswerBeforeFirstRoundAndIncludesZeroScoreTeams() throws Exception {
         TeamManager teams = new TeamManager(1, 1);
-        RoundManager manager = new RoundManager(loadQuiz(), teams);
-        try {
+        try (RoundManager manager = new RoundManager(loadQuiz(), teams)) {
             assertEquals(AnswerStatus.REJECTED, manager.answer("alice", new Answer("A", "alice", 1, 0)));
 
             assertTrue(teams.registerPlayer("alice", "A"));
@@ -31,8 +30,6 @@ class RoundManagerTest {
 
             Scoreboard scoreboard = manager.awaitResult();
             assertEquals(List.of(new Score("A", 0)), scoreboard.getScoreboard());
-        } finally {
-            manager.close();
         }
     }
 
@@ -40,16 +37,27 @@ class RoundManagerTest {
     void startsTimerWithADeadlineForTheCurrentRound() throws Exception {
         TeamManager teams = new TeamManager(1, 1);
         assertTrue(teams.registerPlayer("alice", "A"));
-        RoundManager manager = new RoundManager(loadQuiz(), teams);
-        try {
+        try (RoundManager manager = new RoundManager(loadQuiz(), teams)) {
             manager.prepareNextRound();
             manager.openRound();
 
             long deadline = manager.startTimer();
 
             assertTrue(deadline > System.currentTimeMillis());
-        } finally {
-            manager.close();
+        }
+    }
+
+    @Test
+    void applyingTheSameRoundResultTwiceDoesNotDoubleTheScore() throws Exception {
+        TeamManager teams = new TeamManager(1, 1);
+        assertTrue(teams.registerPlayer("alice", "A"));
+        try (RoundManager manager = new RoundManager(loadQuiz(), teams)) {
+            manager.prepareNextRound();
+            manager.openRound();
+            assertEquals(AnswerStatus.ROUND_COMPLETED, manager.answer("alice", new Answer("A", "alice", 1, 0)));
+
+            assertEquals(List.of(new Score("A", 10)), manager.awaitResult().getScoreboard());
+            assertEquals(List.of(new Score("A", 10)), manager.awaitResult().getScoreboard());
         }
     }
 

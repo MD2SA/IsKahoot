@@ -20,7 +20,7 @@ public class ExitCommand implements Command {
     }
 
     @Override
-    public void execute(Scanner scanner, CommandContext context, String[] args) {
+    public void execute(Scanner scanner, CommandContext context, String... args) {
         Helpers.printSectionHeader("Goodbye!");
         System.exit(0);
     }

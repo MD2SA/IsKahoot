@@ -30,7 +30,7 @@ public class GUI extends Observed {
 
     private final JPanel questionPanel;
     private final JPanel scorePanel;
-    private JLabel timerLabel;
+    private final JLabel timerLabel;
     private Timer timer;
     private long timerDeadlineEpochMillis;
 

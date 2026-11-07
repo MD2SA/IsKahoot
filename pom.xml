@@ -16,6 +16,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <maven.compiler.release>21</maven.compiler.release>
+        <pmd.version>7.29.0</pmd.version>
         <gson.version>2.11.0</gson.version>
         <junit.version>5.11.4</junit.version>
     </properties>
@@ -61,6 +62,94 @@
                 <executions>
                     <execution>
                         <id>spotless-check</id>
+                        <phase>verify</phase>
+                        <goals>
+                            <goal>check</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.15.0</version>
+                <configuration>
+                    <compilerArgs>
+                        <arg>-Xlint:all,-serial</arg>
+                    </compilerArgs>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-pmd-plugin</artifactId>
+                <version>3.28.0</version>
+                <dependencies>
+                    <dependency>
+                        <groupId>net.sourceforge.pmd</groupId>
+                        <artifactId>pmd-core</artifactId>
+                        <version>${pmd.version}</version>
+                    </dependency>
+                    <dependency>
+                        <groupId>net.sourceforge.pmd</groupId>
+                        <artifactId>pmd-java</artifactId>
+                        <version>${pmd.version}</version>
+                    </dependency>
+                    <dependency>
+                        <groupId>net.sourceforge.pmd</groupId>
+                        <artifactId>pmd-javascript</artifactId>
+                        <version>${pmd.version}</version>
+                    </dependency>
+                    <dependency>
+                        <groupId>net.sourceforge.pmd</groupId>
+                        <artifactId>pmd-jsp</artifactId>
+                        <version>${pmd.version}</version>
+                    </dependency>
+                </dependencies>
+                <configuration>
+                    <!-- O pom define maven.compiler.release, nao maven.compiler.source. -->
+                    <targetJdk>21</targetJdk>
+                    <rulesets>
+                        <ruleset>${project.basedir}/config/pmd/ruleset.xml</ruleset>
+                    </rulesets>
+                    <includeTests>true</includeTests>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>pmd-check</id>
+                        <phase>verify</phase>
+                        <goals>
+                            <goal>check</goal>
+                        </goals>
+                        <configuration>
+                            <failurePriority>3</failurePriority>
+                            <printFailingErrors>true</printFailingErrors>
+                            <verbose>true</verbose>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>cpd-check</id>
+                        <phase>verify</phase>
+                        <goals>
+                            <goal>cpd-check</goal>
+                        </goals>
+                        <configuration>
+                            <minimumTokens>100</minimumTokens>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>com.github.spotbugs</groupId>
+                <artifactId>spotbugs-maven-plugin</artifactId>
+                <version>4.10.5.0</version>
+                <configuration>
+                    <effort>Max</effort>
+                    <threshold>Medium</threshold>
+                    <excludeFilterFile>${project.basedir}/config/spotbugs-exclude.xml</excludeFilterFile>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>spotbugs-check</id>
                         <phase>verify</phase>
                         <goals>
                             <goal>check</goal>

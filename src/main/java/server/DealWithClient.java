@@ -2,6 +2,7 @@ package server;
 
 import java.io.IOException;
 import java.io.InvalidObjectException;
+import java.io.Closeable;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.net.Socket;
@@ -22,6 +23,8 @@ import utils.quiz.Answer;
 import utils.quiz.ReducedQuestion;
 import utils.quiz.Scoreboard;
 
+// This adapter intentionally owns one connection; volatile publishes its state to reader/writer/session threads.
+@SuppressWarnings({"PMD.GodClass", "PMD.AvoidUsingVolatile"})
 public class DealWithClient implements Runnable, AutoCloseable {
 
     private static final int OUTBOUND_CAPACITY = 64;
@@ -194,6 +197,7 @@ public class DealWithClient implements Runnable, AutoCloseable {
         }
     }
 
+    @SuppressWarnings("PMD.CompareObjectsWithEquals")
     private void cleanup() {
         if (!closed.compareAndSet(false, true))
             return;
@@ -209,12 +213,13 @@ public class DealWithClient implements Runnable, AutoCloseable {
             writer.interrupt();
     }
 
-    private void closeQuietly(AutoCloseable... closeables) {
-        for (AutoCloseable closeable : closeables) {
+    @SuppressWarnings("PMD.CloseResource")
+    private void closeQuietly(Closeable... closeables) {
+        for (Closeable closeable : closeables) {
             try {
                 if (closeable != null)
                     closeable.close();
-            } catch (Exception e) {
+            } catch (IOException e) {
                 server.getLogger().debug("Error closing client resource: " + e.getMessage());
             }
         }
