@@ -66,6 +66,31 @@ class ProtocolSerializationTest {
     }
 
     @Test
+    void roundTripsAnswerAcceptedAnswerRejectedAndEndThroughServerFilter() throws Exception {
+        ServerMessage.AnswerAccepted accepted = roundTrip(new ServerMessage.AnswerAccepted(2),
+                ProtocolObjectFilters.serverToClient());
+        ServerMessage.AnswerRejected rejected = roundTrip(new ServerMessage.AnswerRejected(3, "too late"),
+                ProtocolObjectFilters.serverToClient());
+        ServerMessage end = roundTrip(new ServerMessage.End(), ProtocolObjectFilters.serverToClient());
+
+        assertEquals(2, accepted.roundNumber());
+        assertEquals(3, rejected.roundNumber());
+        assertEquals("too late", rejected.reason());
+        assertInstanceOf(ServerMessage.End.class, end);
+    }
+
+    @Test
+    void serverMessagesRejectMissingPayloadsAndProtectCollections() {
+        assertThrows(NullPointerException.class, () -> new ServerMessage.Question(null));
+        assertThrows(NullPointerException.class, () -> new ServerMessage.AnswerRejected(0, null));
+        assertThrows(NullPointerException.class, () -> new ServerMessage.Error(null));
+
+        ServerMessage.Scoreboard scoreboard = new ServerMessage.Scoreboard(List.of(new Score("A", 1)));
+
+        assertThrows(UnsupportedOperationException.class, () -> scoreboard.scores().add(new Score("B", 2)));
+    }
+
+    @Test
     void inputFilterRejectsUnexpectedSerializedClasses() throws Exception {
         assertThrows(InvalidClassException.class,
                 () -> roundTrip(new java.util.Date(), ProtocolObjectFilters.clientToServer()));
