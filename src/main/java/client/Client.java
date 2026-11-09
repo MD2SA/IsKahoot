@@ -1,9 +1,9 @@
 package client;
 
-import java.io.IOException;
-import java.io.InvalidObjectException;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
+import java.io.IOException;
+import java.io.InvalidObjectException;
 import java.net.InetAddress;
 import java.net.Socket;
 import java.util.concurrent.ArrayBlockingQueue;
@@ -43,13 +43,11 @@ public final class Client implements Runnable, Observer {
     private DataInputStream in;
     private Thread writerThread;
 
-    public Client(String username, String teamId, String gameId) {
+    public Client(String username, String teamId, String gameId, GUI gui) {
         this.username = username;
         this.gameId = gameId;
         this.teamId = teamId;
-
-        gui = new GUI(username, teamId);
-        gui.registerObserver(this);
+        this.gui = gui;
     }
 
     private void connectToServer() throws IOException {
