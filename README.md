@@ -52,6 +52,15 @@ The server reads commands from standard input. Create a game, then start clients
 Client arguments are `<username> <team-id> <game-code>`. The game starts as soon as the lobby is
 full (in this example, two teams of two).
 
+You can also launch the client without arguments:
+
+```bash
+./scripts/run.sh client
+```
+
+The client window then asks for the username, team ID and game code. Any arguments you pass are
+pre-filled there; supplying all three skips the login screen entirely.
+
 To launch a set of clients automatically, use the simulation script:
 
 ```bash
