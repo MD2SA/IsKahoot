@@ -2,17 +2,15 @@ package server.cli.utils;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static testutils.OutputCapture.capture;
 
-import java.io.ByteArrayOutputStream;
-import java.io.PrintStream;
 import java.io.StringReader;
-import java.nio.charset.StandardCharsets;
 import java.util.Scanner;
-import java.util.function.Supplier;
 
 import org.junit.jupiter.api.Test;
 
 import server.GameManager;
+import testutils.OutputCapture.Captured;
 
 class HelpersTest {
 
@@ -151,19 +149,4 @@ class HelpersTest {
         }
     }
 
-    @SuppressWarnings("PMD.CloseResource") // The original stream is restored, never closed.
-    private static <T> Captured<T> capture(Supplier<T> action) {
-        PrintStream original = System.out;
-        ByteArrayOutputStream buffer = new ByteArrayOutputStream();
-        System.setOut(new PrintStream(buffer, true, StandardCharsets.UTF_8));
-        try {
-            T value = action.get();
-            return new Captured<>(value, buffer.toString(StandardCharsets.UTF_8));
-        } finally {
-            System.setOut(original);
-        }
-    }
-
-    private record Captured<T>(T value, String output) {
-    }
 }
