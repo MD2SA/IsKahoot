@@ -45,8 +45,16 @@ public final class GamePanel extends JPanel {
         scoreboardPanel.show(scoreboard);
     }
 
-    public void displayWaiting() {
-        questionPanel.showWaiting();
+    public void displayConnecting() {
+        questionPanel.showConnecting();
+    }
+
+    public void displayLobby() {
+        questionPanel.showLobby();
+    }
+
+    public void displayWaitingForOthers() {
+        questionPanel.showWaitingForOthers();
     }
 
     public void displaySubmitting() {

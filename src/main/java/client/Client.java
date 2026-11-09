@@ -110,7 +110,7 @@ public final class Client implements Runnable, Observer {
     private void handleAnswerAccepted(ServerMessage.AnswerAccepted accepted) {
         SwingUtilities.invokeLater(() -> {
             if (roundNumber == accepted.roundNumber() && answeredRound == accepted.roundNumber())
-                gui.displayWaiting();
+                gui.displayWaitingForOthers();
         });
     }
 
@@ -168,7 +168,9 @@ public final class Client implements Runnable, Observer {
     @Override
     public void run() {
         try {
+            SwingUtilities.invokeLater(gui::displayConnecting);
             connectToServer();
+            SwingUtilities.invokeLater(gui::displayLobby);
             communicate();
         } catch (IOException | ClassNotFoundException e) {
             if (!resourcesClosed.get())

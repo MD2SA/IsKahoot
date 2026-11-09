@@ -74,8 +74,16 @@ public class GUI extends Observed {
         gamePanel.displayScoreboard(scoreboard);
     }
 
-    public void displayWaiting() {
-        gamePanel.displayWaiting();
+    public void displayConnecting() {
+        gamePanel.displayConnecting();
+    }
+
+    public void displayLobby() {
+        gamePanel.displayLobby();
+    }
+
+    public void displayWaitingForOthers() {
+        gamePanel.displayWaitingForOthers();
     }
 
     public void displaySubmitting() {

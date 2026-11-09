@@ -82,16 +82,20 @@ public final class QuestionPanel extends JPanel {
         refresh();
     }
 
-    public void showWaiting() {
-        removeAll();
-        add(message("A aguardar...", Font.BOLD, 16, Color.BLACK));
-        refresh();
+    public void showConnecting() {
+        showInfo("A ligar ao servidor...");
+    }
+
+    public void showLobby() {
+        showInfo("À espera de outros jogadores se juntarem...");
+    }
+
+    public void showWaitingForOthers() {
+        showInfo("Resposta enviada. À espera dos outros jogadores...");
     }
 
     public void showSubmitting() {
-        removeAll();
-        add(message("A enviar resposta...", Font.BOLD, 16, Color.BLACK));
-        refresh();
+        showInfo("A enviar resposta...");
     }
 
     public void showError(String errorMsg) {
@@ -127,6 +131,12 @@ public final class QuestionPanel extends JPanel {
     private void selectOption(int index) {
         selectedOption = index;
         onOptionSelected.run();
+    }
+
+    private void showInfo(String text) {
+        removeAll();
+        add(message(text, Font.BOLD, 16, Color.BLACK));
+        refresh();
     }
 
     private JLabel message(String text, int style, int size, Color color) {
