@@ -4,7 +4,8 @@
 #
 # Usage:
 #   ./scripts/run.sh server
-#   ./scripts/run.sh client <username> <team-id> <game-code>
+#   ./scripts/run.sh client [username] [team-id] [game-code]
+#   (no client arguments opens a window that asks for them)
 #
 set -euo pipefail
 
@@ -39,4 +40,17 @@ if [[ ! -f "$CLASSPATH_FILE" || "pom.xml" -nt "$CLASSPATH_FILE" ]]; then
     ./mvnw -q dependency:build-classpath -Dmdep.outputFile="$CLASSPATH_FILE"
 fi
 
-exec java -cp "target/classes:$(< "$CLASSPATH_FILE")" "$MAIN_CLASS" "$@"
+JAR_FILE=""
+for candidate in target/iskahoot-*.jar; do
+    if [[ -f "$candidate" ]]; then
+        JAR_FILE="$candidate"
+        break
+    fi
+done
+
+if [[ -z "$JAR_FILE" ]]; then
+    echo "Build did not produce a jar in target/. Run ./mvnw package first." >&2
+    exit 1
+fi
+
+exec java -cp "$JAR_FILE:$(< "$CLASSPATH_FILE")" "$MAIN_CLASS" "$@"
