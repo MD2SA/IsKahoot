@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -13,6 +14,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintStream;
 import java.io.Serializable;
+import java.lang.reflect.Field;
 import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -24,12 +26,17 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
 
+import server.game.GameSession;
 import utils.messages.ClientMessage;
 import utils.messages.MessageCodec;
 import utils.messages.Protocol;
 import utils.messages.ProtocolObjectFilters;
 import utils.messages.ServerMessage;
+import utils.quiz.Quiz;
+import utils.quiz.QuizCreator;
+import utils.tools.ConcurrentMap;
 
+@SuppressWarnings("PMD.ExcessiveImports") // Integration test exercises the full socket/message stack.
 class DealWithClientTest {
 
     private static InputStream originalIn;
@@ -55,19 +62,9 @@ class DealWithClientTest {
         }
     }
 
-    private static void awaitGameManagerStop() {
-        long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(2);
-        while (gameManagerThreadAlive() && System.nanoTime() < deadline)
-            Thread.onSpinWait();
-    }
-
-    private static boolean gameManagerThreadAlive() {
-        return Thread.getAllStackTraces().keySet().stream()
-                .anyMatch(thread -> "game-manager".equals(thread.getName()) && thread.isAlive());
-    }
-
     @AfterAll
-    static void restoreSystemIn() {
+    static void shutdownServerAndRestoreInput() {
+        server.getGameManager().shutdown();
         System.setIn(originalIn);
     }
 
@@ -102,6 +99,43 @@ class DealWithClientTest {
         assertEquals("A", outcome.teamId());
     }
 
+    @Test
+    @Timeout(10)
+    void playsAGameOverTheSocket() throws Exception {
+        GameSession session = new GameSession("socket-game", loadQuiz(), 1, 1);
+        waitingGames(server.getGameManager()).put("socket-game", session);
+
+        try (ServerSocket listener = new ServerSocket(0, 1, InetAddress.getLoopbackAddress());
+                Socket clientSide = new Socket(InetAddress.getLoopbackAddress(), listener.getLocalPort());
+                Socket serverSide = listener.accept();
+                DealWithClient handler = new DealWithClient(server, serverSide)) {
+            clientSide.setSoTimeout(2_000);
+            Thread connection = new Thread(handler, "deal-with-client");
+            connection.start();
+
+            try (DataOutputStream output = new DataOutputStream(clientSide.getOutputStream());
+                    DataInputStream input = new DataInputStream(clientSide.getInputStream())) {
+                MessageCodec.write(output,
+                        new ClientMessage.Register("alice", "A", "socket-game", Protocol.CURRENT_VERSION));
+
+                assertEquals(0, readQuestion(input, 0).question().getRoundNumber());
+                MessageCodec.write(output, new ClientMessage.SubmitAnswer(1, 0));
+
+                assertEquals(1, readQuestion(input, 1).question().getRoundNumber());
+                MessageCodec.write(output, new ClientMessage.SubmitAnswer(2, 1));
+
+                assertInstanceOf(ServerMessage.End.class, readEnd(input));
+            }
+
+            clientSide.close();
+            connection.join(2_000);
+
+            assertFalse(connection.isAlive());
+            assertEquals("alice", handler.getClientId());
+            assertEquals("A", handler.getTeamId());
+        }
+    }
+
     private static Outcome exchange(Serializable request)
             throws IOException, ClassNotFoundException, InterruptedException {
         try (ServerSocket listener = new ServerSocket(0, 1, InetAddress.getLoopbackAddress());
@@ -124,9 +158,57 @@ class DealWithClientTest {
         }
     }
 
+    private static ServerMessage.Question readQuestion(DataInputStream input, int roundNumber)
+            throws IOException, ClassNotFoundException {
+        while (true) {
+            ServerMessage message = readServerMessage(input);
+            if (message instanceof ServerMessage.Question question) {
+                assertEquals(roundNumber, question.question().getRoundNumber());
+                return question;
+            }
+            if (!(message instanceof ServerMessage.AnswerAccepted) && !(message instanceof ServerMessage.Scoreboard))
+                fail("Unexpected message before question: " + message);
+        }
+    }
+
+    private static ServerMessage.End readEnd(DataInputStream input) throws IOException, ClassNotFoundException {
+        while (true) {
+            ServerMessage message = readServerMessage(input);
+            if (message instanceof ServerMessage.End end)
+                return end;
+            if (!(message instanceof ServerMessage.AnswerAccepted) && !(message instanceof ServerMessage.Scoreboard))
+                fail("Unexpected message before end: " + message);
+        }
+    }
+
     private static ServerMessage readServerMessage(DataInputStream input) throws IOException, ClassNotFoundException {
         Object message = MessageCodec.read(input, ProtocolObjectFilters.serverToClient());
         return assertInstanceOf(ServerMessage.class, message);
+    }
+
+    @SuppressWarnings({"unchecked", "PMD.AvoidAccessibilityAlteration"}) // Seeds the private registry.
+    private static ConcurrentMap<String, GameSession> waitingGames(GameManager manager)
+            throws ReflectiveOperationException {
+        Field field = GameManager.class.getDeclaredField("waitingGames");
+        field.setAccessible(true);
+        return (ConcurrentMap<String, GameSession>) field.get(manager);
+    }
+
+    private static Quiz loadQuiz() throws IOException {
+        try (InputStream input = DealWithClientTest.class.getClassLoader().getResourceAsStream("quiz-fast.json")) {
+            return QuizCreator.getFrom(input).get(0);
+        }
+    }
+
+    private static void awaitGameManagerStop() {
+        long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(2);
+        while (gameManagerThreadAlive() && System.nanoTime() < deadline)
+            Thread.onSpinWait();
+    }
+
+    private static boolean gameManagerThreadAlive() {
+        return Thread.getAllStackTraces().keySet().stream()
+                .anyMatch(thread -> "game-manager".equals(thread.getName()) && thread.isAlive());
     }
 
     private record Outcome(ServerMessage message, String clientId, String teamId) {
