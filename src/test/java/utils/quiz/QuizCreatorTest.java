@@ -67,6 +67,8 @@ class QuizCreatorTest {
         assertEquals(List.of("3", "4"), question.getOptions());
         assertTrue(question.isCorrect(1));
         assertFalse(question.isCorrect(0));
+        assertTrue(question.toString().contains("What is 2 + 2?"));
+        assertTrue(question.toString().contains("4"));
     }
 
     @Test
