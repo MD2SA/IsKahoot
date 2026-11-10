@@ -39,6 +39,14 @@ class TeamManagerTest {
     }
 
     @Test
+    void rejectsANewTeamWhenTheGameIsFull() {
+        TeamManager manager = new TeamManager(1, 2);
+
+        assertTrue(manager.registerPlayer("alice", "A"));
+        assertFalse(manager.registerPlayer("bob", "B"), "The game only allows one team");
+    }
+
+    @Test
     void reportsWhetherTheLobbyIsFull() {
         TeamManager manager = new TeamManager(1, 2);
 

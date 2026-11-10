@@ -1,6 +1,7 @@
 package server.game.utils;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -10,6 +11,12 @@ import java.io.ObjectOutputStream;
 import org.junit.jupiter.api.Test;
 
 class TeamSerializationTest {
+
+    @Test
+    void rejectsBlankNamesAndNonPositiveCapacities() {
+        assertThrows(IllegalArgumentException.class, () -> new Team(" ", 2));
+        assertThrows(IllegalArgumentException.class, () -> new Team("A", 0));
+    }
 
     @Test
     void roundTripsTeamPlayers() throws Exception {
