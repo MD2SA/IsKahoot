@@ -7,11 +7,15 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static testutils.OutputCapture.capture;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Field;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -23,6 +27,7 @@ import org.junit.jupiter.api.Timeout;
 
 import server.game.AnswerStatus;
 import server.game.GameSession;
+import testutils.OutputCapture.Captured;
 import utils.quiz.Answer;
 import utils.quiz.Quiz;
 import utils.quiz.QuizCreator;
@@ -31,7 +36,7 @@ import utils.quiz.Score;
 import utils.quiz.Scoreboard;
 import utils.tools.ConcurrentMap;
 
-@SuppressWarnings("PMD.CloseResource") // The recording client is a resource-free test double.
+@SuppressWarnings({"PMD.CloseResource", "PMD.ExcessiveImports"}) // The recording client is a resource-free test double.
 class GameManagerTest {
 
     @Test
@@ -84,6 +89,32 @@ class GameManagerTest {
             waitUntil(() -> !manager.hasGame("game-1"));
             assertTrue(manager.getActiveGames().isEmpty());
         } finally {
+            manager.shutdown();
+        }
+    }
+
+    @Test
+    void runsTheConsoleLoopUntilInputEnds() throws Exception {
+        GameManager manager = new GameManager();
+        InputStream original = System.in;
+
+        try (InputStream input = new ByteArrayInputStream("help\n".getBytes(StandardCharsets.UTF_8))) {
+            System.setIn(input);
+
+            Captured<Void> output = capture(() -> {
+                try {
+                    manager.run();
+                } catch (NoSuchElementException expectedEndOfInput) {
+                    // The console loop ends when stdin is exhausted.
+                    assertNotNull(expectedEndOfInput);
+                }
+                return null;
+            });
+
+            assertTrue(output.output().contains("Server console ready"));
+            assertTrue(output.output().contains("Available commands"));
+        } finally {
+            System.setIn(original);
             manager.shutdown();
         }
     }
