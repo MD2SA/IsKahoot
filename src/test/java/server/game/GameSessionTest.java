@@ -87,6 +87,25 @@ class GameSessionTest {
     }
 
     @Test
+    @Timeout(10)
+    void stopsWhenTheWaitForResultsIsInterrupted() throws Exception {
+        GameSession session = new GameSession("game-interrupt", loadQuiz(), 1, 1);
+        RecordingClient alice = new RecordingClient("alice", "A");
+        assertTrue(session.join(alice));
+
+        Thread game = new Thread(session, "game-session");
+        game.start();
+
+        assertNotNull(alice.questions.poll(2, TimeUnit.SECONDS));
+
+        game.interrupt();
+        game.join(2_000);
+
+        assertFalse(game.isAlive());
+        assertEquals(1, alice.endGames);
+    }
+
+    @Test
     void rejectsAnswersBeforeTheFirstRound() throws Exception {
         GameSession session = new GameSession("game-3", loadQuiz(), 1, 1);
 
