@@ -12,6 +12,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InvalidClassException;
 import java.io.ObjectInputFilter;
+import java.io.ObjectOutputStream;
 import java.io.StreamCorruptedException;
 import java.util.List;
 
@@ -88,6 +89,26 @@ class ProtocolSerializationTest {
         ServerMessage.Scoreboard scoreboard = new ServerMessage.Scoreboard(List.of(new Score("A", 1)));
 
         assertThrows(UnsupportedOperationException.class, () -> scoreboard.scores().add(new Score("B", 2)));
+    }
+
+    @Test
+    void rejectsAFrameContainingMultipleObjects() throws Exception {
+        ByteArrayOutputStream serialized = new ByteArrayOutputStream();
+        try (ObjectOutputStream output = new ObjectOutputStream(serialized)) {
+            output.writeObject(new ServerMessage.End());
+            output.writeObject(new ServerMessage.End());
+        }
+
+        ByteArrayOutputStream frame = new ByteArrayOutputStream();
+        try (DataOutputStream output = new DataOutputStream(frame)) {
+            output.writeInt(serialized.size());
+            output.write(serialized.toByteArray());
+        }
+
+        try (DataInputStream input = new DataInputStream(new ByteArrayInputStream(frame.toByteArray()))) {
+            assertThrows(StreamCorruptedException.class,
+                    () -> MessageCodec.read(input, ProtocolObjectFilters.serverToClient()));
+        }
     }
 
     @Test
