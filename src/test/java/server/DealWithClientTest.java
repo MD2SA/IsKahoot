@@ -6,20 +6,15 @@ import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.fail;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.PrintStream;
 import java.io.Serializable;
 import java.lang.reflect.Field;
 import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.nio.charset.StandardCharsets;
-import java.util.concurrent.TimeUnit;
 
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
@@ -27,6 +22,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
 
 import server.game.GameSession;
+import testutils.ServerTestSupport;
 import utils.messages.ClientMessage;
 import utils.messages.MessageCodec;
 import utils.messages.Protocol;
@@ -36,30 +32,15 @@ import utils.quiz.Quiz;
 import utils.quiz.QuizCreator;
 import utils.tools.ConcurrentMap;
 
-@SuppressWarnings("PMD.ExcessiveImports") // Integration test exercises the full socket/message stack.
 class DealWithClientTest {
 
     private static InputStream originalIn;
     private static Server server;
 
     @BeforeAll
-    @SuppressWarnings("PMD.CloseResource") // Streams are global singletons that are restored, not closed.
     static void initializeServerSingletonWithoutConsoleInput() {
         originalIn = System.in;
-        PrintStream originalOut = System.out;
-        PrintStream originalErr = System.err;
-        PrintStream sink = new PrintStream(new ByteArrayOutputStream(), true, StandardCharsets.UTF_8);
-
-        System.setIn(new ByteArrayInputStream(new byte[0]));
-        System.setOut(sink);
-        System.setErr(sink);
-        try {
-            server = Server.getInstance();
-            awaitGameManagerStop();
-        } finally {
-            System.setOut(originalOut);
-            System.setErr(originalErr);
-        }
+        server = ServerTestSupport.initializeWithoutConsole();
     }
 
     @AfterAll
@@ -198,17 +179,6 @@ class DealWithClientTest {
         try (InputStream input = DealWithClientTest.class.getClassLoader().getResourceAsStream("quiz-fast.json")) {
             return QuizCreator.getFrom(input).get(0);
         }
-    }
-
-    private static void awaitGameManagerStop() {
-        long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(2);
-        while (gameManagerThreadAlive() && System.nanoTime() < deadline)
-            Thread.onSpinWait();
-    }
-
-    private static boolean gameManagerThreadAlive() {
-        return Thread.getAllStackTraces().keySet().stream()
-                .anyMatch(thread -> "game-manager".equals(thread.getName()) && thread.isAlive());
     }
 
     private record Outcome(ServerMessage message, String clientId, String teamId) {
