@@ -1,9 +1,11 @@
 package server;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
 import java.io.DataInputStream;
@@ -32,6 +34,7 @@ import utils.quiz.Quiz;
 import utils.quiz.QuizCreator;
 import utils.tools.ConcurrentMap;
 
+@SuppressWarnings("PMD.ExcessiveImports") // Integration test exercises the full socket/message stack.
 class DealWithClientTest {
 
     private static InputStream originalIn;
@@ -83,8 +86,52 @@ class DealWithClientTest {
     @Test
     @Timeout(10)
     void playsAGameOverTheSocket() throws Exception {
-        GameSession session = new GameSession("socket-game", loadQuiz(), 1, 1);
-        waitingGames(server.getGameManager()).put("socket-game", session);
+        withRegisteredConnection("socket-game", (input, output, handler) -> {
+            assertEquals(0, readQuestion(input, 0).question().getRoundNumber());
+            MessageCodec.write(output, new ClientMessage.SubmitAnswer(1, 0));
+
+            assertEquals(1, readQuestion(input, 1).question().getRoundNumber());
+            MessageCodec.write(output, new ClientMessage.SubmitAnswer(2, 1));
+
+            assertInstanceOf(ServerMessage.End.class, readEnd(input));
+            assertEquals("alice", handler.getClientId());
+            assertEquals("A", handler.getTeamId());
+        });
+    }
+
+    @Test
+    @Timeout(10)
+    void rejectsASecondRegistrationOnAnOpenConnection() throws Exception {
+        withRegisteredConnection("second-register", (input, output, handler) -> {
+            readQuestion(input, 0);
+
+            MessageCodec.write(output,
+                    new ClientMessage.Register("alice", "A", "second-register", Protocol.CURRENT_VERSION));
+
+            ServerMessage.Error error = assertInstanceOf(ServerMessage.Error.class, readServerMessage(input));
+            assertEquals("Already registered", error.reason());
+        });
+    }
+
+    @Test
+    @Timeout(10)
+    void rejectsAnAnswerOutsideTheCurrentRound() throws Exception {
+        withRegisteredConnection("bad-answer", (input, output, handler) -> {
+            readQuestion(input, 0);
+
+            MessageCodec.write(output, new ClientMessage.SubmitAnswer(1, 99));
+
+            ServerMessage.AnswerRejected rejection = assertInstanceOf(ServerMessage.AnswerRejected.class,
+                    readServerMessage(input));
+            assertEquals(99, rejection.roundNumber());
+            assertEquals("Answer was not accepted for this round", rejection.reason());
+        });
+    }
+
+    private static void withRegisteredConnection(String gameId, ClientScenario scenario)
+            throws IOException, ClassNotFoundException, InterruptedException, ReflectiveOperationException {
+        GameSession session = new GameSession(gameId, loadQuiz(), 1, 1);
+        waitingGames(server.getGameManager()).put(gameId, session);
 
         try (ServerSocket listener = new ServerSocket(0, 1, InetAddress.getLoopbackAddress());
                 Socket clientSide = new Socket(InetAddress.getLoopbackAddress(), listener.getLocalPort());
@@ -96,24 +143,48 @@ class DealWithClientTest {
 
             try (DataOutputStream output = new DataOutputStream(clientSide.getOutputStream());
                     DataInputStream input = new DataInputStream(clientSide.getInputStream())) {
-                MessageCodec.write(output,
-                        new ClientMessage.Register("alice", "A", "socket-game", Protocol.CURRENT_VERSION));
-
-                assertEquals(0, readQuestion(input, 0).question().getRoundNumber());
-                MessageCodec.write(output, new ClientMessage.SubmitAnswer(1, 0));
-
-                assertEquals(1, readQuestion(input, 1).question().getRoundNumber());
-                MessageCodec.write(output, new ClientMessage.SubmitAnswer(2, 1));
-
-                assertInstanceOf(ServerMessage.End.class, readEnd(input));
+                MessageCodec.write(output, new ClientMessage.Register("alice", "A", gameId, Protocol.CURRENT_VERSION));
+                scenario.run(input, output, handler);
             }
 
             clientSide.close();
             connection.join(2_000);
 
             assertFalse(connection.isAlive());
-            assertEquals("alice", handler.getClientId());
-            assertEquals("A", handler.getTeamId());
+        }
+    }
+
+    @FunctionalInterface
+    private interface ClientScenario {
+        void run(DataInputStream input, DataOutputStream output, DealWithClient handler)
+                throws IOException, ClassNotFoundException, InterruptedException;
+    }
+
+    @Test
+    @Timeout(5)
+    void logsAnAbruptDisconnect() throws Exception {
+        try (ServerSocket listener = new ServerSocket(0, 1, InetAddress.getLoopbackAddress());
+                Socket clientSide = new Socket(InetAddress.getLoopbackAddress(), listener.getLocalPort());
+                Socket serverSide = listener.accept();
+                DealWithClient handler = new DealWithClient(server, serverSide)) {
+            Thread connection = new Thread(handler, "deal-with-client");
+            connection.start();
+
+            clientSide.close();
+            connection.join(2_000);
+
+            assertFalse(connection.isAlive());
+            assertTrue(server.getLogger().getErrors().stream()
+                    .anyMatch(log -> log.message.contains("Client connection ended after exception")));
+        }
+    }
+
+    @Test
+    void ignoresMessagesSentAfterClose() {
+        try (DealWithClient handler = new DealWithClient(server, null)) {
+            handler.close();
+
+            assertDoesNotThrow(handler::sendEndGame);
         }
     }
 
