@@ -11,6 +11,7 @@ import org.junit.jupiter.api.Test;
 
 import server.GameManager;
 import testutils.OutputCapture.Captured;
+import testutils.ServerTestSupport;
 
 class HelpersTest {
 
@@ -78,6 +79,32 @@ class HelpersTest {
 
             assertEquals(2, read.value());
             assertTrue(read.output().contains("Invalid argument '9'. Falling back to input."));
+        }
+    }
+
+    @Test
+    void getArgOrReadIntInRangeFallsBackOnANonNumericArgument() throws Exception {
+        try (Scanner scanner = new Scanner(new StringReader("2\n"))) {
+            Captured<Integer> read = capture(
+                    () -> Helpers.getArgOrReadIntInRange(new String[]{"x"}, 0, scanner, 1, 3, "Quiz:"));
+
+            assertEquals(2, read.value());
+            assertTrue(read.output().contains("Invalid argument 'x'. Falling back to input."));
+        }
+    }
+
+    @Test
+    void readGameCodeRejectsACodeThatIsAlreadyInUse() throws Exception {
+        ServerTestSupport.initializeWithoutConsole();
+        GameManager manager = new GameManager();
+        manager.createGame("ABCD", 1, 1, 0);
+
+        try (Scanner scanner = new Scanner(new StringReader("ABCD\nABCD\n"))) {
+            Captured<String> read = capture(() -> Helpers.readGameCode(scanner, manager, 4));
+
+            assertTrue(read.value().matches("[A-Z0-9]{4}"));
+            assertTrue(read.output().contains("This code already exists. Try another one."));
+            assertTrue(read.output().contains("Too many invalid attempts. A random code has been generated: "));
         }
     }
 
