@@ -1,6 +1,7 @@
 package server.game;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.IOException;
@@ -58,6 +59,27 @@ class RoundManagerTest {
 
             assertEquals(List.of(new Score("A", 10)), manager.awaitResult().getScoreboard());
             assertEquals(List.of(new Score("A", 10)), manager.awaitResult().getScoreboard());
+        }
+    }
+
+    @Test
+    void rejectsPreparingMoreRoundsThanTheQuizContains() throws Exception {
+        TeamManager teams = new TeamManager(1, 1);
+        try (RoundManager manager = new RoundManager(loadQuiz(), teams)) {
+            manager.prepareNextRound();
+            manager.prepareNextRound();
+
+            assertThrows(IllegalStateException.class, manager::prepareNextRound);
+        }
+    }
+
+    @Test
+    void rejectsOperationsThatNeedAnActiveRound() throws Exception {
+        TeamManager teams = new TeamManager(1, 1);
+        try (RoundManager manager = new RoundManager(loadQuiz(), teams)) {
+            assertThrows(IllegalStateException.class, manager::openRound);
+            assertThrows(IllegalStateException.class, manager::startTimer);
+            assertThrows(IllegalStateException.class, manager::awaitResult);
         }
     }
 
