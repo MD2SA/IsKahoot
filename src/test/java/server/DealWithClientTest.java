@@ -32,9 +32,11 @@ import utils.messages.ProtocolObjectFilters;
 import utils.messages.ServerMessage;
 import utils.quiz.Quiz;
 import utils.quiz.QuizCreator;
+import utils.quiz.ReducedQuestion;
 import utils.tools.ConcurrentMap;
 
-@SuppressWarnings("PMD.ExcessiveImports") // Integration test exercises the full socket/message stack.
+@SuppressWarnings({"PMD.ExcessiveImports", "PMD.CouplingBetweenObjects"}) // Integration test exercises the full
+                                                                          // socket/message stack.
 class DealWithClientTest {
 
     private static InputStream originalIn;
@@ -176,6 +178,28 @@ class DealWithClientTest {
             assertFalse(connection.isAlive());
             assertTrue(server.getLogger().getErrors().stream()
                     .anyMatch(log -> log.message.contains("Client connection ended after exception")));
+        }
+    }
+
+    @Test
+    @Timeout(5)
+    void disconnectsWhenTheOutboundQueueIsFull() throws Exception {
+        ReducedQuestion question = new ReducedQuestion(loadQuiz().getQuestion(0), 0, 0L);
+
+        try (ServerSocket listener = new ServerSocket(0, 1, InetAddress.getLoopbackAddress());
+                Socket clientSide = new Socket(InetAddress.getLoopbackAddress(), listener.getLocalPort());
+                Socket serverSide = listener.accept();
+                DealWithClient handler = new DealWithClient(server, serverSide)) {
+            assertTrue(clientSide.isConnected());
+
+            for (int index = 0; index < 64; index++)
+                handler.sendQuestion(question);
+
+            handler.sendQuestion(question);
+
+            assertTrue(serverSide.isClosed());
+            assertTrue(server.getLogger().getErrors().stream()
+                    .anyMatch(log -> log.message.contains("Outbound queue full for client")));
         }
     }
 
